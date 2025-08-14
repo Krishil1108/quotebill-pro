@@ -1,0 +1,14 @@
+{
+  "name": "quotebill-pro",
+  "version": "1.0.0",
+  "description": "A modern quote and bill management application",
+  "scripts": {
+    "build": "cd frontend/quote-bill-app && npm install && npm run build",
+    "start": "cd frontend/quote-bill-app && npm start",
+    "install-frontend": "cd frontend/quote-bill-app && npm install",
+    "install-backend": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
