@@ -132,7 +132,7 @@ const QuoteBillApp = () => {
   const [pastDocuments, setPastDocuments] = useState([]);
   const [appSettings, setAppSettings] = useState({
     particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
-    units: ['pcs', 'nos', 'meters', 'kg', 'liters', 'boxes', 'sets']
+    units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
   });
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);

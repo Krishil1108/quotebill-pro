@@ -423,7 +423,12 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     let logoWidth = 0;
     if (letterhead.logo) {
       try {
-        const logoPath = path.join(__dirname, letterhead.logo);
+        // Handle both relative and absolute logo paths
+        const logoPath = letterhead.logo.startsWith('/') 
+          ? path.join(__dirname, letterhead.logo.substring(1))  // Remove leading slash
+          : path.join(__dirname, letterhead.logo);
+        
+        console.log('Looking for logo at:', logoPath);
         if (fs.existsSync(logoPath)) {
           doc.image(logoPath, 60, 55, { 
             fit: [80, 70],
@@ -431,6 +436,8 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
             valign: 'center'
           });
           logoWidth = 100; // Reserve space for logo
+        } else {
+          console.log('Logo file not found at:', logoPath);
         }
       } catch (logoError) {
         console.log('Logo loading error:', logoError);
@@ -520,13 +527,15 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     // CLIENT INFORMATION SECTION
     const clientY = 250;
     
-    // "Bill To" header with underline
+    // Dynamic header based on document type
+    const headerText = document.type === 'quote' ? 'QUOTE FOR' : 'BILL TO';
     doc.fontSize(14)
        .fillColor('#1e293b')
        .font('Helvetica-Bold')
-       .text('BILL TO', 40, clientY);
+       .text(headerText, 40, clientY);
     
-    drawLine(40, clientY + 18, 120, clientY + 18, '#3b82f6', 2);
+    const headerWidth = document.type === 'quote' ? 100 : 80;
+    drawLine(40, clientY + 18, 40 + headerWidth, clientY + 18, '#3b82f6', 2);
 
     // Client details in a clean layout
     let currentY = clientY + 35;
@@ -550,11 +559,11 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     if (document.clientInfo.phone || document.clientInfo.email) {
       let contactText = '';
       if (document.clientInfo.phone) {
-        contactText = `📞 ${document.clientInfo.phone}`;
+        contactText = `Phone: ${document.clientInfo.phone}`;
       }
       if (document.clientInfo.email) {
         if (contactText) contactText += '   ';
-        contactText += `✉ ${document.clientInfo.email}`;
+        contactText += `Email: ${document.clientInfo.email}`;
       }
       
       doc.fontSize(10)
@@ -714,7 +723,7 @@ app.get('/api/settings', async (req, res) => {
           tagline: 'Your Company Tagline'
         },
         particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
-        units: ['pcs', 'nos', 'meters', 'kg', 'liters', 'boxes', 'sets']
+        units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
       });
       await settings.save();
     }
