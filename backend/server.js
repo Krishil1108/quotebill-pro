@@ -623,14 +623,14 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
       });
 
       // Rate
-      doc.text(`₹${item.rate.toFixed(2)}`, colPositions[2], rowY + 6, {
+      doc.text(`Rs. ${item.rate.toFixed(2)}`, colPositions[2], rowY + 6, {
         width: colWidths[2] - 10,
         align: 'center'
       });
 
       // Amount
       doc.font('Helvetica-Bold')
-         .text(`₹${item.amount.toFixed(2)}`, colPositions[3], rowY + 6, {
+         .text(`Rs. ${item.amount.toFixed(2)}`, colPositions[3], rowY + 6, {
            width: colWidths[3] - 10,
            align: 'center'
          });
@@ -655,7 +655,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
        .font('Helvetica')
        .text('Subtotal:', 365, totalY + 15);
     
-    doc.text(`₹${document.totalAmount.toFixed(2)}`, 460, totalY + 15, {
+    doc.text(`Rs. ${document.totalAmount.toFixed(2)}`, 460, totalY + 15, {
       align: 'right',
       width: 80
     });
@@ -670,7 +670,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     
     doc.fontSize(16)
        .fillColor('#3b82f6')
-       .text(`₹${document.totalAmount.toFixed(2)}`, 460, totalY + 40, {
+       .text(`Rs. ${document.totalAmount.toFixed(2)}`, 460, totalY + 40, {
          align: 'right',
          width: 80
        });
