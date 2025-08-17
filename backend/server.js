@@ -614,14 +614,14 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
       });
 
       // Rate
-      doc.text(`₹${item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, colPositions[2], rowY + 6, {
+      doc.text(`Rs ${Number(item.rate).toFixed(2)}`, colPositions[2], rowY + 6, {
         width: colWidths[2] - 10,
         align: 'center'
       });
 
       // Amount
       doc.font('Helvetica-Bold')
-         .text(`₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, colPositions[3], rowY + 6, {
+         .text(`Rs ${Number(item.amount).toFixed(2)}`, colPositions[3], rowY + 6, {
            width: colWidths[3] - 10,
            align: 'center'
          });
@@ -646,7 +646,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
        .font('Helvetica')
        .text('Subtotal:', 365, totalY + 15);
     
-    doc.text(`₹${document.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 460, totalY + 15, {
+    doc.text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + 15, {
       align: 'right',
       width: 80
     });
@@ -661,7 +661,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     
     doc.fontSize(16)
        .fillColor('#3b82f6')
-       .text(`₹${document.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 460, totalY + 40, {
+       .text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + 40, {
          align: 'right',
          width: 80
        });
@@ -714,7 +714,7 @@ app.get('/api/settings', async (req, res) => {
           tagline: 'Your Company Tagline'
         },
         particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
-        units: ['pcs', 'nos', 'meters', 'kg', 'liters', 'boxes', 'sets']
+        units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
       });
       await settings.save();
     }

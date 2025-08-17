@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check } from 'lucide-react';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
 
 // Custom dropdown component for particulars
 const ParticularDropdown = ({ value, onChange, particulars, onAddParticular }) => {
@@ -130,9 +130,16 @@ const QuoteBillApp = () => {
     tagline: 'Your Company Tagline'
   });
   const [pastDocuments, setPastDocuments] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [documentFilter, setDocumentFilter] = useState('all'); // 'all', 'quote', 'bill'
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [appSettings, setAppSettings] = useState({
     particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
-    units: ['pcs', 'nos', 'meters', 'kg', 'liters', 'boxes', 'sets']
+    units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
   });
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -146,6 +153,80 @@ const QuoteBillApp = () => {
     fetchDocuments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Filter documents when search or filter changes
+  useEffect(() => {
+    let filtered = pastDocuments;
+
+    // Apply document type filter
+    if (documentFilter !== 'all') {
+      filtered = filtered.filter(doc => doc.type === documentFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(doc => {
+        const clientName = (doc.clientInfo?.name || doc.customerName || '').toLowerCase();
+        const documentNumber = (doc.documentNumber || '').toLowerCase();
+        const type = (doc.type || '').toLowerCase();
+        return clientName.includes(query) || 
+               documentNumber.includes(query) || 
+               type.includes(query);
+      });
+    }
+
+    setFilteredDocuments(filtered);
+  }, [pastDocuments, searchQuery, documentFilter]);
+
+  // Browser navigation support
+  useEffect(() => {
+    // Set initial URL based on activeTab
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath === '/create') {
+      setActiveTab('create');
+    } else if (currentPath === '/history') {
+      setActiveTab('history');
+    } else if (currentPath === '/settings') {
+      setActiveTab('settings');
+    }
+    
+    // Listen for browser back/forward button clicks
+    const handlePopState = (event) => {
+      const path = window.location.pathname;
+      if (path === '/' || path === '/create') {
+        setActiveTab('create');
+      } else if (path === '/history') {
+        setActiveTab('history');
+      } else if (path === '/settings') {
+        setActiveTab('settings');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // Update URL when activeTab changes
+  useEffect(() => {
+    const path = activeTab === 'create' ? '/' : `/${activeTab}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+  }, [activeTab]);
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setShowErrorDialog(true);
+  };
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessDialog(true);
+  };
 
   const fetchSettings = async () => {
     try {
@@ -165,13 +246,21 @@ const QuoteBillApp = () => {
 
   const fetchDocuments = async () => {
     try {
+      console.log('Fetching documents from:', `${API_BASE_URL}/documents`);
       const response = await fetch(`${API_BASE_URL}/documents`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Documents fetched:', data);
         setPastDocuments(data.documents || []);
+      } else {
+        console.error('Failed to fetch documents:', response.status, response.statusText);
+        showError(`Failed to fetch documents: ${response.status} ${response.statusText}`);
+        setPastDocuments([]);
       }
     } catch (error) {
       console.error('Error fetching documents:', error);
+      showError(`Error fetching documents: ${error.message}`);
+      setPastDocuments([]);
     }
   };
 
@@ -229,7 +318,7 @@ const QuoteBillApp = () => {
       }
 
       if (!docId) {
-        alert('Please save the document first');
+        showError('Please save the document first');
         return;
       }
 
@@ -245,12 +334,13 @@ const QuoteBillApp = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        showSuccess('PDF downloaded successfully!');
       } else {
-        alert('Failed to generate PDF');
+        showError('Failed to generate PDF');
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF');
+      showError('Error generating PDF: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -262,12 +352,12 @@ const QuoteBillApp = () => {
       
       // Validate required fields
       if (!clientInfo.name.trim()) {
-        alert('Please enter client name');
+        showError('Please enter client name');
         return null;
       }
 
       if (items.length === 0 || !items.some(item => item.particular.trim())) {
-        alert('Please add at least one item with particulars');
+        showError('Please add at least one item with particulars');
         return null;
       }
 
@@ -277,7 +367,7 @@ const QuoteBillApp = () => {
       );
 
       if (hasInvalidItems) {
-        alert('Please fill in all item details (particulars, quantity, and rate)');
+        showError('Please fill in all item details (particulars, quantity, and rate)');
         return null;
       }
       
@@ -316,16 +406,16 @@ const QuoteBillApp = () => {
       if (response.ok) {
         const savedDocument = await response.json();
         setCurrentDocument(savedDocument);
-        alert(`${documentType.charAt(0).toUpperCase() + documentType.slice(1)} saved successfully!`);
+        showSuccess(`${documentType.charAt(0).toUpperCase() + documentType.slice(1)} saved successfully!`);
         fetchDocuments(); // Refresh the documents list
         return savedDocument;
       } else {
         const error = await response.json();
-        alert(`Error saving document: ${error.error}`);
+        showError(`Error saving document: ${error.error}`);
       }
     } catch (error) {
       console.error('Error saving document:', error);
-      alert('Error saving document: ' + error.message);
+      showError('Error saving document: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -358,12 +448,12 @@ const QuoteBillApp = () => {
           method: 'DELETE',
         });
         if (response.ok) {
-          alert('Document deleted successfully');
+          showSuccess('Document deleted successfully');
           fetchDocuments();
         }
       } catch (error) {
         console.error('Error deleting document:', error);
-        alert('Error deleting document');
+        showError('Error deleting document');
       }
     }
   };
@@ -384,11 +474,11 @@ const QuoteBillApp = () => {
           ...prev,
           logo: `${API_BASE_URL.replace('/api', '')}${result.logoUrl}`
         }));
-        alert('Logo uploaded successfully!');
+        showSuccess('Logo uploaded successfully!');
       }
     } catch (error) {
       console.error('Error uploading logo:', error);
-      alert('Error uploading logo');
+      showError('Error uploading logo: ' + error.message);
     }
   };
 
@@ -407,11 +497,11 @@ const QuoteBillApp = () => {
       });
 
       if (response.ok) {
-        alert('Settings saved successfully!');
+        showSuccess('Settings saved successfully!');
       }
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert('Error saving settings');
+      showError('Error saving settings: ' + error.message);
     }
   };
 
@@ -545,10 +635,10 @@ const QuoteBillApp = () => {
                           Unit
                         </th>
                         <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 border-b">
-                          Rate (₹)
+                          Rate (Rs)
                         </th>
                         <th className="px-6 py-4 text-right text-sm font-semibold text-gray-700 border-b">
-                          Amount (₹)
+                          Amount (Rs)
                         </th>
                       </tr>
                     </thead>
@@ -565,10 +655,10 @@ const QuoteBillApp = () => {
                             {item.unit}
                           </td>
                           <td className="px-4 py-4 text-center text-sm text-gray-700 border-b">
-                            ₹{parseFloat(item.rate || 0).toLocaleString()}
+                            Rs {parseFloat(item.rate || 0).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 text-right text-sm font-medium text-gray-900 border-b">
-                            ₹{item.amount.toLocaleString()}
+                            Rs {item.amount.toLocaleString()}
                           </td>
                         </tr>
                       ))}
@@ -579,7 +669,7 @@ const QuoteBillApp = () => {
                           Total Amount:
                         </td>
                         <td className="px-6 py-4 text-right text-lg font-bold">
-                          ₹{getTotalAmount().toLocaleString()}
+                          Rs {getTotalAmount().toLocaleString()}
                         </td>
                       </tr>
                     </tfoot>
@@ -861,7 +951,7 @@ const QuoteBillApp = () => {
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Rate (₹)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rate (Rs)</label>
                       <input
                         type="number"
                         value={item.rate}
@@ -874,7 +964,7 @@ const QuoteBillApp = () => {
 
                     <div className="lg:col-span-2 flex items-end">
                       <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Rs)</label>
                         <div className="p-3 bg-gray-100 border border-gray-300 rounded-md text-right font-medium">
                           {item.amount.toFixed(2)}
                         </div>
@@ -897,7 +987,7 @@ const QuoteBillApp = () => {
                 <div className="flex justify-end">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="text-lg font-semibold text-blue-900">
-                      Total Amount: ₹{getTotalAmount().toFixed(2)}
+                      Total Amount: Rs {getTotalAmount().toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -936,8 +1026,58 @@ const QuoteBillApp = () => {
         {/* History Tab */}
         {activeTab === 'history' && (
           <div className="bg-white rounded-lg shadow">
+            {/* Header with Search and Filters */}
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">Past Quotes & Bills</h2>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <h2 className="text-lg font-semibold">Past Quotes & Bills</h2>
+                
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by client, document number, or type..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-80"
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Document Type Filter */}
+                  <select
+                    value={documentFilter}
+                    onChange={(e) => setDocumentFilter(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">All Documents</option>
+                    <option value="quote">Quotes Only</option>
+                    <option value="bill">Bills Only</option>
+                  </select>
+
+                  {/* Refresh Button */}
+                  <button
+                    onClick={fetchDocuments}
+                    className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Results Info */}
+              <div className="mt-4 text-sm text-gray-600">
+                Showing {filteredDocuments.length} of {pastDocuments.length} documents
+                {searchQuery && ` matching "${searchQuery}"`}
+                {documentFilter !== 'all' && ` (${documentFilter}s only)`}
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -948,12 +1088,11 @@ const QuoteBillApp = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {pastDocuments.map((doc) => (
+                  {filteredDocuments.map((doc) => (
                     <tr key={doc._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -965,21 +1104,10 @@ const QuoteBillApp = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.documentNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.clientInfo.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{doc.totalAmount.toLocaleString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.clientInfo?.name || doc.customerName || 'Unknown Client'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {(doc.totalAmount || 0).toLocaleString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(doc.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          doc.status === 'paid' 
-                            ? 'bg-green-100 text-green-800'
-                            : doc.status === 'approved'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
@@ -1010,9 +1138,14 @@ const QuoteBillApp = () => {
                   ))}
                 </tbody>
               </table>
-              {pastDocuments.length === 0 && (
+              {filteredDocuments.length === 0 && pastDocuments.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No documents found. Create your first quote or bill!
+                </div>
+              )}
+              {filteredDocuments.length === 0 && pastDocuments.length > 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No documents match your search criteria. Try adjusting your search or filters.
                 </div>
               )}
             </div>
@@ -1164,6 +1297,68 @@ const QuoteBillApp = () => {
       </main>
 
       <PreviewModal isOpen={showPreview} onClose={() => setShowPreview(false)} />
+      
+      {/* Error Dialog */}
+      {showErrorDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-red-600 flex items-center">
+                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                Error
+              </h3>
+              <button 
+                onClick={() => setShowErrorDialog(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-gray-700 mb-6">{errorMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowErrorDialog(false)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Dialog */}
+      {showSuccessDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-green-600 flex items-center">
+                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Success
+              </h3>
+              <button 
+                onClick={() => setShowSuccessDialog(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-gray-700 mb-6">{successMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowSuccessDialog(false)}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

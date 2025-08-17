@@ -54,13 +54,10 @@ async function initializeDatabase() {
           'pcs',
           'nos', 
           'meters',
-          'kg',
-          'liters',
-          'boxes',
           'sets',
-          'hours',
-          'days',
-          'months'
+          'approx',
+          'feet',
+          'points'
         ]
       });
       
