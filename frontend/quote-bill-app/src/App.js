@@ -750,56 +750,62 @@ const QuoteBillApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+      </div>
+      
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
+      <header className="relative z-10 bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
-                <FileText className="h-8 w-8 text-white" />
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-xl">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <div className="ml-3">
+                <h1 className="text-xl font-black bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
                   ElectroQuote
                 </h1>
-                <p className="text-sm text-gray-500 font-medium">Professional Quote & Bill Management</p>
+                <p className="text-xs text-blue-200/70 font-medium">Professional Suite</p>
               </div>
             </div>
             
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-2">
+            <nav className="hidden md:flex space-x-1 bg-black/30 backdrop-blur-md rounded-2xl p-1">
               <button
                 onClick={() => handleTabChange('create')}
-                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeTab === 'create' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
+                    ? 'bg-white text-purple-900 shadow-xl' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Plus className="w-4 h-4 inline mr-2" />
+                <Plus className="w-4 h-4 inline mr-1" />
                 Create
               </button>
               <button
                 onClick={() => handleTabChange('history')}
-                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeTab === 'history' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
+                    ? 'bg-white text-purple-900 shadow-xl' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <FileText className="w-4 h-4 inline mr-2" />
+                <FileText className="w-4 h-4 inline mr-1" />
                 History
               </button>
               <button
                 onClick={() => handleTabChange('settings')}
-                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeTab === 'settings' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
+                    ? 'bg-white text-purple-900 shadow-xl' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Upload className="w-4 h-4 inline mr-2" />
+                <Upload className="w-4 h-4 inline mr-1" />
                 Settings
               </button>
             </nav>
@@ -856,22 +862,22 @@ const QuoteBillApp = () => {
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Create Tab */}
         {activeTab === 'create' && (
-          <div className="space-y-8">
-            {/* New/Current Document Info */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <div className="flex justify-between items-center mb-6">
+          <div className="space-y-6">
+            {/* New/Current Document Info - Compact */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 shadow-2xl">
+              <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                  <h2 className="text-xl font-black text-white flex items-center">
+                    <Zap className="w-5 h-5 mr-2 text-yellow-400" />
                     {currentDocument ? `Edit ${currentDocument.type.toUpperCase()}` : 'New Document'}
-                    {hasUnsavedChanges && <span className="ml-2 text-orange-500">*</span>}
+                    {hasUnsavedChanges && <span className="ml-2 text-yellow-400 animate-pulse">●</span>}
                   </h2>
                   {currentDocument && (
-                    <p className="text-sm text-gray-500 font-medium">
-                      Document No: {currentDocument.documentNumber} | 
-                      Created: {new Date(currentDocument.createdAt).toLocaleDateString()}
+                    <p className="text-sm text-blue-200 font-medium mt-1">
+                      #{currentDocument.documentNumber} • {new Date(currentDocument.createdAt).toLocaleDateString()}
                     </p>
                   )}
                 </div>
