@@ -1489,62 +1489,18 @@ const QuoteBillApp = () => {
                 </div>
               </div>
               
-              <div className="space-y-6">
-                {/* Particulars Display Grid */}
-                {appSettings.particulars.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {appSettings.particulars.map((particular, index) => (
-                      <div key={index} className={`group relative flex items-center justify-between p-3 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
-                        isDarkTheme 
-                          ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-white/20 hover:border-white/40' 
-                          : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300'
-                      }`}>
-                        <span className={`font-medium truncate mr-3 transition-colors duration-500 ${
-                          isDarkTheme ? 'text-white/90' : 'text-gray-800'
-                        }`}>
-                          {particular}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
-                            setAppSettings({...appSettings, particulars: updatedParticulars});
-                            autoSaveParticulars(updatedParticulars);
-                          }}
-                          className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${
-                            isDarkTheme 
-                              ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300' 
-                              : 'text-red-500 hover:bg-red-50 hover:text-red-600'
-                          }`}
-                          title="Delete particular"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={`text-center py-12 rounded-xl border-2 border-dashed transition-all duration-500 ${
-                    isDarkTheme 
-                      ? 'border-white/20 text-white/60' 
-                      : 'border-gray-300 text-gray-500'
-                  }`}>
-                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p className="font-medium">No particulars added yet</p>
-                    <p className="text-sm mt-1">Add your first particular below</p>
-                  </div>
-                )}
-
-                {/* Add New Particular Form */}
-                <div className={`p-4 rounded-xl border transition-all duration-500 ${
+              <div className="space-y-4">
+                {/* Add New Particular Form - Moved to Top */}
+                <div className={`p-3 rounded-xl border transition-all duration-500 ${
                   isDarkTheme 
                     ? 'bg-black/20 border-white/20' 
                     : 'bg-gray-50 border-gray-200'
                 }`}>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Add new particular (e.g., LED Light, Switch Board, Cable)"
-                      className={`flex-1 p-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                      placeholder="Add new particular..."
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-all duration-300 focus:ring-2 focus:outline-none ${
                         isDarkTheme 
                           ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-400 focus:ring-blue-100'
@@ -1580,21 +1536,82 @@ const QuoteBillApp = () => {
                           input.value = '';
                         }
                       }}
-                      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${
+                      className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:shadow-md transform hover:scale-105 ${
                         isDarkTheme 
                           ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' 
                           : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
                       }`}
                     >
-                      <Plus size={18} />
+                      <Plus size={16} />
                     </button>
                   </div>
-                  <p className={`text-xs mt-2 transition-colors duration-500 ${
-                    isDarkTheme ? 'text-white/60' : 'text-gray-500'
-                  }`}>
-                    💡 Tip: Press Enter to quickly add items
-                  </p>
                 </div>
+
+                {/* Particulars Display - Mobile Optimized */}
+                {appSettings.particulars.length > 0 ? (
+                  <div className={`p-4 rounded-xl border transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'bg-black/10 border-white/10' 
+                      : 'bg-white border-gray-200'
+                  }`}>
+                    <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+                      <div className="space-y-2">
+                        {appSettings.particulars.map((particular, index) => (
+                          <div key={index} className={`group flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
+                            isDarkTheme 
+                              ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-white/10 hover:border-white/20' 
+                              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-200'
+                          }`}>
+                            <div className="flex items-center min-w-0 flex-1">
+                              <div className={`w-2 h-2 rounded-full mr-3 ${
+                                isDarkTheme ? 'bg-blue-400' : 'bg-blue-500'
+                              }`}></div>
+                              <span className={`font-medium truncate transition-colors duration-500 ${
+                                isDarkTheme ? 'text-white/90' : 'text-gray-800'
+                              }`}>
+                                {particular}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
+                                setAppSettings({...appSettings, particulars: updatedParticulars});
+                                autoSaveParticulars(updatedParticulars);
+                              }}
+                              className={`ml-3 p-1 rounded-md transition-all duration-200 hover:scale-110 opacity-70 hover:opacity-100 ${
+                                isDarkTheme 
+                                  ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300' 
+                                  : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                              }`}
+                              title="Delete particular"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Scroll Hint */}
+                    {appSettings.particulars.length > 6 && (
+                      <div className={`text-center mt-3 pt-2 border-t transition-colors duration-500 ${
+                        isDarkTheme ? 'border-white/10 text-white/50' : 'border-gray-200 text-gray-400'
+                      }`}>
+                        <p className="text-xs">↕️ Scroll to see more items</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className={`text-center py-8 rounded-xl border-2 border-dashed transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'border-white/20 text-white/60' 
+                      : 'border-gray-300 text-gray-500'
+                  }`}>
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="font-medium text-sm">No particulars added yet</p>
+                    <p className="text-xs mt-1">Add your first item above</p>
+                  </div>
+                )}
               </div>
             </div>
 
