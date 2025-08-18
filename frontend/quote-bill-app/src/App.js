@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, Filter, Calendar, DollarSign, TrendingUp, Users, Sparkles, Zap } from 'lucide-react';
+import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Sun, Moon } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
 
@@ -110,9 +110,78 @@ const ParticularDropdown = ({ value, onChange, particulars, onAddParticular }) =
   );
 };
 
+// Enhanced Unit Dropdown Component
+const UnitDropdown = ({ value, onChange, units, isDark }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-4 text-left border-0 rounded-xl transition-all duration-300 flex items-center justify-between transform hover:scale-105 ${
+          isDark 
+            ? 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30 shadow-lg' 
+            : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-400 hover:shadow-lg'
+        }`}
+      >
+        <span className="font-medium">{value}</span>
+        <ChevronDown 
+          size={16} 
+          className={`transform transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          } ${isDark ? 'text-white/70' : 'text-gray-400'}`} 
+        />
+      </button>
+      
+      {isOpen && (
+        <div className={`absolute z-50 w-full mt-2 rounded-xl shadow-2xl max-h-48 overflow-auto border transition-all duration-300 transform ${
+          isDark 
+            ? 'bg-black/90 backdrop-blur-xl border-white/20' 
+            : 'bg-white border-gray-200'
+        }`}>
+          {units.map((unit, index) => (
+            <button
+              key={unit}
+              type="button"
+              onClick={() => {
+                onChange(unit);
+                setIsOpen(false);
+              }}
+              className={`w-full px-4 py-3 text-left transition-all duration-200 flex items-center justify-between group ${
+                isDark 
+                  ? 'hover:bg-white/10 text-white' 
+                  : 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 text-gray-700'
+              } ${index === 0 ? 'rounded-t-xl' : ''} ${index === units.length - 1 ? 'rounded-b-xl' : ''}`}
+            >
+              <span className="font-medium">{unit}</span>
+              {value === unit && (
+                <Check size={16} className={`${isDark ? 'text-green-400' : 'text-blue-600'} animate-bounce`} />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const QuoteBillApp = () => {
   const [activeTab, setActiveTab] = useState('create');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [documentType, setDocumentType] = useState('quote');
   const [items, setItems] = useState([
     { id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }
@@ -585,11 +654,17 @@ const QuoteBillApp = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className={`rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${
+          isDarkTheme ? 'bg-gray-800' : 'bg-white'
+        }`}>
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Preview {documentType.toUpperCase()}</h3>
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <h3 className={`text-xl font-bold transition-colors duration-300 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>Preview {documentType.toUpperCase()}</h3>
+              <button onClick={onClose} className={`transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+              }`}>
                 <X size={24} />
               </button>
             </div>
@@ -750,15 +825,30 @@ const QuoteBillApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className={`min-h-screen relative overflow-hidden transition-all duration-500 ${
+      isDarkTheme 
+        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+    }`}>
       {/* Animated Background */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse transition-colors duration-500 ${
+          isDarkTheme ? 'bg-blue-500/10' : 'bg-blue-300/20'
+        }`}></div>
+        <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse transition-colors duration-500 ${
+          isDarkTheme ? 'bg-purple-500/10' : 'bg-purple-300/20'
+        }`} style={{animationDelay: '2s'}}></div>
+        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] rounded-full blur-3xl animate-pulse transition-colors duration-500 ${
+          isDarkTheme ? 'bg-indigo-500/5' : 'bg-indigo-300/15'
+        }`} style={{animationDelay: '4s'}}></div>
       </div>
       
       {/* Header */}
-      <header className="relative z-10 bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0">
+      <header className={`relative z-10 backdrop-blur-xl border-b sticky top-0 transition-all duration-500 ${
+        isDarkTheme 
+          ? 'bg-black/20 border-white/10' 
+          : 'bg-white/30 border-gray-200/50'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -766,23 +856,32 @@ const QuoteBillApp = () => {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div className="ml-3">
-                <h1 className="text-xl font-black bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                <h1 className={`text-xl font-black bg-gradient-to-r bg-clip-text text-transparent transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'from-white to-blue-200' 
+                    : 'from-gray-800 to-blue-600'
+                }`}>
                   ElectroQuote
                 </h1>
-                <p className="text-xs text-blue-200/70 font-medium">Professional Suite</p>
+                <p className={`text-xs font-medium transition-colors duration-500 ${
+                  isDarkTheme ? 'text-blue-200/70' : 'text-gray-600'
+                }`}>Professional Suite</p>
               </div>
             </div>
             
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-1 bg-black/30 backdrop-blur-md rounded-2xl p-1">
-              <button
-                onClick={() => handleTabChange('create')}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                  activeTab === 'create' 
-                    ? 'bg-white text-purple-900 shadow-xl' 
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
+            {/* Desktop Navigation & Theme Toggle */}
+            <div className="hidden md:flex items-center space-x-3">
+              <nav className={`flex space-x-1 backdrop-blur-md rounded-2xl p-1 transition-all duration-500 ${
+                isDarkTheme ? 'bg-black/30' : 'bg-white/50'
+              }`}>
+                <button
+                  onClick={() => handleTabChange('create')}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    activeTab === 'create' 
+                      ? (isDarkTheme ? 'bg-white text-purple-900 shadow-xl' : 'bg-blue-600 text-white shadow-xl')
+                      : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/70')
+                  }`}
+                >
                 <Plus className="w-4 h-4 inline mr-1" />
                 Create
               </button>
@@ -790,8 +889,8 @@ const QuoteBillApp = () => {
                 onClick={() => handleTabChange('history')}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeTab === 'history' 
-                    ? 'bg-white text-purple-900 shadow-xl' 
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                    ? (isDarkTheme ? 'bg-white text-purple-900 shadow-xl' : 'bg-blue-600 text-white shadow-xl')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/70')
                 }`}
               >
                 <FileText className="w-4 h-4 inline mr-1" />
@@ -801,8 +900,8 @@ const QuoteBillApp = () => {
                 onClick={() => handleTabChange('settings')}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeTab === 'settings' 
-                    ? 'bg-white text-purple-900 shadow-xl' 
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                    ? (isDarkTheme ? 'bg-white text-purple-900 shadow-xl' : 'bg-blue-600 text-white shadow-xl')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/70')
                 }`}
               >
                 <Upload className="w-4 h-4 inline mr-1" />
@@ -810,26 +909,58 @@ const QuoteBillApp = () => {
               </button>
             </nav>
 
-            {/* Mobile menu button */}
+            {/* Theme Toggle Button */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
+              onClick={() => setIsDarkTheme(!isDarkTheme)}
+              className={`p-3 rounded-xl backdrop-blur-md transition-all duration-300 hover:scale-110 ${
+                isDarkTheme 
+                  ? 'bg-white/10 hover:bg-white/20 text-yellow-300' 
+                  : 'bg-black/10 hover:bg-black/20 text-gray-700'
+              }`}
+              title={isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isDarkTheme ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
+          </div>
+
+            {/* Mobile menu button & Theme Toggle */}
+            <div className="md:hidden flex items-center space-x-2">
+              <button
+                onClick={() => setIsDarkTheme(!isDarkTheme)}
+                className={`p-2 rounded-xl transition-all duration-300 ${
+                  isDarkTheme 
+                    ? 'bg-white/10 text-yellow-300' 
+                    : 'bg-black/10 text-gray-700'
+                }`}
+              >
+                {isDarkTheme ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className={`p-2 rounded-md transition-colors duration-300 ${
+                  isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-500'
+                }`}
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-4 pt-4 pb-6 space-y-3 sm:px-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-100">
+            <div className={`px-4 pt-4 pb-6 space-y-3 sm:px-6 border-t transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-gradient-to-r from-black/40 to-blue-900/40 border-white/10 backdrop-blur-xl' 
+                : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100'
+            }`}>
               <button
                 onClick={() => { handleTabChange('create'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
                   activeTab === 'create' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
+                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
                 }`}
               >
                 <Plus className="w-5 h-5 mr-3" />
@@ -837,10 +968,10 @@ const QuoteBillApp = () => {
               </button>
               <button
                 onClick={() => { handleTabChange('history'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
                   activeTab === 'history' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
+                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
                 }`}
               >
                 <FileText className="w-5 h-5 mr-3" />
@@ -848,10 +979,10 @@ const QuoteBillApp = () => {
               </button>
               <button
                 onClick={() => { handleTabChange('settings'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
                   activeTab === 'settings' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
+                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
                 }`}
               >
                 <Upload className="w-5 h-5 mr-3" />
@@ -867,16 +998,24 @@ const QuoteBillApp = () => {
         {activeTab === 'create' && (
           <div className="space-y-6">
             {/* New/Current Document Info - Compact */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 shadow-2xl">
+            <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/80 border-gray-200/50'
+            }`}>
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-black text-white flex items-center">
+                  <h2 className={`text-xl font-black flex items-center transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
                     <Zap className="w-5 h-5 mr-2 text-yellow-400" />
                     {currentDocument ? `Edit ${currentDocument.type.toUpperCase()}` : 'New Document'}
                     {hasUnsavedChanges && <span className="ml-2 text-yellow-400 animate-pulse">●</span>}
                   </h2>
                   {currentDocument && (
-                    <p className="text-sm text-blue-200 font-medium mt-1">
+                    <p className={`text-sm font-medium mt-1 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-blue-200' : 'text-gray-600'
+                    }`}>
                       #{currentDocument.documentNumber} • {new Date(currentDocument.createdAt).toLocaleDateString()}
                     </p>
                   )}
@@ -892,15 +1031,23 @@ const QuoteBillApp = () => {
             </div>
 
             {/* Document Type Selection */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Document Type</h2>
+            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-8 transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/70 border-gray-200/50'
+            }`}>
+              <h2 className={`text-xl font-bold mb-6 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>Document Type</h2>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setDocumentType('quote')}
                   className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
                     documentType === 'quote'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      : (isDarkTheme 
+                          ? 'bg-white/10 text-white hover:bg-white/20 hover:shadow-md' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md')
                   }`}
                 >
                   📋 Quote
@@ -909,8 +1056,10 @@ const QuoteBillApp = () => {
                   onClick={() => setDocumentType('bill')}
                   className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
                     documentType === 'bill'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
+                      : (isDarkTheme 
+                          ? 'bg-white/10 text-white hover:bg-white/20 hover:shadow-md' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md')
                   }`}
                 >
                   🧾 Bill
@@ -986,9 +1135,15 @@ const QuoteBillApp = () => {
 
               <div className="space-y-6">
                 {items.map((item, index) => (
-                  <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 border border-gray-200 rounded-2xl bg-gradient-to-r from-gray-50 to-blue-50 hover:shadow-lg transition-all duration-200">
+                  <div key={item.id} className={`grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 border rounded-2xl transition-all duration-500 hover:shadow-lg ${
+                    isDarkTheme 
+                      ? 'border-white/20 bg-gradient-to-r from-black/30 to-blue-900/30 backdrop-blur-xl' 
+                      : 'border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50'
+                  }`}>
                     <div className="lg:col-span-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Particulars</label>
+                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                      }`}>Particulars</label>
                       <ParticularDropdown
                         value={item.particular}
                         onChange={(value) => updateItem(item.id, 'particular', value)}
@@ -1003,36 +1158,47 @@ const QuoteBillApp = () => {
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                      }`}>Quantity</label>
                       <input
                         type="number"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+                        className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md ${
+                          isDarkTheme 
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
+                        }`}
                         placeholder="0"
                       />
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Unit</label>
-                      <select
+                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                      }`}>Unit</label>
+                      <UnitDropdown
                         value={item.unit}
-                        onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
-                      >
-                        {appSettings.units.map(unit => (
-                          <option key={unit} value={unit}>{unit}</option>
-                        ))}
-                      </select>
+                        onChange={(value) => updateItem(item.id, 'unit', value)}
+                        units={appSettings.units}
+                        isDark={isDarkTheme}
+                      />
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Rate (Rs)</label>
+                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                      }`}>Rate (Rs)</label>
                       <input
                         type="number"
                         value={item.rate}
                         onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+                        className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md ${
+                          isDarkTheme 
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
+                        }`}
                         placeholder="0.00"
                         step="0.01"
                       />
@@ -1040,15 +1206,25 @@ const QuoteBillApp = () => {
 
                     <div className="lg:col-span-2 flex items-end">
                       <div className="w-full">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Amount (Rs)</label>
-                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl text-right font-bold text-green-800 text-lg">
+                        <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                        }`}>Amount (Rs)</label>
+                        <div className={`p-4 border-2 rounded-xl text-right font-bold text-lg transition-all duration-500 ${
+                          isDarkTheme 
+                            ? 'bg-gradient-to-r from-emerald-900/50 to-green-800/50 border-emerald-500/30 text-emerald-300' 
+                            : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800'
+                        }`}>
                           ₹{item.amount.toFixed(2)}
                         </div>
                       </div>
                       {items.length > 1 && (
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="ml-3 p-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200"
+                          className={`ml-3 p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
+                            isDarkTheme 
+                              ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20' 
+                              : 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                          }`}
                         >
                           <Trash2 size={20} />
                         </button>
@@ -1238,12 +1414,20 @@ const QuoteBillApp = () => {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-6">Settings</h2>
+          <div className={`rounded-lg shadow p-6 transition-all duration-500 ${
+            isDarkTheme 
+              ? 'bg-white/10 backdrop-blur-xl border border-white/20' 
+              : 'bg-white border border-gray-200/50'
+          }`}>
+            <h2 className={`text-lg font-semibold mb-6 transition-colors duration-500 ${
+              isDarkTheme ? 'text-white' : 'text-gray-800'
+            }`}>Settings</h2>
             
             {/* Particulars Management Section */}
             <div className="mb-8">
-              <h3 className="text-md font-semibold mb-4">Manage Particulars</h3>
+              <h3 className={`text-md font-semibold mb-4 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>Manage Particulars</h3>
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2 mb-4">
                   {appSettings.particulars.map((particular, index) => (
@@ -1309,10 +1493,14 @@ const QuoteBillApp = () => {
 
             {/* Letterhead Settings Section */}
             <div>
-              <h3 className="text-md font-semibold mb-4">Letterhead Settings</h3>
+              <h3 className={`text-md font-semibold mb-4 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>Letterhead Settings</h3>
               <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
+                <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                  isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                }`}>Company Logo</label>
                 <div className="flex items-center space-x-4">
                   <input
                     type="file"
