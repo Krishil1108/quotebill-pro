@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check } from 'lucide-react';
+import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, Filter, Calendar, DollarSign, TrendingUp, Users } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
 
@@ -56,30 +56,30 @@ const ParticularDropdown = ({ value, onChange, particulars, onAddParticular }) =
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
-          className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full p-4 pr-12 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md text-gray-700"
           placeholder="Select or enter particulars"
         />
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+          className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-blue-500 transition-colors duration-200"
         >
-          <ChevronDown size={20} className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown size={20} className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto backdrop-blur-sm">
           {filteredParticulars.length > 0 && (
-            <div className="py-1">
+            <div className="py-2">
               {filteredParticulars.map((particular, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => handleSelect(particular)}
-                  className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center justify-between group"
+                  className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 flex items-center justify-between group transition-all duration-150 text-gray-700"
                 >
-                  <span>{particular}</span>
+                  <span className="font-medium">{particular}</span>
                   {value === particular && <Check size={16} className="text-blue-600" />}
                 </button>
               ))}
@@ -87,11 +87,11 @@ const ParticularDropdown = ({ value, onChange, particulars, onAddParticular }) =
           )}
           
           {searchTerm.trim() && !particulars.includes(searchTerm.trim()) && (
-            <div className="border-t border-gray-200">
+            <div className="border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleAddNew}
-                className="w-full px-4 py-2 text-left hover:bg-green-50 text-green-700 flex items-center"
+                className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 text-green-700 flex items-center transition-all duration-150 font-medium"
               >
                 <Plus size={16} className="mr-2" />
                 Add "{searchTerm.trim()}" as new particular
@@ -100,7 +100,7 @@ const ParticularDropdown = ({ value, onChange, particulars, onAddParticular }) =
           )}
           
           {filteredParticulars.length === 0 && !searchTerm.trim() && (
-            <div className="px-4 py-2 text-gray-500 text-sm">
+            <div className="px-4 py-3 text-gray-500 text-sm italic">
               Start typing to search or add new particulars
             </div>
           )}
@@ -750,46 +750,56 @@ const QuoteBillApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
-              <FileText className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">ElectroQuote</h1>
+              <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+                <FileText className="h-8 w-8 text-white" />
+              </div>
+              <div className="ml-4">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  ElectroQuote
+                </h1>
+                <p className="text-sm text-gray-500 font-medium">Professional Quote & Bill Management</p>
+              </div>
             </div>
             
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden md:flex space-x-2">
               <button
                 onClick={() => handleTabChange('create')}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   activeTab === 'create' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
                 }`}
               >
+                <Plus className="w-4 h-4 inline mr-2" />
                 Create
               </button>
               <button
                 onClick={() => handleTabChange('history')}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   activeTab === 'history' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
                 }`}
               >
+                <FileText className="w-4 h-4 inline mr-2" />
                 History
               </button>
               <button
                 onClick={() => handleTabChange('settings')}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   activeTab === 'settings' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'
                 }`}
               >
+                <Upload className="w-4 h-4 inline mr-2" />
                 Settings
               </button>
             </nav>
@@ -807,35 +817,38 @@ const QuoteBillApp = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+            <div className="px-4 pt-4 pb-6 space-y-3 sm:px-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-100">
               <button
                 onClick={() => { handleTabChange('create'); setIsMenuOpen(false); }}
-                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
                   activeTab === 'create' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
+                <Plus className="w-5 h-5 mr-3" />
                 Create
               </button>
               <button
                 onClick={() => { handleTabChange('history'); setIsMenuOpen(false); }}
-                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
                   activeTab === 'history' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
+                <FileText className="w-5 h-5 mr-3" />
                 History
               </button>
               <button
                 onClick={() => { handleTabChange('settings'); setIsMenuOpen(false); }}
-                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-200 ${
                   activeTab === 'settings' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
+                <Upload className="w-5 h-5 mr-3" />
                 Settings
               </button>
             </div>
@@ -846,16 +859,17 @@ const QuoteBillApp = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Create Tab */}
         {activeTab === 'create' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* New/Current Document Info */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex justify-between items-center">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     {currentDocument ? `Edit ${currentDocument.type.toUpperCase()}` : 'New Document'}
+                    {hasUnsavedChanges && <span className="ml-2 text-orange-500">*</span>}
                   </h2>
                   {currentDocument && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 font-medium">
                       Document No: {currentDocument.documentNumber} | 
                       Created: {new Date(currentDocument.createdAt).toLocaleDateString()}
                     </p>
@@ -863,105 +877,112 @@ const QuoteBillApp = () => {
                 </div>
                 <button
                   onClick={newDocument}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
                 >
+                  <Plus className="w-4 h-4 inline mr-2" />
                   New Document
                 </button>
               </div>
             </div>
 
             {/* Document Type Selection */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Document Type</h2>
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Document Type</h2>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setDocumentType('quote')}
-                  className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                  className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
                     documentType === 'quote'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
                   }`}
                 >
-                  Quote
+                  📋 Quote
                 </button>
                 <button
                   onClick={() => setDocumentType('bill')}
-                  className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                  className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
                     documentType === 'bill'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
                   }`}
                 >
-                  Bill
+                  🧾 Bill
                 </button>
               </div>
             </div>
 
             {/* Client Information */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Client Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <Users className="w-6 h-6 mr-3 text-blue-600" />
+                Client Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Client Name</label>
                   <input
                     type="text"
                     value={clientInfo.name}
                     onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                     placeholder="Enter client name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
                   <input
                     type="tel"
                     value={clientInfo.phone}
                     onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                     placeholder="Enter phone number"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                   <input
                     type="email"
                     value={clientInfo.email}
                     onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                     placeholder="Enter email address"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
                   <textarea
                     value={clientInfo.address}
                     onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
                     placeholder="Enter client address"
-                    rows="2"
+                    rows="3"
                   />
                 </div>
               </div>
             </div>
 
             {/* Items */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Items</h2>
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                  <DollarSign className="w-6 h-6 mr-3 text-green-600" />
+                  Items
+                </h2>
                 <button
                   onClick={addItem}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
                 >
-                  <Plus size={20} className="mr-1" />
+                  <Plus size={20} className="mr-2" />
                   Add Item
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {items.map((item, index) => (
-                  <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 border border-gray-200 rounded-lg">
+                  <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 border border-gray-200 rounded-2xl bg-gradient-to-r from-gray-50 to-blue-50 hover:shadow-lg transition-all duration-200">
                     <div className="lg:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Particulars</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Particulars</label>
                       <ParticularDropdown
                         value={item.particular}
                         onChange={(value) => updateItem(item.id, 'particular', value)}
@@ -976,22 +997,22 @@ const QuoteBillApp = () => {
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
                       <input
                         type="number"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                         placeholder="0"
                       />
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Unit</label>
                       <select
                         value={item.unit}
                         onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                       >
                         {appSettings.units.map(unit => (
                           <option key={unit} value={unit}>{unit}</option>
@@ -1000,12 +1021,12 @@ const QuoteBillApp = () => {
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Rate (Rs)</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Rate (Rs)</label>
                       <input
                         type="number"
                         value={item.rate}
                         onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
                         placeholder="0.00"
                         step="0.01"
                       />
@@ -1013,15 +1034,15 @@ const QuoteBillApp = () => {
 
                     <div className="lg:col-span-2 flex items-end">
                       <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Rs)</label>
-                        <div className="p-3 bg-gray-100 border border-gray-300 rounded-md text-right font-medium">
-                          {item.amount.toFixed(2)}
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Amount (Rs)</label>
+                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl text-right font-bold text-green-800 text-lg">
+                          ₹{item.amount.toFixed(2)}
                         </div>
                       </div>
                       {items.length > 1 && (
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="ml-2 p-3 text-red-600 hover:text-red-800 transition-colors"
+                          className="ml-3 p-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl transition-all duration-200"
                         >
                           <Trash2 size={20} />
                         </button>
@@ -1032,11 +1053,11 @@ const QuoteBillApp = () => {
               </div>
 
               {/* Total */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="mt-8 pt-6 border-t-2 border-gray-200">
                 <div className="flex justify-end">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-lg font-semibold text-blue-900">
-                      Total Amount: Rs {getTotalAmount().toFixed(2)}
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl shadow-xl">
+                    <div className="text-xl font-bold text-white">
+                      Total Amount: ₹{getTotalAmount().toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -1047,7 +1068,7 @@ const QuoteBillApp = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-end">
               <button
                 onClick={() => setShowPreview(true)}
-                className="flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-center px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
               >
                 <Eye size={20} className="mr-2" />
                 Preview
@@ -1055,7 +1076,7 @@ const QuoteBillApp = () => {
               <button
                 onClick={saveDocument}
                 disabled={loading}
-                className="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:transform-none font-semibold"
               >
                 <FileText size={20} className="mr-2" />
                 {loading ? 'Saving...' : `Save ${documentType.charAt(0).toUpperCase() + documentType.slice(1)}`}
@@ -1063,7 +1084,7 @@ const QuoteBillApp = () => {
               <button
                 onClick={() => generatePDF()}
                 disabled={loading}
-                className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:transform-none font-semibold"
               >
                 <Download size={20} className="mr-2" />
                 {loading ? 'Generating...' : 'Export PDF'}
@@ -1074,11 +1095,14 @@ const QuoteBillApp = () => {
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20">
             {/* Header with Search and Filters */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <h2 className="text-lg font-semibold">Past Quotes & Bills</h2>
+            <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <FileText className="w-7 h-7 mr-3 text-blue-600" />
+                  Past Quotes & Bills
+                </h2>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search Input */}
@@ -1088,12 +1112,10 @@ const QuoteBillApp = () => {
                       placeholder="Search by client, document number, or type..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-80"
+                      className="pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 w-full sm:w-80 bg-white shadow-sm hover:shadow-md"
                     />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
                     </div>
                   </div>
 
@@ -1101,7 +1123,7 @@ const QuoteBillApp = () => {
                   <select
                     value={documentFilter}
                     onChange={(e) => setDocumentFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md font-medium"
                   >
                     <option value="all">All Documents</option>
                     <option value="quote">Quotes Only</option>
