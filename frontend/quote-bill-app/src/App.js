@@ -1476,68 +1476,124 @@ const QuoteBillApp = () => {
             
             {/* Particulars Management Section */}
             <div className="mb-8">
-              <h3 className={`text-md font-semibold mb-4 transition-colors duration-500 ${
-                isDarkTheme ? 'text-white' : 'text-gray-800'
-              }`}>Manage Particulars</h3>
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {appSettings.particulars.map((particular, index) => (
-                    <div key={index} className="flex items-center bg-gray-100 rounded-md px-3 py-1">
-                      <span className="text-sm">{particular}</span>
-                      <button
-                        onClick={() => {
-                          const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
-                          setAppSettings({...appSettings, particulars: updatedParticulars});
-                          autoSaveParticulars(updatedParticulars);
-                        }}
-                        className="ml-2 text-red-500 hover:text-red-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white' : 'text-gray-800'
+                }`}>Manage Particulars</h3>
+                <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}>
+                  {appSettings.particulars.length} {appSettings.particulars.length === 1 ? 'Item' : 'Items'}
                 </div>
-                <div className="flex gap-2">
-                  {/* Use a ref for the input */}
-                  <input
-                    type="text"
-                    placeholder="Add new particular"
-                    className="flex-1 p-2 border border-gray-300 rounded-md"
-                    ref={addParticularInputRef}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && e.target.value.trim()) {
-                        const newParticular = e.target.value.trim();
-                        if (!appSettings.particulars.includes(newParticular)) {
+              </div>
+              
+              <div className="space-y-6">
+                {/* Particulars Display Grid */}
+                {appSettings.particulars.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {appSettings.particulars.map((particular, index) => (
+                      <div key={index} className={`group relative flex items-center justify-between p-3 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                        isDarkTheme 
+                          ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-white/20 hover:border-white/40' 
+                          : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:border-blue-300'
+                      }`}>
+                        <span className={`font-medium truncate mr-3 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-white/90' : 'text-gray-800'
+                        }`}>
+                          {particular}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
+                            setAppSettings({...appSettings, particulars: updatedParticulars});
+                            autoSaveParticulars(updatedParticulars);
+                          }}
+                          className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${
+                            isDarkTheme 
+                              ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300' 
+                              : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                          }`}
+                          title="Delete particular"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`text-center py-12 rounded-xl border-2 border-dashed transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'border-white/20 text-white/60' 
+                      : 'border-gray-300 text-gray-500'
+                  }`}>
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="font-medium">No particulars added yet</p>
+                    <p className="text-sm mt-1">Add your first particular below</p>
+                  </div>
+                )}
+
+                {/* Add New Particular Form */}
+                <div className={`p-4 rounded-xl border transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-black/20 border-white/20' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Add new particular (e.g., LED Light, Switch Board, Cable)"
+                      className={`flex-1 p-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-400 focus:ring-blue-100'
+                      }`}
+                      ref={addParticularInputRef}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && e.target.value.trim()) {
+                          const newParticular = e.target.value.trim();
+                          if (!appSettings.particulars.includes(newParticular)) {
+                            const updatedParticulars = [...appSettings.particulars, newParticular];
+                            setAppSettings({
+                              ...appSettings, 
+                              particulars: updatedParticulars
+                            });
+                            autoSaveParticulars(updatedParticulars);
+                            e.target.value = '';
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const input = addParticularInputRef.current;
+                        if (!input) return;
+                        const newParticular = input.value.trim();
+                        if (newParticular && !appSettings.particulars.includes(newParticular)) {
                           const updatedParticulars = [...appSettings.particulars, newParticular];
                           setAppSettings({
                             ...appSettings, 
                             particulars: updatedParticulars
                           });
                           autoSaveParticulars(updatedParticulars);
-                          e.target.value = '';
+                          input.value = '';
                         }
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={() => {
-                      const input = addParticularInputRef.current;
-                      if (!input) return;
-                      const newParticular = input.value.trim();
-                      if (newParticular && !appSettings.particulars.includes(newParticular)) {
-                        const updatedParticulars = [...appSettings.particulars, newParticular];
-                        setAppSettings({
-                          ...appSettings, 
-                          particulars: updatedParticulars
-                        });
-                        autoSaveParticulars(updatedParticulars);
-                        input.value = '';
-                      }
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    <Plus size={16} />
-                  </button>
+                      }}
+                      className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${
+                        isDarkTheme 
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' 
+                          : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                      }`}
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                  <p className={`text-xs mt-2 transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white/60' : 'text-gray-500'
+                  }`}>
+                    💡 Tip: Press Enter to quickly add items
+                  </p>
                 </div>
               </div>
             </div>
