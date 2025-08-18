@@ -182,6 +182,8 @@ const QuoteBillApp = () => {
   const [activeTab, setActiveTab] = useState('create');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [documentType, setDocumentType] = useState('quote');
   const [items, setItems] = useState([
     { id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }
@@ -368,6 +370,24 @@ const QuoteBillApp = () => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
+  };
+
+  const handleDeleteItem = (id) => {
+    setItemToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteItem = () => {
+    if (itemToDelete) {
+      removeItem(itemToDelete);
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const cancelDeleteItem = () => {
+    setShowDeleteConfirm(false);
+    setItemToDelete(null);
   };
 
   const updateItem = (id, field, value) => {
@@ -1218,7 +1238,7 @@ const QuoteBillApp = () => {
                       </div>
                       {items.length > 1 && (
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleDeleteItem(item.id)}
                           className={`ml-3 p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
                             isDarkTheme 
                               ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20' 
@@ -1234,7 +1254,7 @@ const QuoteBillApp = () => {
               </div>
 
               {/* Add Item Button & Items Count */}
-              <div className="mt-6 flex justify-between items-center">
+              <div className="mt-6 flex justify-between items-center gap-6">
                 <button
                   onClick={addItem}
                   className={`flex items-center px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold ${
@@ -1732,6 +1752,62 @@ const QuoteBillApp = () => {
               >
                 Leave Anyway
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Item Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ${
+            isDarkTheme 
+              ? 'bg-gray-800 border border-gray-600' 
+              : 'bg-white border border-gray-200'
+          }`}>
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    Delete Item
+                  </h3>
+                  <p className={`text-sm transition-colors duration-500 ${
+                    isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+              
+              <p className={`mb-6 transition-colors duration-500 ${
+                isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Are you sure you want to delete this item? This will permanently remove it from your {documentType}.
+              </p>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={cancelDeleteItem}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    isDarkTheme 
+                      ? 'bg-gray-600 hover:bg-gray-500 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteItem}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-all duration-200"
+                >
+                  Delete Item
+                </button>
+              </div>
             </div>
           </div>
         </div>
