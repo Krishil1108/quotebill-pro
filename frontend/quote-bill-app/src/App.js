@@ -1118,19 +1118,18 @@ const QuoteBillApp = () => {
             </div>
 
             {/* Items */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center">
+            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-8 transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-black/20 border-white/20' 
+                : 'bg-white/70 border-white/20'
+            }`}>
+              <div className="mb-6">
+                <h2 className={`text-xl font-bold flex items-center transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white/90' : 'text-gray-800'
+                }`}>
                   <DollarSign className="w-6 h-6 mr-3 text-green-600" />
                   Items
                 </h2>
-                <button
-                  onClick={addItem}
-                  className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
-                >
-                  <Plus size={20} className="mr-2" />
-                  Add Item
-                </button>
               </div>
 
               <div className="space-y-6">
@@ -1234,10 +1233,31 @@ const QuoteBillApp = () => {
                 ))}
               </div>
 
+              {/* Add Item Button */}
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={addItem}
+                  className={`flex items-center px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold ${
+                    isDarkTheme 
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white' 
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                  }`}
+                >
+                  <Plus size={20} className="mr-2" />
+                  Add Item
+                </button>
+              </div>
+
               {/* Total */}
-              <div className="mt-8 pt-6 border-t-2 border-gray-200">
+              <div className={`mt-8 pt-6 border-t-2 transition-colors duration-500 ${
+                isDarkTheme ? 'border-white/20' : 'border-gray-200'
+              }`}>
                 <div className="flex justify-end">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl shadow-xl">
+                  <div className={`p-6 rounded-2xl shadow-xl transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600' 
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600'
+                  }`}>
                     <div className="text-xl font-bold text-white">
                       Total Amount: ₹{getTotalAmount().toFixed(2)}
                     </div>
