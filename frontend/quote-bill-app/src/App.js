@@ -1233,8 +1233,8 @@ const QuoteBillApp = () => {
                 ))}
               </div>
 
-              {/* Add Item Button */}
-              <div className="mt-6 flex justify-center">
+              {/* Add Item Button & Items Count */}
+              <div className="mt-6 flex justify-between items-center">
                 <button
                   onClick={addItem}
                   className={`flex items-center px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold ${
@@ -1246,6 +1246,17 @@ const QuoteBillApp = () => {
                   <Plus size={20} className="mr-2" />
                   Add Item
                 </button>
+                
+                <div className={`flex items-center px-6 py-3 rounded-xl backdrop-blur-sm transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-white/10 text-white/90 border border-white/20' 
+                    : 'bg-gray-100/80 text-gray-700 border border-gray-200'
+                }`}>
+                  <FileText size={18} className="mr-2" />
+                  <span className="font-semibold">
+                    {items.length} {items.length === 1 ? 'Item' : 'Items'} Added
+                  </span>
+                </div>
               </div>
 
               {/* Total */}
