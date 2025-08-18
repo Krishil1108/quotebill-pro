@@ -181,7 +181,7 @@ const UnitDropdown = ({ value, onChange, units, isDark }) => {
 const QuoteBillApp = () => {
   const [activeTab, setActiveTab] = useState('create');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [documentType, setDocumentType] = useState('quote');
