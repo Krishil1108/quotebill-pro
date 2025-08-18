@@ -137,6 +137,12 @@ const QuoteBillApp = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteDocId, setDeleteDocId] = useState(null);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingTab, setPendingTab] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
   const [appSettings, setAppSettings] = useState({
     particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
     units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
@@ -154,30 +160,20 @@ const QuoteBillApp = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filter documents when search or filter changes
+  // Filter documents when search or filter changes (now handled by server)
   useEffect(() => {
-    let filtered = pastDocuments;
+    setFilteredDocuments(pastDocuments);
+  }, [pastDocuments]);
 
-    // Apply document type filter
-    if (documentFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.type === documentFilter);
-    }
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(doc => {
-        const clientName = (doc.clientInfo?.name || doc.customerName || '').toLowerCase();
-        const documentNumber = (doc.documentNumber || '').toLowerCase();
-        const type = (doc.type || '').toLowerCase();
-        return clientName.includes(query) || 
-               documentNumber.includes(query) || 
-               type.includes(query);
-      });
-    }
-
-    setFilteredDocuments(filtered);
-  }, [pastDocuments, searchQuery, documentFilter]);
+  // Refetch documents when search or filter changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchDocuments();
+    }, 500); // Debounce search requests
+    
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, documentFilter]);
 
   // Browser navigation support
   useEffect(() => {
@@ -218,6 +214,14 @@ const QuoteBillApp = () => {
     }
   }, [activeTab]);
 
+  // Track unsaved changes
+  useEffect(() => {
+    const hasClientData = clientInfo.name.trim() || clientInfo.address.trim() || clientInfo.phone.trim() || clientInfo.email.trim();
+    const hasItemData = items.some(item => item.particular.trim() || item.quantity || item.rate);
+    const hasChanges = hasClientData || hasItemData;
+    setHasUnsavedChanges(hasChanges && !currentDocument);
+  }, [clientInfo, items, currentDocument]);
+
   const showError = (message) => {
     setErrorMessage(message);
     setShowErrorDialog(true);
@@ -246,8 +250,21 @@ const QuoteBillApp = () => {
 
   const fetchDocuments = async () => {
     try {
-      console.log('Fetching documents from:', `${API_BASE_URL}/documents`);
-      const response = await fetch(`${API_BASE_URL}/documents`);
+      setDocumentsLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
+      if (documentFilter !== 'all') {
+        params.append('type', documentFilter);
+      }
+      
+      const url = `${API_BASE_URL}/documents${params.toString() ? '?' + params.toString() : ''}`;
+      console.log('Fetching documents from:', url);
+      
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         console.log('Documents fetched:', data);
@@ -261,6 +278,8 @@ const QuoteBillApp = () => {
       console.error('Error fetching documents:', error);
       showError(`Error fetching documents: ${error.message}`);
       setPastDocuments([]);
+    } finally {
+      setDocumentsLoading(false);
     }
   };
 
@@ -406,6 +425,7 @@ const QuoteBillApp = () => {
       if (response.ok) {
         const savedDocument = await response.json();
         setCurrentDocument(savedDocument);
+        setHasUnsavedChanges(false);
         showSuccess(`${documentType.charAt(0).toUpperCase() + documentType.slice(1)} saved successfully!`);
         fetchDocuments(); // Refresh the documents list
         return savedDocument;
@@ -442,19 +462,26 @@ const QuoteBillApp = () => {
   };
 
   const deleteDocument = async (docId) => {
-    if (window.confirm('Are you sure you want to delete this document?')) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/documents/${docId}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          showSuccess('Document deleted successfully');
-          fetchDocuments();
-        }
-      } catch (error) {
-        console.error('Error deleting document:', error);
-        showError('Error deleting document');
+    setDeleteDocId(docId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteDocument = async () => {
+    if (!deleteDocId) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/documents/${deleteDocId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        showSuccess('Document deleted successfully');
+        fetchDocuments();
       }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      showError('Error deleting document');
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteDocId(null);
     }
   };
 
@@ -524,11 +551,33 @@ const QuoteBillApp = () => {
     }
   };
 
+  const handleTabChange = (newTab) => {
+    if (hasUnsavedChanges && activeTab === 'create' && newTab !== 'create') {
+      setPendingTab(newTab);
+      setShowUnsavedChangesDialog(true);
+    } else {
+      setActiveTab(newTab);
+    }
+  };
+
+  const confirmTabChange = () => {
+    setHasUnsavedChanges(false);
+    setActiveTab(pendingTab);
+    setShowUnsavedChangesDialog(false);
+    setPendingTab(null);
+  };
+
+  const cancelTabChange = () => {
+    setShowUnsavedChangesDialog(false);
+    setPendingTab(null);
+  };
+
   const newDocument = () => {
     setCurrentDocument(null);
     setDocumentType('quote');
     setClientInfo({ name: '', address: '', phone: '', email: '' });
     setItems([{ id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }]);
+    setHasUnsavedChanges(false);
   };
 
   const PreviewModal = ({ isOpen, onClose }) => {
@@ -714,7 +763,7 @@ const QuoteBillApp = () => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               <button
-                onClick={() => setActiveTab('create')}
+                onClick={() => handleTabChange('create')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'create' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -724,7 +773,7 @@ const QuoteBillApp = () => {
                 Create
               </button>
               <button
-                onClick={() => setActiveTab('history')}
+                onClick={() => handleTabChange('history')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'history' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -734,7 +783,7 @@ const QuoteBillApp = () => {
                 History
               </button>
               <button
-                onClick={() => setActiveTab('settings')}
+                onClick={() => handleTabChange('settings')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'settings' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -760,7 +809,7 @@ const QuoteBillApp = () => {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
               <button
-                onClick={() => { setActiveTab('create'); setIsMenuOpen(false); }}
+                onClick={() => { handleTabChange('create'); setIsMenuOpen(false); }}
                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
                   activeTab === 'create' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -770,7 +819,7 @@ const QuoteBillApp = () => {
                 Create
               </button>
               <button
-                onClick={() => { setActiveTab('history'); setIsMenuOpen(false); }}
+                onClick={() => { handleTabChange('history'); setIsMenuOpen(false); }}
                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
                   activeTab === 'history' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -780,7 +829,7 @@ const QuoteBillApp = () => {
                 History
               </button>
               <button
-                onClick={() => { setActiveTab('settings'); setIsMenuOpen(false); }}
+                onClick={() => { handleTabChange('settings'); setIsMenuOpen(false); }}
                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
                   activeTab === 'settings' 
                     ? 'bg-blue-100 text-blue-700' 
@@ -1080,7 +1129,13 @@ const QuoteBillApp = () => {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              {documentsLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading documents...</span>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
@@ -1138,12 +1193,13 @@ const QuoteBillApp = () => {
                   ))}
                 </tbody>
               </table>
-              {filteredDocuments.length === 0 && pastDocuments.length === 0 && (
+              )}
+              {!documentsLoading && filteredDocuments.length === 0 && pastDocuments.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No documents found. Create your first quote or bill!
                 </div>
               )}
-              {filteredDocuments.length === 0 && pastDocuments.length > 0 && (
+              {!documentsLoading && filteredDocuments.length === 0 && pastDocuments.length > 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No documents match your search criteria. Try adjusting your search or filters.
                 </div>
@@ -1354,6 +1410,80 @@ const QuoteBillApp = () => {
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-red-600 flex items-center">
+                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                Confirm Delete
+              </h3>
+              <button 
+                onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-gray-700 mb-6">Are you sure you want to delete this document? This action cannot be undone.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteDocument}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Dialog */}
+      {showUnsavedChangesDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-yellow-600 flex items-center">
+                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                Unsaved Changes
+              </h3>
+              <button 
+                onClick={cancelTabChange}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-gray-700 mb-6">You have unsaved changes. Are you sure you want to leave without saving?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={cancelTabChange}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Stay
+              </button>
+              <button
+                onClick={confirmTabChange}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+              >
+                Leave Anyway
               </button>
             </div>
           </div>

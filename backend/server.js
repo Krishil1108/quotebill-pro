@@ -15,6 +15,13 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
@@ -193,16 +200,39 @@ const upload = multer({
 
 // Routes
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 // Get all documents
 app.get('/api/documents', async (req, res) => {
   try {
-    const { type, status, page = 1, limit = 10 } = req.query;
+    const { type, status, page = 1, limit = 50, search } = req.query;
     const filter = {};
     
-    if (type) filter.type = type;
+    // Filter by type and status
+    if (type && type !== 'all') filter.type = type;
     if (status) filter.status = status;
     
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { 'clientInfo.name': searchRegex },
+        { documentNumber: searchRegex },
+        { type: searchRegex }
+      ];
+    }
+    
+    // Fetch documents with optimized fields for list view
     const documents = await Document.find(filter)
+      .select('type documentNumber clientInfo.name totalAmount createdAt status')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -213,11 +243,16 @@ app.get('/api/documents', async (req, res) => {
     res.json({
       documents,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
+      currentPage: parseInt(page),
+      total,
+      hasMore: parseInt(page) < Math.ceil(total / limit)
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch documents',
+      details: error.message 
+    });
   }
 });
 
@@ -353,13 +388,35 @@ app.put('/api/documents/:id', async (req, res) => {
 // Delete document
 app.delete('/api/documents/:id', async (req, res) => {
   try {
-    const document = await Document.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid document ID format' });
+    }
+    
+    // Find and delete the document
+    const document = await Document.findByIdAndDelete(id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
-    res.json({ message: 'Document deleted successfully' });
+    
+    console.log(`Document deleted: ${document.documentNumber} (${document.type}) for client: ${document.clientInfo.name}`);
+    
+    res.json({ 
+      message: 'Document deleted successfully',
+      deletedDocument: {
+        id: document._id,
+        documentNumber: document.documentNumber,
+        type: document.type
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error deleting document:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete document',
+      details: error.message 
+    });
   }
 });
 
