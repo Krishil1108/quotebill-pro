@@ -705,18 +705,12 @@ const QuoteBillApp = () => {
                     )}
                     <div>
                       <h1 className="text-3xl font-bold">{letterhead.firmName}</h1>
-                      {letterhead.tagline && (
-                        <p className="text-blue-100 text-sm italic">{letterhead.tagline}</p>
-                      )}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="bg-white bg-opacity-20 rounded-lg p-3">
                       <p className="text-sm font-semibold">
                         {documentType.toUpperCase()} #{currentDocument?.documentNumber || 'DRAFT'}
-                      </p>
-                      <p className="text-xs text-blue-100">
-                        Date: {new Date().toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -832,7 +826,6 @@ const QuoteBillApp = () => {
                   </div>
                   <div className="text-right text-sm text-gray-500">
                     <p>Page 1</p>
-                    <p>Generated on {new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
