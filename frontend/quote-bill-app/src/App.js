@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Sun, Moon } from 'lucide-react';
 
+// Default company logo (blue square with "L" - replace with your own base64 logo)
+const DEFAULT_LOGO = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiMzQjgyRjYiLz4KPHRleHQgeD0iNDAiIHk9IjQ4IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TDwvdGV4dD4KPHN2Zz4=';
+
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
 
 // Custom dropdown component for particulars
@@ -196,7 +199,7 @@ const QuoteBillApp = () => {
   });
   const [letterhead, setLetterhead] = useState({
     firmName: 'Your Company Name',
-    logo: null,
+    logo: DEFAULT_LOGO,
     address: 'Your Company Address',
     phone: 'Your Company Phone',
     tagline: 'Your Company Tagline'

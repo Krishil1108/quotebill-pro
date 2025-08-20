@@ -7,6 +7,9 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
+// Default company logo (blue square with "L" - replace with your own base64 logo)
+const DEFAULT_LOGO = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiMzQjgyRjYiLz4KPHRleHQgeD0iNDAiIHk9IjQ4IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TDwvdGV4dD4KPHN2Zz4=';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -481,14 +484,28 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     let logoWidth = 0;
     if (letterhead.logo) {
       try {
-        const logoPath = path.join(__dirname, letterhead.logo);
-        if (fs.existsSync(logoPath)) {
-          doc.image(logoPath, 60, 55, { 
+        // Handle base64 encoded logos
+        if (letterhead.logo.startsWith('data:image/')) {
+          // Create buffer from base64 data
+          const base64Data = letterhead.logo.split(',')[1];
+          const logoBuffer = Buffer.from(base64Data, 'base64');
+          doc.image(logoBuffer, 60, 55, { 
             fit: [80, 70],
             align: 'center',
             valign: 'center'
           });
           logoWidth = 100; // Reserve space for logo
+        } else {
+          // Handle file path logos (fallback for uploaded files)
+          const logoPath = path.join(__dirname, letterhead.logo);
+          if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, 60, 55, { 
+              fit: [80, 70],
+              align: 'center',
+              valign: 'center'
+            });
+            logoWidth = 100; // Reserve space for logo
+          }
         }
       } catch (logoError) {
         console.log('Logo loading error:', logoError);
@@ -761,7 +778,8 @@ app.get('/api/settings', async (req, res) => {
           firmName: 'Your Company Name',
           address: 'Your Company Address',
           phone: 'Your Company Phone',
-          tagline: 'Your Company Tagline'
+          tagline: 'Your Company Tagline',
+          logo: DEFAULT_LOGO
         },
         particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
         units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
