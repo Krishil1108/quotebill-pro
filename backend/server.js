@@ -480,40 +480,34 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     drawRect(40, 40, pageWidth, 100, '#f8fafc');
     drawRect(40, 40, pageWidth, 4, '#3b82f6'); // Top blue bar
 
-    // Logo (if available)
-    let logoWidth = 0;
-    if (letterhead.logo) {
-      try {
-        // Handle base64 encoded logos
-        if (letterhead.logo.startsWith('data:image/')) {
-          // Extract base64 data after the comma
-          const base64Data = letterhead.logo.split(',')[1];
-          if (base64Data) {
-            const logoBuffer = Buffer.from(base64Data, 'base64');
-            doc.image(logoBuffer, 60, 55, { 
-              fit: [80, 70],
-              align: 'center',
-              valign: 'center'
-            });
-            logoWidth = 100; // Reserve space for logo
-            console.log('Base64 logo loaded successfully');
-          }
-        } else {
-          // Handle file path logos (fallback for uploaded files)
-          const logoPath = path.join(__dirname, letterhead.logo);
-          if (fs.existsSync(logoPath)) {
-            doc.image(logoPath, 60, 55, { 
-              fit: [80, 70],
-              align: 'center',
-              valign: 'center'
-            });
-            logoWidth = 100; // Reserve space for logo
-            console.log('File logo loaded successfully');
-          }
-        }
-      } catch (logoError) {
-        console.log('Logo loading error:', logoError.message);
-      }
+    // Logo (always draw a default logo)
+    let logoWidth = 100;
+    try {
+      // Draw a simple company logo using PDFKit shapes
+      const logoX = 60;
+      const logoY = 55;
+      const logoW = 80;
+      const logoH = 70;
+      const centerX = logoX + logoW / 2;
+      const centerY = logoY + logoH / 2;
+      
+      // Draw outer circle (company border)
+      doc.circle(centerX, centerY, Math.min(logoW, logoH) / 2 - 2)
+         .lineWidth(2)
+         .stroke('#2563eb');
+      
+      // Draw inner elements - a stylized "E" for Electricals
+      doc.fontSize(32)
+         .fillColor('#2563eb')
+         .text('E', centerX - 12, centerY - 16, {
+           width: 24,
+           align: 'center'
+         });
+      
+      console.log('Logo drawn successfully');
+    } catch (logoError) {
+      console.log('Logo drawing error:', logoError.message);
+      logoWidth = 0; // No logo space if drawing fails
     }
 
     // Company Name
