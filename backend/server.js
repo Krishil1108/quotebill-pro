@@ -160,6 +160,7 @@ const settingsSchema = new mongoose.Schema({
   letterhead: {
     firmName: { type: String, default: 'Your Company Name' },
     address: { type: String, default: 'Your Company Address' },
+    phone: { type: String, default: 'Your Company Phone' },
     tagline: { type: String, default: 'Your Company Tagline' },
     logo: String
   },
@@ -512,6 +513,16 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
          });
     }
 
+    // Company Phone
+    if (letterhead.phone) {
+      doc.fontSize(11)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(`Phone: ${letterhead.phone}`, 60 + logoWidth, 110, {
+           width: pageWidth - logoWidth - 40
+         });
+    }
+
     // DOCUMENT INFO SECTION
     const docInfoY = 170;
     
@@ -749,6 +760,7 @@ app.get('/api/settings', async (req, res) => {
         letterhead: {
           firmName: 'Your Company Name',
           address: 'Your Company Address',
+          phone: 'Your Company Phone',
           tagline: 'Your Company Tagline'
         },
         particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],

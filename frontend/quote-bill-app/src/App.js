@@ -198,6 +198,7 @@ const QuoteBillApp = () => {
     firmName: 'Your Company Name',
     logo: null,
     address: 'Your Company Address',
+    phone: 'Your Company Phone',
     tagline: 'Your Company Tagline'
   });
   const [pastDocuments, setPastDocuments] = useState([]);
@@ -718,6 +719,9 @@ const QuoteBillApp = () => {
                 {letterhead.address && (
                   <div className="mt-4 pt-4 border-t border-blue-300">
                     <p className="text-blue-100 text-sm">{letterhead.address}</p>
+                    {letterhead.phone && (
+                      <p className="text-blue-100 text-sm mt-1">Phone: {letterhead.phone}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1662,6 +1666,16 @@ const QuoteBillApp = () => {
                   onChange={(e) => setLetterhead({...letterhead, address: e.target.value})}
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows="3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Firm Phone</label>
+                <input
+                  type="text"
+                  value={letterhead.phone}
+                  onChange={(e) => setLetterhead({...letterhead, phone: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter firm phone number"
                 />
               </div>
               <div>
