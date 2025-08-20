@@ -512,16 +512,6 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
          });
     }
 
-    // Company Tagline
-    if (letterhead.tagline) {
-      doc.fontSize(10)
-         .fillColor('#3b82f6')
-         .font('Helvetica-Oblique')
-         .text(letterhead.tagline, 60 + logoWidth, 110, {
-           width: pageWidth - logoWidth - 40
-         });
-    }
-
     // DOCUMENT INFO SECTION
     const docInfoY = 170;
     
@@ -729,25 +719,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     // Footer line
     drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
     
-    // Footer content
-    if (letterhead.tagline) {
-      doc.fontSize(9)
-         .fillColor('#64748b')
-         .font('Helvetica-Oblique')
-         .text(letterhead.tagline, 40, footerY + 10, {
-           align: 'center',
-           width: pageWidth
-         });
-    }
-
-    // Generated timestamp
-    doc.fontSize(8)
-       .fillColor('#9ca3af')
-       .font('Helvetica')
-       .text(`Generated on ${new Date().toLocaleString('en-IN')}`, 40, footerY + 25, {
-         align: 'center',
-         width: pageWidth
-       });
+    // Footer content - tagline removed
 
     // Finalize PDF
     doc.end();
