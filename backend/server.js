@@ -719,7 +719,16 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     // Footer line
     drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
     
-    // Footer content - tagline removed
+    // Footer content
+    if (letterhead.tagline) {
+      doc.fontSize(9)
+         .fillColor('#64748b')
+         .font('Helvetica-Oblique')
+         .text(letterhead.tagline, 40, footerY + 10, {
+           align: 'center',
+           width: pageWidth
+         });
+    }
 
     // Finalize PDF
     doc.end();
