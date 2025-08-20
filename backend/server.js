@@ -597,11 +597,11 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     if (document.clientInfo.phone || document.clientInfo.email) {
       let contactText = '';
       if (document.clientInfo.phone) {
-        contactText = `📞 ${document.clientInfo.phone}`;
+        contactText = `Phone: ${document.clientInfo.phone}`;
       }
       if (document.clientInfo.email) {
         if (contactText) contactText += '   ';
-        contactText += `✉ ${document.clientInfo.email}`;
+        contactText += `Email: ${document.clientInfo.email}`;
       }
       
       doc.fontSize(10)
