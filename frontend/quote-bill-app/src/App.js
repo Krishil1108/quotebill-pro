@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Sun, Moon, User, ShoppingCart, Package, ArrowLeft, Save, Share2 } from 'lucide-react';
+import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Sun, Moon } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PersonalSection from './PersonalSection';
 
@@ -183,16 +183,33 @@ const UnitDropdown = ({ value, onChange, units, isDark }) => {
   );
 };
 
-const QuoteBillApp = () => {
+const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: parentToggleTheme }) => {
   const [activeTab, setActiveTab] = useState('create');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(parentIsDarkTheme || false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [documentType, setDocumentType] = useState('quote');
   const [items, setItems] = useState([
     { id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }
   ]);
+  // Use parent theme controls if available
+  const toggleTheme = () => {
+    if (parentToggleTheme) {
+      parentToggleTheme();
+      setIsDarkTheme(!isDarkTheme);
+    } else {
+      setIsDarkTheme(!isDarkTheme);
+    }
+  };
+
+  // Sync with parent theme
+  useEffect(() => {
+    if (parentIsDarkTheme !== undefined) {
+      setIsDarkTheme(parentIsDarkTheme);
+    }
+  }, [parentIsDarkTheme]);
+
   const [clientInfo, setClientInfo] = useState({
     name: '',
     address: '',
@@ -229,6 +246,49 @@ const QuoteBillApp = () => {
   const [currentDocument, setCurrentDocument] = useState(null);
   const fileInputRef = useRef(null);
   const addParticularInputRef = useRef(null);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.altKey && event.key === 'ArrowLeft') {
+        event.preventDefault();
+        window.history.back();
+      } else if (event.altKey && event.key === 'ArrowRight') {
+        event.preventDefault();
+        window.history.forward();
+      } else if (event.key === 'Escape') {
+        if (showPreview) {
+          setShowPreview(false);
+        } else if (showErrorDialog) {
+          setShowErrorDialog(false);
+        } else if (showSuccessDialog) {
+          setShowSuccessDialog(false);
+        } else if (showDeleteDialog) {
+          setShowDeleteDialog(false);
+          setDeleteDocId(null);
+        } else if (showUnsavedChangesDialog) {
+          setShowUnsavedChangesDialog(false);
+          setPendingTab(null);
+        }
+      }
+    };
+
+    const handlePopState = (event) => {
+      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        event.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [showPreview, showErrorDialog, showSuccessDialog, showDeleteDialog, showUnsavedChangesDialog, hasUnsavedChanges]);
 
   // Fetch settings on component mount
   useEffect(() => {
@@ -866,14 +926,29 @@ const QuoteBillApp = () => {
       </div>
       
       {/* Header */}
-      <header className={`relative z-10 backdrop-blur-xl border-b sticky top-0 transition-all duration-500 ${
+      <header className={`z-10 backdrop-blur-xl border-b sticky top-0 transition-all duration-500 ${
         isDarkTheme 
           ? 'bg-black/20 border-white/10' 
           : 'bg-white/30 border-gray-200/50'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            <div className="flex items-center space-x-3">
+              {/* Back to Landing Button */}
+              <button
+                onClick={onBack}
+                className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${
+                  isDarkTheme 
+                    ? 'bg-white/10 text-white hover:bg-white/20' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                title="Back to Home (ESC or Alt+←)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </button>
+              
               <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-xl">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
@@ -933,7 +1008,7 @@ const QuoteBillApp = () => {
 
             {/* Theme Toggle Button */}
             <button
-              onClick={() => setIsDarkTheme(!isDarkTheme)}
+              onClick={toggleTheme}
               className={`p-3 rounded-xl backdrop-blur-md transition-all duration-300 hover:scale-110 ${
                 isDarkTheme 
                   ? 'bg-white/10 hover:bg-white/20 text-yellow-300' 
@@ -948,7 +1023,7 @@ const QuoteBillApp = () => {
             {/* Mobile menu button & Theme Toggle */}
             <div className="md:hidden flex items-center space-x-2">
               <button
-                onClick={() => setIsDarkTheme(!isDarkTheme)}
+                onClick={toggleTheme}
                 className={`p-2 rounded-xl transition-all duration-300 ${
                   isDarkTheme 
                     ? 'bg-white/10 text-yellow-300' 
@@ -1906,17 +1981,90 @@ const App = () => {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'personal', 'client'
   const [isDarkTheme, setIsDarkTheme] = useState(false);
 
+  // Initialize navigation based on URL or browser history
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+      } else {
+        // If no state, go to landing page
+        setCurrentView('landing');
+      }
+    };
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', handlePopState);
+
+    // Set initial state if not already set
+    if (!window.history.state) {
+      window.history.replaceState({ view: 'landing' }, 'Landing', '/');
+    }
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
   };
 
   const handleNavigate = (view) => {
     setCurrentView(view);
+    // Push new state to browser history
+    const titles = {
+      landing: 'QuoteBill Pro',
+      personal: 'Personal Use - QuoteBill Pro',
+      client: 'Client App - QuoteBill Pro'
+    };
+    const paths = {
+      landing: '/',
+      personal: '/personal',
+      client: '/client'
+    };
+    
+    window.history.pushState(
+      { view }, 
+      titles[view] || 'QuoteBill Pro', 
+      paths[view] || '/'
+    );
+    document.title = titles[view] || 'QuoteBill Pro';
   };
 
   const handleBackToLanding = () => {
     setCurrentView('landing');
+    // Push landing state to history
+    window.history.pushState({ view: 'landing' }, 'QuoteBill Pro', '/');
+    document.title = 'QuoteBill Pro';
   };
+
+  // Handle browser back button to exit app when on landing page
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (currentView !== 'landing') {
+        // If not on landing page, navigate to landing instead of exiting
+        event.preventDefault();
+        handleBackToLanding();
+        return false;
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      // Handle Escape key to go back
+      if (event.key === 'Escape' && currentView !== 'landing') {
+        handleBackToLanding();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentView]);
 
   if (currentView === 'landing') {
     return (
@@ -1933,13 +2081,18 @@ const App = () => {
       <PersonalSection 
         onBack={handleBackToLanding}
         isDarkTheme={isDarkTheme}
+        toggleTheme={toggleTheme}
       />
     );
   }
 
   if (currentView === 'client') {
     return (
-      <QuoteBillApp />
+      <QuoteBillApp 
+        onBack={handleBackToLanding}
+        isDarkTheme={isDarkTheme}
+        toggleTheme={toggleTheme}
+      />
     );
   }
 

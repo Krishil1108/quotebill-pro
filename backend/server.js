@@ -300,6 +300,157 @@ personalQuotationSchema.pre('save', function(next) {
 
 const PersonalQuotation = mongoose.model('PersonalQuotation', personalQuotationSchema);
 
+// Category Schema for Personal Use
+const categorySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  value: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
+  color: {
+    type: String,
+    default: '#F0F8FF'
+  },
+  isCustom: {
+    type: Boolean,
+    default: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+categorySchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+const Category = mongoose.model('Category', categorySchema);
+
+// Personal Analytics Schema
+const personalAnalyticsSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    default: 'default_user' // For now, since we don't have user management
+  },
+  totalMaterials: {
+    type: Number,
+    default: 0
+  },
+  totalQuotations: {
+    type: Number,
+    default: 0
+  },
+  totalValue: {
+    type: Number,
+    default: 0
+  },
+  categoryBreakdown: [{
+    category: String,
+    count: Number,
+    totalValue: Number
+  }],
+  monthlyData: [{
+    month: String, // Format: YYYY-MM
+    materials: Number,
+    quotations: Number,
+    totalValue: Number
+  }],
+  lastCalculated: {
+    type: Date,
+    default: Date.now
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+personalAnalyticsSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  this.lastCalculated = new Date();
+  next();
+});
+
+const PersonalAnalytics = mongoose.model('PersonalAnalytics', personalAnalyticsSchema);
+
+// Personal Settings Schema
+const personalSettingsSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    default: 'default_user'
+  },
+  theme: {
+    type: String,
+    enum: ['light', 'dark', 'system'],
+    default: 'system'
+  },
+  currency: {
+    type: String,
+    default: 'INR'
+  },
+  dateFormat: {
+    type: String,
+    enum: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'],
+    default: 'DD/MM/YYYY'
+  },
+  defaultUnit: {
+    type: String,
+    default: 'pcs'
+  },
+  notifications: {
+    lowStock: {
+      type: Boolean,
+      default: true
+    },
+    quotationReminders: {
+      type: Boolean,
+      default: true
+    }
+  },
+  backupSettings: {
+    autoBackup: {
+      type: Boolean,
+      default: false
+    },
+    backupFrequency: {
+      type: String,
+      enum: ['daily', 'weekly', 'monthly'],
+      default: 'weekly'
+    }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+personalSettingsSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+const PersonalSettings = mongoose.model('PersonalSettings', personalSettingsSchema);
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -1472,6 +1623,320 @@ app.get('/api/personal/stats', async (req, res) => {
       totalMaterialValue: totalMaterialValue[0]?.total || 0,
       totalQuotationValue: totalQuotationValue[0]?.total || 0,
       materialsByCategory
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// CATEGORY MANAGEMENT API ENDPOINTS
+
+// Get all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ createdAt: -1 });
+    res.json({ categories });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new category
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { name, color } = req.body;
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Category name is required' });
+    }
+
+    const value = name.toLowerCase().replace(/\s+/g, '_');
+    
+    // Check if category already exists
+    const existingCategory = await Category.findOne({ value });
+    if (existingCategory) {
+      return res.status(400).json({ error: 'Category already exists' });
+    }
+
+    const category = new Category({
+      name: name.trim(),
+      value,
+      color: color || '#F0F8FF'
+    });
+
+    await category.save();
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update category
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { name, color } = req.body;
+    const category = await Category.findById(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    if (name && name.trim()) {
+      category.name = name.trim();
+      category.value = name.toLowerCase().replace(/\s+/g, '_');
+    }
+    if (color) {
+      category.color = color;
+    }
+
+    await category.save();
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete category
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Check if category is being used by any materials
+    const materialsUsingCategory = await Material.countDocuments({ category: category.value });
+    if (materialsUsingCategory > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete category that is being used by materials',
+        materialsCount: materialsUsingCategory
+      });
+    }
+
+    await Category.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL ANALYTICS API ENDPOINTS
+
+// Get analytics data
+app.get('/api/personal-analytics', async (req, res) => {
+  try {
+    let analytics = await PersonalAnalytics.findOne({ userId: 'default_user' });
+    
+    if (!analytics) {
+      // Create new analytics record
+      analytics = new PersonalAnalytics();
+    }
+
+    // Update analytics with current data
+    const totalMaterials = await Material.countDocuments();
+    const totalQuotations = await PersonalQuotation.countDocuments();
+    
+    const materialValue = await Material.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    const quotationValue = await PersonalQuotation.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalQuotationAmount' } } }
+    ]);
+
+    // Category breakdown
+    const categoryBreakdown = await Material.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+          totalValue: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $project: {
+          category: '$_id',
+          count: 1,
+          totalValue: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    // Monthly data (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlyMaterials = await Material.aggregate([
+      {
+        $match: { createdAt: { $gte: sixMonthsAgo } }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 },
+          totalValue: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $project: {
+          month: {
+            $concat: [
+              { $toString: '$_id.year' },
+              '-',
+              { $cond: [
+                { $lt: ['$_id.month', 10] },
+                { $concat: ['0', { $toString: '$_id.month' }] },
+                { $toString: '$_id.month' }
+              ]}
+            ]
+          },
+          materials: '$count',
+          totalValue: '$totalValue',
+          _id: 0
+        }
+      }
+    ]);
+
+    const monthlyQuotations = await PersonalQuotation.aggregate([
+      {
+        $match: { createdAt: { $gte: sixMonthsAgo } }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          month: {
+            $concat: [
+              { $toString: '$_id.year' },
+              '-',
+              { $cond: [
+                { $lt: ['$_id.month', 10] },
+                { $concat: ['0', { $toString: '$_id.month' }] },
+                { $toString: '$_id.month' }
+              ]}
+            ]
+          },
+          quotations: '$count',
+          _id: 0
+        }
+      }
+    ]);
+
+    // Merge monthly data
+    const monthlyData = {};
+    monthlyMaterials.forEach(m => {
+      monthlyData[m.month] = { 
+        month: m.month, 
+        materials: m.materials, 
+        totalValue: m.totalValue,
+        quotations: 0 
+      };
+    });
+    monthlyQuotations.forEach(q => {
+      if (monthlyData[q.month]) {
+        monthlyData[q.month].quotations = q.quotations;
+      } else {
+        monthlyData[q.month] = { 
+          month: q.month, 
+          materials: 0, 
+          totalValue: 0,
+          quotations: q.quotations 
+        };
+      }
+    });
+
+    // Update analytics
+    analytics.totalMaterials = totalMaterials;
+    analytics.totalQuotations = totalQuotations;
+    analytics.totalValue = (materialValue[0]?.total || 0) + (quotationValue[0]?.total || 0);
+    analytics.categoryBreakdown = categoryBreakdown;
+    analytics.monthlyData = Object.values(monthlyData);
+
+    await analytics.save();
+    res.json(analytics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL SETTINGS API ENDPOINTS
+
+// Get personal settings
+app.get('/api/personal-settings', async (req, res) => {
+  try {
+    let settings = await PersonalSettings.findOne({ userId: 'default_user' });
+    
+    if (!settings) {
+      // Create default settings
+      settings = new PersonalSettings();
+      await settings.save();
+    }
+    
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update personal settings
+app.put('/api/personal-settings', async (req, res) => {
+  try {
+    let settings = await PersonalSettings.findOne({ userId: 'default_user' });
+    
+    if (!settings) {
+      settings = new PersonalSettings(req.body);
+    } else {
+      Object.assign(settings, req.body);
+    }
+    
+    await settings.save();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Clear all materials
+app.delete('/api/materials/clear', async (req, res) => {
+  try {
+    const result = await Material.deleteMany({});
+    res.json({ 
+      message: 'All materials cleared successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset all personal data
+app.delete('/api/personal/reset', async (req, res) => {
+  try {
+    const materialResult = await Material.deleteMany({});
+    const quotationResult = await PersonalQuotation.deleteMany({});
+    const categoryResult = await Category.deleteMany({});
+    const analyticsResult = await PersonalAnalytics.deleteMany({});
+    
+    res.json({ 
+      message: 'All personal data reset successfully',
+      cleared: {
+        materials: materialResult.deletedCount,
+        quotations: quotationResult.deletedCount,
+        categories: categoryResult.deletedCount,
+        analytics: analyticsResult.deletedCount
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
