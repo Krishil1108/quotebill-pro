@@ -177,6 +177,129 @@ const settingsSchema = new mongoose.Schema({
 
 const Settings = mongoose.model('Settings', settingsSchema);
 
+// Material Schema for Personal Use
+const materialSchema = new mongoose.Schema({
+  itemName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  category: {
+    type: String,
+    default: 'general',
+    enum: ['tubelights', 'hanging_lights', 'spotlights', 'wire_coils', 'switches', 'sockets', 'general']
+  },
+  rate: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  totalAmount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  unit: {
+    type: String,
+    default: 'pcs'
+  },
+  purchaseDate: {
+    type: Date,
+    default: Date.now
+  },
+  supplier: {
+    type: String,
+    trim: true
+  },
+  notes: {
+    type: String,
+    trim: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Update the updatedAt field on save
+materialSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+const Material = mongoose.model('Material', materialSchema);
+
+// Personal Quotation Schema
+const personalQuotationSchema = new mongoose.Schema({
+  quotationName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  materials: [{
+    materialId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Material',
+      required: true
+    },
+    itemName: String,
+    quantity: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    rate: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    unit: String
+  }],
+  totalQuotationAmount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  status: {
+    type: String,
+    enum: ['draft', 'ready', 'transferred'],
+    default: 'draft'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+personalQuotationSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+const PersonalQuotation = mongoose.model('PersonalQuotation', personalQuotationSchema);
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -870,6 +993,485 @@ app.get('/api/dashboard/stats', async (req, res) => {
       paidBills,
       totalRevenue: totalRevenue[0]?.total || 0,
       pendingRevenue: pendingRevenue[0]?.total || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// MATERIAL MANAGEMENT API ENDPOINTS
+
+// Get all materials for personal use
+app.get('/api/materials', async (req, res) => {
+  try {
+    const { category, page = 1, limit = 50, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = {};
+    
+    // Filter by category
+    if (category && category !== 'all') filter.category = category;
+    
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { itemName: searchRegex },
+        { supplier: searchRegex },
+        { notes: searchRegex }
+      ];
+    }
+    
+    // Sort options
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    const materials = await Material.find(filter)
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    
+    const total = await Material.countDocuments(filter);
+    
+    // Calculate total value of materials
+    const totalValue = await Material.aggregate([
+      { $match: filter },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    res.json({
+      materials,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total,
+      totalValue: totalValue[0]?.total || 0,
+      hasMore: parseInt(page) < Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching materials:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch materials',
+      details: error.message 
+    });
+  }
+});
+
+// Get single material
+app.get('/api/materials/:id', async (req, res) => {
+  try {
+    const material = await Material.findById(req.params.id);
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    res.json(material);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new material
+app.post('/api/materials', async (req, res) => {
+  try {
+    const { itemName, category, rate, quantity, unit, supplier, notes } = req.body;
+    
+    // Validate required fields
+    if (!itemName || !rate || !quantity) {
+      return res.status(400).json({ error: 'Missing required fields: itemName, rate, and quantity are required' });
+    }
+
+    // Calculate total amount
+    const totalAmount = parseFloat(rate) * parseFloat(quantity);
+    
+    const material = new Material({
+      itemName: itemName.trim(),
+      category: category || 'general',
+      rate: parseFloat(rate),
+      quantity: parseFloat(quantity),
+      totalAmount,
+      unit: unit || 'pcs',
+      supplier: supplier ? supplier.trim() : '',
+      notes: notes ? notes.trim() : ''
+    });
+    
+    await material.save();
+    res.status(201).json(material);
+  } catch (error) {
+    console.error('Error creating material:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update material
+app.put('/api/materials/:id', async (req, res) => {
+  try {
+    const { itemName, category, rate, quantity, unit, supplier, notes } = req.body;
+    
+    const updateData = {};
+    if (itemName) updateData.itemName = itemName.trim();
+    if (category) updateData.category = category;
+    if (rate) updateData.rate = parseFloat(rate);
+    if (quantity) updateData.quantity = parseFloat(quantity);
+    if (unit) updateData.unit = unit;
+    if (supplier !== undefined) updateData.supplier = supplier.trim();
+    if (notes !== undefined) updateData.notes = notes.trim();
+    
+    // Recalculate total amount if rate or quantity changed
+    if (rate || quantity) {
+      const material = await Material.findById(req.params.id);
+      if (material) {
+        const newRate = rate ? parseFloat(rate) : material.rate;
+        const newQuantity = quantity ? parseFloat(quantity) : material.quantity;
+        updateData.totalAmount = newRate * newQuantity;
+      }
+    }
+    
+    const material = await Material.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    
+    res.json(material);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete material
+app.delete('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid material ID format' });
+    }
+    
+    const material = await Material.findByIdAndDelete(id);
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    
+    console.log(`Material deleted: ${material.itemName} - ${material.quantity} ${material.unit}`);
+    
+    res.json({ 
+      message: 'Material deleted successfully',
+      deletedMaterial: {
+        id: material._id,
+        itemName: material.itemName,
+        quantity: material.quantity,
+        unit: material.unit
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting material:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete material',
+      details: error.message 
+    });
+  }
+});
+
+// Get material categories
+app.get('/api/material-categories', async (req, res) => {
+  try {
+    const categories = await Material.distinct('category');
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL QUOTATION API ENDPOINTS
+
+// Get all personal quotations
+app.get('/api/personal-quotations', async (req, res) => {
+  try {
+    const { status, page = 1, limit = 50, search } = req.query;
+    const filter = {};
+    
+    if (status && status !== 'all') filter.status = status;
+    
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { quotationName: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+    
+    const quotations = await PersonalQuotation.find(filter)
+      .populate('materials.materialId', 'itemName category unit')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    
+    const total = await PersonalQuotation.countDocuments(filter);
+    
+    res.json({
+      quotations,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total,
+      hasMore: parseInt(page) < Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching personal quotations:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch personal quotations',
+      details: error.message 
+    });
+  }
+});
+
+// Get single personal quotation
+app.get('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    const quotation = await PersonalQuotation.findById(req.params.id)
+      .populate('materials.materialId');
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    res.json(quotation);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new personal quotation
+app.post('/api/personal-quotations', async (req, res) => {
+  try {
+    const { quotationName, description, materials } = req.body;
+    
+    if (!quotationName || !materials || materials.length === 0) {
+      return res.status(400).json({ error: 'Missing required fields: quotationName and materials are required' });
+    }
+
+    // Process materials and calculate total
+    const processedMaterials = [];
+    let totalQuotationAmount = 0;
+    
+    for (const material of materials) {
+      if (!material.materialId || !material.quantity || !material.rate) {
+        return res.status(400).json({ error: 'Each material must have materialId, quantity, and rate' });
+      }
+      
+      // Verify material exists
+      const materialDoc = await Material.findById(material.materialId);
+      if (!materialDoc) {
+        return res.status(400).json({ error: `Material with ID ${material.materialId} not found` });
+      }
+      
+      const quantity = parseFloat(material.quantity);
+      const rate = parseFloat(material.rate);
+      const totalAmount = quantity * rate;
+      
+      processedMaterials.push({
+        materialId: material.materialId,
+        itemName: materialDoc.itemName,
+        quantity,
+        rate,
+        totalAmount,
+        unit: materialDoc.unit
+      });
+      
+      totalQuotationAmount += totalAmount;
+    }
+    
+    const quotation = new PersonalQuotation({
+      quotationName: quotationName.trim(),
+      description: description ? description.trim() : '',
+      materials: processedMaterials,
+      totalQuotationAmount
+    });
+    
+    await quotation.save();
+    await quotation.populate('materials.materialId');
+    
+    res.status(201).json(quotation);
+  } catch (error) {
+    console.error('Error creating personal quotation:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update personal quotation
+app.put('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    const { quotationName, description, materials, status } = req.body;
+    
+    const updateData = {};
+    if (quotationName) updateData.quotationName = quotationName.trim();
+    if (description !== undefined) updateData.description = description.trim();
+    if (status) updateData.status = status;
+    
+    if (materials) {
+      const processedMaterials = [];
+      let totalQuotationAmount = 0;
+      
+      for (const material of materials) {
+        const materialDoc = await Material.findById(material.materialId);
+        if (!materialDoc) {
+          return res.status(400).json({ error: `Material with ID ${material.materialId} not found` });
+        }
+        
+        const quantity = parseFloat(material.quantity);
+        const rate = parseFloat(material.rate);
+        const totalAmount = quantity * rate;
+        
+        processedMaterials.push({
+          materialId: material.materialId,
+          itemName: materialDoc.itemName,
+          quantity,
+          rate,
+          totalAmount,
+          unit: materialDoc.unit
+        });
+        
+        totalQuotationAmount += totalAmount;
+      }
+      
+      updateData.materials = processedMaterials;
+      updateData.totalQuotationAmount = totalQuotationAmount;
+    }
+    
+    const quotation = await PersonalQuotation.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('materials.materialId');
+    
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    res.json(quotation);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete personal quotation
+app.delete('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid quotation ID format' });
+    }
+    
+    const quotation = await PersonalQuotation.findByIdAndDelete(id);
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    console.log(`Personal quotation deleted: ${quotation.quotationName}`);
+    
+    res.json({ 
+      message: 'Personal quotation deleted successfully',
+      deletedQuotation: {
+        id: quotation._id,
+        quotationName: quotation.quotationName
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting personal quotation:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete personal quotation',
+      details: error.message 
+    });
+  }
+});
+
+// Transfer personal quotation to client quotation
+app.post('/api/personal-quotations/:id/transfer', async (req, res) => {
+  try {
+    const { clientInfo } = req.body;
+    
+    if (!clientInfo || !clientInfo.name) {
+      return res.status(400).json({ error: 'Client information with name is required' });
+    }
+    
+    const personalQuotation = await PersonalQuotation.findById(req.params.id)
+      .populate('materials.materialId');
+    
+    if (!personalQuotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    // Convert personal quotation materials to document items format
+    const items = personalQuotation.materials.map(material => ({
+      particular: material.itemName,
+      unit: material.unit,
+      quantity: material.quantity,
+      rate: material.rate,
+      amount: material.totalAmount
+    }));
+    
+    // Create new client document (quote)
+    const clientDocument = new Document({
+      type: 'quote',
+      clientInfo: {
+        name: clientInfo.name,
+        address: clientInfo.address || '',
+        phone: clientInfo.phone || '',
+        email: clientInfo.email || ''
+      },
+      items,
+      totalAmount: personalQuotation.totalQuotationAmount,
+      letterhead: clientInfo.letterhead || {}
+    });
+    
+    await clientDocument.save();
+    
+    // Update personal quotation status to transferred
+    personalQuotation.status = 'transferred';
+    await personalQuotation.save();
+    
+    res.json({
+      message: 'Personal quotation transferred to client successfully',
+      clientDocument,
+      personalQuotation
+    });
+  } catch (error) {
+    console.error('Error transferring personal quotation:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Dashboard stats for personal materials and quotations
+app.get('/api/personal/stats', async (req, res) => {
+  try {
+    const totalMaterials = await Material.countDocuments();
+    const totalPersonalQuotations = await PersonalQuotation.countDocuments();
+    const draftQuotations = await PersonalQuotation.countDocuments({ status: 'draft' });
+    const readyQuotations = await PersonalQuotation.countDocuments({ status: 'ready' });
+    
+    const totalMaterialValue = await Material.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    const totalQuotationValue = await PersonalQuotation.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalQuotationAmount' } } }
+    ]);
+    
+    // Get materials by category
+    const materialsByCategory = await Material.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 }, value: { $sum: '$totalAmount' } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    res.json({
+      totalMaterials,
+      totalPersonalQuotations,
+      draftQuotations,
+      readyQuotations,
+      totalMaterialValue: totalMaterialValue[0]?.total || 0,
+      totalQuotationValue: totalQuotationValue[0]?.total || 0,
+      materialsByCategory
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
