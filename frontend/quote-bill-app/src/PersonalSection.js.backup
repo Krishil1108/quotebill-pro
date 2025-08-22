@@ -124,10 +124,6 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   const addMaterial = async (e) => {
     e.preventDefault();
-    
-    console.log('Adding material with form data:', materialForm);
-    console.log('Available custom categories:', customCategories);
-    
     if (!materialForm.itemName.trim() || !materialForm.rate || !materialForm.quantity) {
       setError('Please fill in all required fields');
       return;
@@ -135,32 +131,16 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
     try {
       setLoading(true);
-      setError(''); // Clear previous errors
-      
-      // Create material data with proper category handling
-      const materialData = {
-        ...materialForm,
-        itemName: materialForm.itemName.trim(),
-        rate: parseFloat(materialForm.rate),
-        quantity: parseFloat(materialForm.quantity)
-      };
-      
-      console.log('Sending material data to API:', materialData);
-      
       const response = await fetch(`${API_BASE_URL}/materials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(materialData),
+        body: JSON.stringify(materialForm),
       });
-      
-      console.log('Add material response status:', response.status);
       
       if (response.ok) {
         const newMaterial = await response.json();
-        console.log('New material created:', newMaterial);
-        
         setMaterials([newMaterial, ...materials]);
         setMaterialForm({
           itemName: '',
@@ -175,11 +155,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         setError('');
       } else {
         const errorData = await response.json();
-        console.error('Add material API error:', errorData);
         setError(errorData.error || 'Failed to add material');
       }
     } catch (error) {
-      console.error('Add material network error:', error);
       setError('Network error: ' + error.message);
     } finally {
       setLoading(false);
@@ -268,14 +246,6 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   const createPersonalQuotation = async (e) => {
     e.preventDefault();
-    
-    console.log('Creating quotation with data:', {
-      quotationName: quotationForm.quotationName,
-      description: quotationForm.description,
-      selectedMaterials: selectedMaterials,
-      materials: materials
-    });
-
     if (!quotationForm.quotationName.trim()) {
       setError('Please enter a quotation name');
       return;
@@ -288,30 +258,23 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
     try {
       setLoading(true);
-      setError(''); // Clear previous errors
-      
       const quotationData = {
-        quotationName: quotationForm.quotationName.trim(),
-        description: quotationForm.description?.trim() || '',
+        quotationName: quotationForm.quotationName,
+        description: quotationForm.description,
         materials: selectedMaterials.map(materialId => {
           const material = materials.find(m => m._id === materialId);
-          if (!material) {
-            throw new Error(`Material with ID ${materialId} not found`);
-          }
           return {
             materialId: material._id,
             itemName: material.itemName,
             category: material.category,
-            rate: parseFloat(material.rate),
-            quantity: parseFloat(material.quantity),
+            rate: material.rate,
+            quantity: material.quantity,
             unit: material.unit,
-            totalAmount: parseFloat(material.rate) * parseFloat(material.quantity)
+            totalAmount: material.rate * material.quantity
           };
         }),
         status: 'draft'
       };
-
-      console.log('Sending quotation data to API:', quotationData);
 
       const response = await fetch(`${API_BASE_URL}/personal-quotations`, {
         method: 'POST',
@@ -321,12 +284,8 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         body: JSON.stringify(quotationData),
       });
       
-      console.log('API response status:', response.status);
-      
       if (response.ok) {
         const newQuotation = await response.json();
-        console.log('New quotation created:', newQuotation);
-        
         setPersonalQuotations([newQuotation, ...personalQuotations]);
         setQuotationForm({
           quotationName: '',
@@ -339,11 +298,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         setActiveTab('quotations');
       } else {
         const errorData = await response.json();
-        console.error('API error response:', errorData);
         setError(errorData.error || 'Failed to create quotation');
       }
     } catch (error) {
-      console.error('Create quotation error:', error);
       setError('Network error: ' + error.message);
     } finally {
       setLoading(false);
@@ -957,10 +914,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Personal Quotations</h2>
             <button
-              onClick={() => {
-                console.log('Create Quotation button clicked');
-                setShowCreateQuotation(true);
-              }}
+              onClick={() => setShowCreateQuotation(true)}
               className="flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-sm hover:shadow-md"
             >
               <Plus size={20} />
@@ -1331,113 +1285,102 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                   </button>
                 </div>
                 
-                {/* Default Categories - Compact */}
-                <div>
-                  <h5 className={`text-sm font-medium mb-2 transition-colors duration-500 ${
-                    isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                  }`}>
-                    Default Categories
-                  </h5>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {defaultCategories.map((category) => (
-                      <div
-                        key={category.value}
-                        className={`p-2 rounded-lg border transition-all duration-300 ${
-                          isDarkTheme 
-                            ? 'bg-black/10 border-white/10' 
-                            : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Default Categories */}
+                  {defaultCategories.map((category) => (
+                    <div
+                      key={category.value}
+                      className={`p-4 rounded-xl border transition-all duration-300 hover:scale-105 ${
+                        isDarkTheme 
+                          ? 'bg-black/10 border-white/10 hover:border-white/20' 
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                      style={{ 
+                        backgroundColor: isDarkTheme 
+                          ? 'rgba(0,0,0,0.1)' 
+                          : category.color 
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div 
-                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            className="w-4 h-4 rounded-full border"
                             style={{ backgroundColor: category.color }}
                           ></div>
-                          <span className={`text-sm font-medium truncate transition-colors duration-500 ${
+                          <span className={`font-medium transition-colors duration-500 ${
                             isDarkTheme ? 'text-white' : 'text-gray-800'
                           }`}>
                             {category.label}
                           </span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Custom Categories - Compact Scrollable */}
-                {customCategories.length > 0 && (
-                  <div>
-                    <h5 className={`text-sm font-medium mb-2 transition-colors duration-500 ${
-                      isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                    }`}>
-                      Custom Categories ({customCategories.length})
-                    </h5>
-                    <div className="max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pr-2">
-                        {customCategories.map((category) => (
-                          <div
-                            key={category._id || category.value}
-                            className={`p-2 rounded-lg border transition-all duration-300 hover:scale-102 ${
-                              isDarkTheme 
-                                ? 'bg-black/10 border-white/10 hover:border-white/20' 
-                                : 'bg-white border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                <div 
-                                  className="w-3 h-3 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: category.color }}
-                                ></div>
-                                <span className={`text-sm font-medium truncate transition-colors duration-500 ${
-                                  isDarkTheme ? 'text-white' : 'text-gray-800'
-                                }`}>
-                                  {category.name || category.label}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                                <button
-                                  onClick={() => {
-                                    setEditingCategory(category);
-                                    setNewCategory({ name: category.name || category.label, color: category.color });
-                                    setShowAddCategory(true);
-                                  }}
-                                  className={`p-1 rounded transition-all duration-200 ${
-                                    isDarkTheme 
-                                      ? 'text-blue-400 hover:bg-blue-900/20' 
-                                      : 'text-blue-500 hover:bg-blue-50'
-                                  }`}
-                                  title="Edit category"
-                                >
-                                  <Edit size={12} />
-                                </button>
-                                <button
-                                  onClick={() => deleteCustomCategory(category)}
-                                  className={`p-1 rounded transition-all duration-200 ${
-                                    isDarkTheme 
-                                      ? 'text-red-400 hover:bg-red-900/20' 
-                                      : 'text-red-500 hover:bg-red-50'
-                                  }`}
-                                  title="Delete category"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                        <div className={`text-xs px-2 py-1 rounded-full ${
+                          isDarkTheme ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          Default
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {customCategories.length === 0 && (
-                  <div className={`text-center py-4 transition-colors duration-500 ${
-                    isDarkTheme ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
-                    <p className="text-sm">No custom categories yet. Add one to get started!</p>
-                  </div>
-                )}
+                  ))}
+                  
+                  {/* Custom Categories from Backend */}
+                  {customCategories.map((category) => (
+                    <div
+                      key={category._id || category.value}
+                      className={`p-4 rounded-xl border transition-all duration-300 hover:scale-105 ${
+                        isDarkTheme 
+                          ? 'bg-black/10 border-white/10 hover:border-white/20' 
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                      style={{ 
+                        backgroundColor: isDarkTheme 
+                          ? 'rgba(0,0,0,0.1)' 
+                          : category.color 
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div 
+                            className="w-4 h-4 rounded-full border"
+                            style={{ backgroundColor: category.color }}
+                          ></div>
+                          <span className={`font-medium transition-colors duration-500 ${
+                            isDarkTheme ? 'text-white' : 'text-gray-800'
+                          }`}>
+                            {category.name || category.label}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => {
+                              setEditingCategory(category);
+                              setNewCategory({ name: category.name || category.label, color: category.color });
+                              setShowAddCategory(true);
+                            }}
+                            className={`p-1 rounded transition-all duration-200 ${
+                              isDarkTheme 
+                                ? 'text-blue-400 hover:bg-blue-900/20' 
+                                : 'text-blue-500 hover:bg-blue-50'
+                            }`}
+                            title="Edit category"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => deleteCustomCategory(category)}
+                            className={`p-1 rounded transition-all duration-200 ${
+                              isDarkTheme 
+                                ? 'text-red-400 hover:bg-red-900/20' 
+                                : 'text-red-500 hover:bg-red-50'
+                            }`}
+                            title="Delete category"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1464,32 +1407,15 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                     if (window.confirm('Are you sure you want to clear all materials? This action cannot be undone.')) {
                       try {
                         setLoading(true);
-                        setError(''); // Clear previous errors
-                        console.log('Clearing all materials...');
-                        
-                        const response = await fetch(`${API_BASE_URL}/materials/clear`, { 
-                          method: 'DELETE',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          }
-                        });
-                        
-                        console.log('Clear materials response status:', response.status);
-                        
+                        const response = await fetch(`${API_BASE_URL}/materials/clear`, { method: 'DELETE' });
                         if (response.ok) {
-                          const result = await response.json();
-                          console.log('Clear materials result:', result);
                           setMaterials([]);
-                          setSelectedMaterials([]);
                           setError('');
-                          alert(`Successfully cleared ${result.deletedCount || 0} materials`);
                         } else {
                           const errorData = await response.json();
-                          console.error('Clear materials error:', errorData);
                           setError(errorData.error || 'Failed to clear materials');
                         }
                       } catch (error) {
-                        console.error('Clear materials network error:', error);
                         setError('Network error: ' + error.message);
                       } finally {
                         setLoading(false);
