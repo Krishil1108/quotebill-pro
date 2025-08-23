@@ -1836,6 +1836,28 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="materials-list-${new Date().toISOString().split('T')[0]}.pdf"`);
     doc.pipe(res);
+
+    // Helper functions for drawing
+    const drawLine = (x1, y1, x2, y2, color = '#e5e7eb', width = 1) => {
+      doc.strokeColor(color)
+         .lineWidth(width)
+         .moveTo(x1, y1)
+         .lineTo(x2, y2)
+         .stroke();
+    };
+
+    const drawRect = (x, y, width, height, fillColor, strokeColor = null) => {
+      if (fillColor) {
+        doc.rect(x, y, width, height)
+           .fillColor(fillColor)
+           .fill();
+      }
+      if (strokeColor) {
+        doc.rect(x, y, width, height)
+           .strokeColor(strokeColor)
+           .stroke();
+      }
+    };
     
     // Get company settings (same as client PDF)
     const settings = await PersonalSettings.findOne() || {};
@@ -1850,38 +1872,83 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
       logo: clientSettings?.letterhead?.logo || DEFAULT_LOGO
     };
 
-    // Add company logo if available
-    if (settings.logoPath) {
+    // Extract company details from settings
+    const companyName = letterheadData.firmName;
+    const companyAddress = letterheadData.address;
+    const companyPhone = letterheadData.phone;
+    const companyEmail = settings.companyEmail || '';
+
+    // Add company logo and letterhead (EXACT same as client PDF)
+    const pageWidth = 555;
+    
+    // Background
+    drawRect(40, 40, pageWidth, 120, '#f8fafc');
+    
+    // Blue top bar
+    drawRect(40, 40, pageWidth, 8, '#3b82f6');
+    
+    // Logo section
+    if (letterheadData.logo) {
       try {
-        doc.image(settings.logoPath, 50, 50, { width: 60, height: 60 });
+        if (letterheadData.logo.startsWith('data:image/')) {
+          const base64Data = letterheadData.logo.split(',')[1];
+          const logoBuffer = Buffer.from(base64Data, 'base64');
+          doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
+        }
       } catch (logoError) {
         console.warn('Logo loading failed:', logoError.message);
       }
     }
+    
+    // Company name with shadow effect
+    doc.fontSize(24)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text(letterheadData.firmName, 160, 70, { width: 300 });
+    
+    // Company address and phone
+    doc.fontSize(11)
+       .fillColor('#64748b')
+       .font('Helvetica')
+       .text(letterheadData.address, 160, 95, { width: 300 });
+    
+    if (letterheadData.phone) {
+      doc.text(`Phone: ${letterheadData.phone}`, 160, 110, { width: 300 });
+    }
+
+    // Remove old company information code
+    // Add company logo if available
+    // if (settings.logoPath) {
+    //   try {
+    //     doc.image(settings.logoPath, 50, 50, { width: 60, height: 60 });
+    //   } catch (logoError) {
+    //     console.warn('Logo loading failed:', logoError.message);
+    //   }
+    // }
 
     // Company Information
-    doc.fontSize(20).font('Helvetica-Bold').fillColor('#2c3e50');
-    doc.text(companyName, 120, 60);
+    // doc.fontSize(20).font('Helvetica-Bold').fillColor('#2c3e50');
+    // doc.text(companyName, 120, 60);
     
-    if (companyAddress) {
-      doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
-      doc.text(companyAddress, 120, 78);
-    }
+    // if (companyAddress) {
+    //   doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    //   doc.text(companyAddress, 120, 78);
+    // }
     
-    if (companyPhone || companyEmail) {
-      let contactY = companyAddress ? 95 : 78;
-      if (companyPhone) {
-        doc.text(`Phone: ${companyPhone}`, 120, contactY);
-        contactY += 12;
-      }
-      if (companyEmail) {
-        doc.text(`Email: ${companyEmail}`, 120, contactY);
-      }
-    }
+    // if (companyPhone || companyEmail) {
+    //   let contactY = companyAddress ? 95 : 78;
+    //   if (companyPhone) {
+    //     doc.text(`Phone: ${companyPhone}`, 120, contactY);
+    //     contactY += 12;
+    //   }
+    //   if (companyEmail) {
+    //     doc.text(`Email: ${companyEmail}`, 120, contactY);
+    //   }
+    // }
 
     // Title
     doc.fontSize(18).font('Helvetica-Bold').fillColor('#2c3e50');
-    const titleY = 150;
+    const titleY = 180; // Adjusted for new letterhead height
     doc.text('MATERIALS INVENTORY LIST', 50, titleY);
     
     if (searchQuery) {

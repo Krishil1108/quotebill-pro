@@ -891,7 +891,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   const exportMaterialsToPDF = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
+      const response = await fetch(`${API_BASE_URL}/api/generate-materials-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
