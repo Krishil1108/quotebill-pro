@@ -1597,56 +1597,113 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
       return res.status(400).json({ error: 'Quotation data is required' });
     }
 
+    // Get settings for letterhead (same as client PDF)
+    const settings = await Settings.findOne();
+    const letterheadData = {
+      firmName: settings?.letterhead?.firmName || 'Your Company Name',
+      address: settings?.letterhead?.address || 'Your Company Address', 
+      phone: settings?.letterhead?.phone || 'Your Company Phone',
+      tagline: settings?.letterhead?.tagline || 'Your Company Tagline',
+      logo: settings?.letterhead?.logo || DEFAULT_LOGO
+    };
+
     // Set response headers for PDF
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
 
-    // Create PDF document
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    // Create PDF with exact same styling as client PDF
+    const doc = new PDFDocument({
+      margin: 40,
+      size: 'A4'
+    });
+    
     doc.pipe(res);
 
-    // Company Logo and Header
-    if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
-      try {
+    // Helper function to draw a line  
+    const drawLine = (x1, y1, x2, y2, color = '#e5e7eb', width = 1) => {
+      doc.strokeColor(color)
+         .lineWidth(width)
+         .moveTo(x1, y1)
+         .lineTo(x2, y2)
+         .stroke();
+    };
+
+    // Helper function to draw a rectangle
+    const drawRect = (x, y, width, height, fillColor, strokeColor = null) => {
+      if (fillColor) {
+        doc.rect(x, y, width, height).fillColor(fillColor).fill();
+      }
+      if (strokeColor) {
+        doc.rect(x, y, width, height).strokeColor(strokeColor).stroke();
+      }
+    };
+
+    // Page dimensions
+    const pageWidth = 515; // A4 width minus margins
+    const pageHeight = 750; // A4 height minus margins
+
+    // HEADER SECTION with gradient-like effect (EXACT same as client PDF)
+    drawRect(40, 40, pageWidth, 100, '#f8fafc');
+    drawRect(40, 40, pageWidth, 4, '#3b82f6'); // Top blue bar
+
+    // Logo (EXACT same as client PDF)  
+    let logoWidth = 100;
+    try {
+      if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
         const base64Data = DEFAULT_LOGO.split(',')[1];
         const logoBuffer = Buffer.from(base64Data, 'base64');
-        doc.image(logoBuffer, 50, 50, { width: 60 });
-      } catch (logoError) {
-        console.warn('Logo loading failed:', logoError.message);
+        
+        doc.image(logoBuffer, 60, 55, { 
+          fit: [80, 70],
+          align: 'center',
+          valign: 'center'
+        });
+        
+        console.log('✅ Logo loaded successfully for personal PDF');
+      } else {
+        // Fallback: draw simple logo if base64 fails
+        const logoX = 60, logoY = 55, logoW = 80, logoH = 70;
+        const centerX = logoX + logoW / 2, centerY = logoY + logoH / 2;
+        
+        doc.circle(centerX, centerY, Math.min(logoW, logoH) / 2 - 2)
+           .lineWidth(2).stroke('#2563eb');
+        doc.fontSize(32).fillColor('#2563eb')
+           .text('SE', centerX - 16, centerY - 16, { width: 32, align: 'center' });
+        
+        console.log('⚠️ Using fallback drawn logo for personal PDF');
       }
+    } catch (logoError) {
+      console.log('❌ Logo loading error:', logoError.message);
+      logoWidth = 0;
     }
 
-    // Company Details (use letterhead or defaults)
-    const companyName = letterhead?.companyName || 'Personal Quotation';
-    const companyAddress = letterhead?.address || '';
-    const companyPhone = letterhead?.phone || '';
-    const companyEmail = letterhead?.email || '';
+    // Company Name (EXACT same styling as client PDF)
+    doc.fontSize(24)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text(letterheadData.firmName, 60 + logoWidth, 60, {
+         width: pageWidth - logoWidth - 40
+       });
 
-    doc.fontSize(20).font('Helvetica-Bold');
-    doc.text(companyName, 120, 55);
-    
-    if (companyAddress) {
-      doc.fontSize(10).font('Helvetica');
-      doc.text(companyAddress, 120, 78);
-    }
-    
-    if (companyPhone || companyEmail) {
-      let contactY = companyAddress ? 95 : 78;
-      if (companyPhone) {
-        doc.text(`Phone: ${companyPhone}`, 120, contactY);
-        contactY += 12;
-      }
-      if (companyEmail) {
-        doc.text(`Email: ${companyEmail}`, 120, contactY);
-      }
+    // Company Address (EXACT same styling as client PDF)
+    if (letterheadData.address) {
+      doc.fontSize(11)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(letterheadData.address, 60 + logoWidth, 90, {
+           width: pageWidth - logoWidth - 40
+         });
     }
 
-    // Add a line separator
-    doc.strokeColor('#cccccc')
-       .lineWidth(1)
-       .moveTo(50, 130)
-       .lineTo(545, 130)
-       .stroke();
+    // Company Phone (EXACT same styling as client PDF)
+    if (letterheadData.phone) {
+      doc.fontSize(11)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(`Phone: ${letterheadData.phone}`, 60 + logoWidth, 110, {
+           width: pageWidth - logoWidth - 40
+         });
+    }
 
     // Document Title
     doc.fontSize(24).font('Helvetica-Bold').fillColor('#2c3e50');
@@ -1780,12 +1837,18 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="materials-list-${new Date().toISOString().split('T')[0]}.pdf"`);
     doc.pipe(res);
     
-    // Get company settings
+    // Get company settings (same as client PDF)
     const settings = await PersonalSettings.findOne() || {};
-    const companyName = settings.companyName || 'Your Company Name';
-    const companyAddress = settings.companyAddress || '';
-    const companyPhone = settings.companyPhone || '';
-    const companyEmail = settings.companyEmail || '';
+    const clientSettings = await Settings.findOne() || {}; // Get client settings for letterhead
+    
+    // Use client letterhead for consistency
+    const letterheadData = {
+      firmName: clientSettings?.letterhead?.firmName || settings.companyName || 'Your Company Name',
+      address: clientSettings?.letterhead?.address || settings.companyAddress || 'Your Company Address',
+      phone: clientSettings?.letterhead?.phone || settings.companyPhone || 'Your Company Phone',
+      tagline: clientSettings?.letterhead?.tagline || 'Your Company Tagline',
+      logo: clientSettings?.letterhead?.logo || DEFAULT_LOGO
+    };
 
     // Add company logo if available
     if (settings.logoPath) {
@@ -1899,11 +1962,22 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
     doc.text('TOTAL INVENTORY VALUE: ₹', 300, currentY);
     doc.text(totalInventoryValue.toLocaleString('en-IN'), 450, currentY);
 
-    // Footer
-    const footerY = 750;
-    doc.fontSize(8).font('Helvetica').fillColor('#7f8c8d');
-    doc.text('Generated from Personal Materials Management System', 50, footerY);
-    doc.text(`Report Date: ${new Date().toLocaleDateString('en-IN')}`, 400, footerY);
+    // FOOTER SECTION (EXACT same styling as client PDF)
+    const footerY = 720;
+    
+    // Footer line
+    drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
+    
+    // Footer content with tagline
+    if (letterheadData.tagline) {
+      doc.fontSize(9)
+         .fillColor('#64748b')
+         .font('Helvetica-Oblique')
+         .text(letterheadData.tagline, 40, footerY + 10, {
+           align: 'center',
+           width: pageWidth
+         });
+    }
 
     // Finalize PDF
     doc.end();
