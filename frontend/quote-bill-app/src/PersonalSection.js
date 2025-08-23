@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit } from 'lucide-react';
+import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit, FileSpreadsheet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
@@ -887,6 +887,80 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     material.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Export materials to PDF
+  const exportMaterialsToPDF = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          materials: filteredMaterials,
+          searchQuery: searchQuery
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `materials-list-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      setError('Failed to export materials to PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export materials to Excel
+  const exportMaterialsToExcel = () => {
+    try {
+      // Create CSV content
+      const headers = ['Item Name', 'Category', 'Rate (₹)', 'Quantity', 'Total Amount (₹)', 'Unit', 'Supplier', 'Purchase Date', 'Notes'];
+      const csvContent = [
+        headers.join(','),
+        ...filteredMaterials.map(material => [
+          `"${material.itemName || ''}"`,
+          `"${material.category || ''}"`,
+          material.rate || 0,
+          material.quantity || 0,
+          material.totalAmount || 0,
+          `"${material.unit || ''}"`,
+          `"${material.supplier || ''}"`,
+          material.purchaseDate ? new Date(material.purchaseDate).toLocaleDateString() : '',
+          `"${material.notes || ''}"`
+        ].join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `materials-list-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Excel export error:', error);
+      setError('Failed to export materials to Excel');
+    }
+  };
+
   return (
     <div className={`min-h-screen relative overflow-hidden transition-all duration-500 ${
       isDarkTheme 
@@ -1149,17 +1223,53 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                   />
                 </div>
               </div>
-              <button
-                onClick={() => setShowAddMaterial(true)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                  isDarkTheme 
-                    ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
-                    : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
-                }`}
-              >
-                <Plus size={20} />
-                <span>Add Material</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                {/* Export Buttons */}
+                <button
+                  onClick={exportMaterialsToPDF}
+                  disabled={loading || filteredMaterials.length === 0}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                    loading || filteredMaterials.length === 0
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : isDarkTheme 
+                        ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-red-500/25' 
+                        : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-red-500/25'
+                  }`}
+                  title="Export materials to PDF"
+                >
+                  <Download size={18} />
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
+                
+                <button
+                  onClick={exportMaterialsToExcel}
+                  disabled={filteredMaterials.length === 0}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                    filteredMaterials.length === 0
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : isDarkTheme 
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-500/25' 
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25'
+                  }`}
+                  title="Export materials to Excel (CSV)"
+                >
+                  <FileSpreadsheet size={18} />
+                  <span className="hidden sm:inline">Excel</span>
+                </button>
+
+                {/* Add Material Button */}
+                <button
+                  onClick={() => setShowAddMaterial(true)}
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                    isDarkTheme 
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
+                      : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
+                  }`}
+                >
+                  <Plus size={20} />
+                  <span>Add Material</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1306,23 +1416,6 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 }`}
               />
             </div>
-            
-            {/* DEBUG: Test Edit Button - Remove this later */}
-            {personalQuotations.length > 0 && (
-              <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-                <p className="text-sm text-yellow-800 mb-2">🔧 DEBUG: Test edit function</p>
-                <button
-                  onClick={() => {
-                    console.log('🧪 TEST: Direct edit function call');
-                    console.log('🧪 First quotation:', personalQuotations[0]);
-                    editQuotation(personalQuotations[0]);
-                  }}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                >
-                  Test Edit First Quotation
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Quotations List */}

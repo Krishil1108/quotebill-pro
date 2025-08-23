@@ -1763,6 +1763,162 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
   }
 });
 
+// Generate Materials List PDF
+app.post('/api/generate-materials-pdf', async (req, res) => {
+  try {
+    const { materials, searchQuery } = req.body;
+    
+    if (!materials || materials.length === 0) {
+      return res.status(400).json({ error: 'No materials provided for PDF generation' });
+    }
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument();
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="materials-list-${new Date().toISOString().split('T')[0]}.pdf"`);
+    doc.pipe(res);
+    
+    // Get company settings
+    const settings = await PersonalSettings.findOne() || {};
+    const companyName = settings.companyName || 'Your Company Name';
+    const companyAddress = settings.companyAddress || '';
+    const companyPhone = settings.companyPhone || '';
+    const companyEmail = settings.companyEmail || '';
+
+    // Add company logo if available
+    if (settings.logoPath) {
+      try {
+        doc.image(settings.logoPath, 50, 50, { width: 60, height: 60 });
+      } catch (logoError) {
+        console.warn('Logo loading failed:', logoError.message);
+      }
+    }
+
+    // Company Information
+    doc.fontSize(20).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text(companyName, 120, 60);
+    
+    if (companyAddress) {
+      doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+      doc.text(companyAddress, 120, 78);
+    }
+    
+    if (companyPhone || companyEmail) {
+      let contactY = companyAddress ? 95 : 78;
+      if (companyPhone) {
+        doc.text(`Phone: ${companyPhone}`, 120, contactY);
+        contactY += 12;
+      }
+      if (companyEmail) {
+        doc.text(`Email: ${companyEmail}`, 120, contactY);
+      }
+    }
+
+    // Title
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#2c3e50');
+    const titleY = 150;
+    doc.text('MATERIALS INVENTORY LIST', 50, titleY);
+    
+    if (searchQuery) {
+      doc.fontSize(12).font('Helvetica').fillColor('#7f8c8d');
+      doc.text(`Filtered by: "${searchQuery}"`, 50, titleY + 25);
+    }
+    
+    doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 50, titleY + (searchQuery ? 45 : 25));
+    doc.text(`Total Materials: ${materials.length}`, 400, titleY + (searchQuery ? 45 : 25));
+
+    // Add separator line
+    doc.strokeColor('#cccccc')
+       .lineWidth(1)
+       .moveTo(50, titleY + (searchQuery ? 65 : 45))
+       .lineTo(545, titleY + (searchQuery ? 65 : 45))
+       .stroke();
+
+    // Table Header
+    let currentY = titleY + (searchQuery ? 85 : 65);
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
+    
+    // Header background
+    doc.rect(50, currentY, 495, 25).fillColor('#34495e').fill();
+    
+    currentY += 8;
+    doc.text('Item Name', 55, currentY);
+    doc.text('Category', 180, currentY);
+    doc.text('Qty', 260, currentY);
+    doc.text('Rate (₹)', 300, currentY);
+    doc.text('Total (₹)', 380, currentY);
+    doc.text('Unit', 450, currentY);
+    doc.text('Supplier', 490, currentY);
+    
+    currentY += 25;
+
+    // Materials Data
+    let totalInventoryValue = 0;
+    doc.fontSize(9).font('Helvetica').fillColor('#2c3e50');
+    
+    materials.forEach((material, index) => {
+      // Alternate row colors
+      if (index % 2 === 0) {
+        doc.rect(50, currentY - 5, 495, 18).fillColor('#f8f9fa').fill();
+      }
+      
+      doc.fillColor('#2c3e50');
+      const totalValue = (material.rate || 0) * (material.quantity || 0);
+      totalInventoryValue += totalValue;
+
+      doc.text(material.itemName || 'N/A', 55, currentY, { width: 120 });
+      doc.text(material.category || 'N/A', 180, currentY, { width: 75 });
+      doc.text((material.quantity || 0).toString(), 260, currentY);
+      doc.text((material.rate || 0).toLocaleString('en-IN'), 300, currentY);
+      doc.text(totalValue.toLocaleString('en-IN'), 380, currentY);
+      doc.text(material.unit || 'pcs', 450, currentY);
+      doc.text(material.supplier || 'N/A', 490, currentY, { width: 50 });
+      
+      currentY += 18;
+      
+      // Check for page break
+      if (currentY > 700) {
+        doc.addPage();
+        currentY = 50;
+      }
+    });
+
+    // Summary Section
+    currentY += 20;
+    doc.strokeColor('#2c3e50')
+       .lineWidth(2)
+       .moveTo(300, currentY)
+       .lineTo(545, currentY)
+       .stroke();
+    
+    currentY += 15;
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text('TOTAL INVENTORY VALUE: ₹', 300, currentY);
+    doc.text(totalInventoryValue.toLocaleString('en-IN'), 450, currentY);
+
+    // Footer
+    const footerY = 750;
+    doc.fontSize(8).font('Helvetica').fillColor('#7f8c8d');
+    doc.text('Generated from Personal Materials Management System', 50, footerY);
+    doc.text(`Report Date: ${new Date().toLocaleDateString('en-IN')}`, 400, footerY);
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('Materials PDF generation error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to generate materials PDF',
+        details: error.message 
+      });
+    }
+  }
+});
+
 // Transfer personal quotation to client quotation
 app.post('/api/personal-quotations/:id/transfer', async (req, res) => {
   try {
