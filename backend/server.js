@@ -1291,6 +1291,22 @@ app.put('/api/materials/:id', async (req, res) => {
   }
 });
 
+// Clear all materials
+app.delete('/api/materials/clear', async (req, res) => {
+  try {
+    console.log('🗑️ Clearing all materials...');
+    const result = await Material.deleteMany({});
+    console.log(`🗑️ Successfully cleared ${result.deletedCount} materials`);
+    res.json({ 
+      message: 'All materials cleared successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('🗑️ Error clearing materials:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete material
 app.delete('/api/materials/:id', async (req, res) => {
   try {
@@ -2078,19 +2094,6 @@ app.put('/api/personal-settings', async (req, res) => {
     
     await settings.save();
     res.json(settings);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Clear all materials
-app.delete('/api/materials/clear', async (req, res) => {
-  try {
-    const result = await Material.deleteMany({});
-    res.json({ 
-      message: 'All materials cleared successfully',
-      deletedCount: result.deletedCount
-    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

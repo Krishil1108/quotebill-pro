@@ -360,10 +360,14 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   // Edit quotation function
   const editQuotation = (quotation) => {
-    console.log('Editing quotation:', quotation);
-    console.log('Quotation materials:', quotation.materials);
+    console.log('🚀 editQuotation function called!');
+    console.log('📋 Editing quotation:', quotation);
+    console.log('🔧 Quotation materials:', quotation.materials);
     
+    console.log('🎯 Setting editingQuotation state...');
     setEditingQuotation(quotation);
+    
+    console.log('📝 Setting quotationForm...');
     setQuotationForm({
       quotationName: quotation.quotationName,
       description: quotation.description || ''
@@ -371,26 +375,54 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     
     // Handle different material ID structures
     const materialIds = [];
+    console.log('🔧 Processing quotation materials:', quotation.materials);
+    console.log('🔧 Available materials for matching:', materials.map(m => ({ id: m._id, name: m.itemName })));
+    
     if (quotation.materials && Array.isArray(quotation.materials)) {
-      quotation.materials.forEach(material => {
+      quotation.materials.forEach((material, index) => {
+        console.log(`🔧 Processing material ${index}:`, material);
+        
         // Try different possible ID fields
-        const materialId = material._id || material.materialId || material.id;
+        let materialId = material._id || material.materialId || material.id;
+        
         if (materialId) {
-          materialIds.push(materialId);
+          // Check if this ID exists in our current materials list
+          const existingMaterial = materials.find(m => m._id === materialId);
+          if (existingMaterial) {
+            materialIds.push(materialId);
+            console.log(`✅ Direct ID match found for ${material.itemName}: ${materialId}`);
+          } else {
+            console.log(`⚠️ Direct ID ${materialId} not found, trying name match...`);
+            // If ID doesn't exist, try to find by name
+            const matchingMaterial = materials.find(m => m.itemName === material.itemName);
+            if (matchingMaterial) {
+              materialIds.push(matchingMaterial._id);
+              console.log(`✅ Name match found for ${material.itemName}: ${matchingMaterial._id}`);
+            } else {
+              console.error(`❌ No match found for material: ${material.itemName}`);
+            }
+          }
         } else {
-          console.warn('Material without ID found:', material);
+          console.warn('⚠️ Material without ID found:', material);
           // If no ID found, try to match by name with existing materials
           const matchingMaterial = materials.find(m => m.itemName === material.itemName);
           if (matchingMaterial) {
             materialIds.push(matchingMaterial._id);
+            console.log(`✅ Name-only match found for ${material.itemName}: ${matchingMaterial._id}`);
+          } else {
+            console.error(`❌ No name match found for material: ${material.itemName}`);
           }
         }
       });
     }
     
-    console.log('Selected material IDs:', materialIds);
+    console.log('🎯 Selected material IDs:', materialIds);
     setSelectedMaterials(materialIds);
+    
+    console.log('🔓 Setting showEditQuotation to true...');
     setShowEditQuotation(true);
+    console.log('✅ Edit function completed!');
+    
     setError('');
   };
 
@@ -410,15 +442,41 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     setError('');
 
     try {
-      console.log('Updating quotation with selected materials:', selectedMaterials);
-      console.log('Available materials:', materials.map(m => ({ id: m._id, name: m.itemName })));
+      console.log('🔄 Updating quotation with selected materials:', selectedMaterials);
+      console.log('📦 Available materials:', materials.map(m => ({ id: m._id, name: m.itemName })));
+      console.log('📝 Original quotation materials:', editingQuotation?.materials);
       
-      const selectedMaterialsData = materials.filter(m => selectedMaterials.includes(m._id));
+      // Enhanced material matching logic
+      const selectedMaterialsData = [];
       
-      console.log('Filtered materials data:', selectedMaterialsData);
+      for (const selectedId of selectedMaterials) {
+        // First try direct ID match
+        let material = materials.find(m => m._id === selectedId);
+        
+        if (!material) {
+          // If no direct match, try to find by name from original quotation
+          const originalMaterial = editingQuotation?.materials?.find(m => 
+            (m._id === selectedId || m.materialId === selectedId || m.id === selectedId)
+          );
+          
+          if (originalMaterial) {
+            material = materials.find(m => m.itemName === originalMaterial.itemName);
+          }
+        }
+        
+        if (material) {
+          selectedMaterialsData.push(material);
+          console.log('✅ Material found:', material.itemName, 'ID:', material._id);
+        } else {
+          console.error('❌ Material not found for ID:', selectedId);
+        }
+      }
+      
+      console.log('🔍 Filtered materials data:', selectedMaterialsData);
       
       if (selectedMaterialsData.length === 0) {
         setError('No valid materials found for selected IDs. Please try refreshing and selecting materials again.');
+        setLoading(false);
         return;
       }
       
@@ -1231,6 +1289,23 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 }`}
               />
             </div>
+            
+            {/* DEBUG: Test Edit Button - Remove this later */}
+            {personalQuotations.length > 0 && (
+              <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                <p className="text-sm text-yellow-800 mb-2">🔧 DEBUG: Test edit function</p>
+                <button
+                  onClick={() => {
+                    console.log('🧪 TEST: Direct edit function call');
+                    console.log('🧪 First quotation:', personalQuotations[0]);
+                    editQuotation(personalQuotations[0]);
+                  }}
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                >
+                  Test Edit First Quotation
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quotations List */}
@@ -1272,7 +1347,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex flex-col space-y-2 ml-4 min-w-[80px]">
+                      <div className="flex flex-col space-y-2 ml-4 min-w-[80px] z-20 relative">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -1280,7 +1355,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                             console.log('PDF button clicked for:', quotation.quotationName);
                             exportToPDF(quotation);
                           }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium"
                           title="Export to PDF"
                           type="button"
                         >
@@ -1288,15 +1363,27 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                           <span>PDF</span>
                         </button>
                         <button
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Edit button mouse down for:', quotation.quotationName);
+                          }}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Edit button clicked for:', quotation.quotationName);
-                            editQuotation(quotation);
+                            console.log('Edit function exists:', typeof editQuotation);
+                            try {
+                              editQuotation(quotation);
+                              console.log('Edit function called successfully');
+                            } catch (error) {
+                              console.error('Error calling editQuotation:', error);
+                            }
                           }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium border-2 border-transparent hover:border-yellow-300"
                           title="Edit quotation"
                           type="button"
+                          style={{ pointerEvents: 'auto' }}
                         >
                           <FileEdit size={16} />
                           <span>Edit</span>
@@ -1308,7 +1395,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                             console.log('Delete button clicked for:', quotation.quotationName);
                             deleteQuotation(quotation._id, quotation.quotationName);
                           }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium"
                           title="Delete quotation"
                           type="button"
                         >
