@@ -187,7 +187,24 @@ const materialSchema = new mongoose.Schema({
   category: {
     type: String,
     default: 'general',
-    enum: ['tubelights', 'hanging_lights', 'spotlights', 'wire_coils', 'switches', 'sockets', 'general']
+    enum: [
+      'tubelights', 
+      'hanging_lights', 
+      'spotlights', 
+      'wire_coils', 
+      'switches', 
+      'sockets', 
+      'fans', 
+      'conduits', 
+      'cables', 
+      'panels', 
+      'transformers', 
+      'motors', 
+      'sensors', 
+      'tools', 
+      'safety', 
+      'general'
+    ]
   },
   rate: {
     type: Number,
