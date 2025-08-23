@@ -1537,6 +1537,181 @@ app.delete('/api/personal-quotations/:id', async (req, res) => {
   }
 });
 
+// Generate PDF for personal quotation
+app.post('/api/generate-personal-pdf', async (req, res) => {
+  try {
+    const { quotation, clientInfo, letterhead } = req.body;
+    
+    if (!quotation) {
+      return res.status(400).json({ error: 'Quotation data is required' });
+    }
+
+    // Set response headers for PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    doc.pipe(res);
+
+    // Company Logo and Header
+    const logoBase64 = DEFAULT_LOGO_BASE64;
+    if (logoBase64) {
+      try {
+        const logoBuffer = Buffer.from(logoBase64, 'base64');
+        doc.image(logoBuffer, 50, 50, { width: 60 });
+      } catch (logoError) {
+        console.warn('Logo loading failed:', logoError.message);
+      }
+    }
+
+    // Company Details (use letterhead or defaults)
+    const companyName = letterhead?.companyName || 'Personal Quotation';
+    const companyAddress = letterhead?.address || '';
+    const companyPhone = letterhead?.phone || '';
+    const companyEmail = letterhead?.email || '';
+
+    doc.fontSize(20).font('Helvetica-Bold');
+    doc.text(companyName, 120, 55);
+    
+    if (companyAddress) {
+      doc.fontSize(10).font('Helvetica');
+      doc.text(companyAddress, 120, 78);
+    }
+    
+    if (companyPhone || companyEmail) {
+      let contactY = companyAddress ? 95 : 78;
+      if (companyPhone) {
+        doc.text(`Phone: ${companyPhone}`, 120, contactY);
+        contactY += 12;
+      }
+      if (companyEmail) {
+        doc.text(`Email: ${companyEmail}`, 120, contactY);
+      }
+    }
+
+    // Add a line separator
+    doc.strokeColor('#cccccc')
+       .lineWidth(1)
+       .moveTo(50, 130)
+       .lineTo(545, 130)
+       .stroke();
+
+    // Document Title
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text('PERSONAL QUOTATION', 50, 150);
+
+    // Quotation Details
+    doc.fontSize(12).font('Helvetica').fillColor('black');
+    doc.text(`Quotation Name: ${quotation.quotationName}`, 50, 190);
+    
+    if (quotation.description) {
+      doc.text(`Description: ${quotation.description}`, 50, 210);
+    }
+    
+    doc.text(`Date: ${new Date(quotation.createdAt || Date.now()).toLocaleDateString('en-IN')}`, 50, quotation.description ? 230 : 210);
+    doc.text(`Status: ${(quotation.status || 'ready').toUpperCase()}`, 50, quotation.description ? 250 : 230);
+
+    // Materials Table Header
+    let currentY = quotation.description ? 290 : 270;
+    
+    doc.fontSize(16).font('Helvetica-Bold').fillColor('#34495e');
+    doc.text('MATERIALS', 50, currentY);
+    currentY += 30;
+
+    // Table Headers
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('black');
+    doc.text('Item Name', 50, currentY);
+    doc.text('Quantity', 200, currentY);
+    doc.text('Unit', 280, currentY);
+    doc.text('Rate (₹)', 350, currentY);
+    doc.text('Amount (₹)', 450, currentY);
+    
+    currentY += 20;
+    
+    // Table line
+    doc.strokeColor('#cccccc')
+       .lineWidth(1)
+       .moveTo(50, currentY)
+       .lineTo(545, currentY)
+       .stroke();
+    
+    currentY += 20;
+
+    // Materials Data
+    let totalAmount = 0;
+    doc.fontSize(10).font('Helvetica');
+    
+    quotation.materials.forEach((material, index) => {
+      // Check if we need a new page
+      if (currentY > 700) {
+        doc.addPage();
+        currentY = 50;
+        
+        // Re-add headers on new page
+        doc.fontSize(12).font('Helvetica-Bold');
+        doc.text('Item Name', 50, currentY);
+        doc.text('Quantity', 200, currentY);
+        doc.text('Unit', 280, currentY);
+        doc.text('Rate (₹)', 350, currentY);
+        doc.text('Amount (₹)', 450, currentY);
+        currentY += 20;
+        
+        doc.strokeColor('#cccccc')
+           .lineWidth(1)
+           .moveTo(50, currentY)
+           .lineTo(545, currentY)
+           .stroke();
+        currentY += 20;
+        
+        doc.fontSize(10).font('Helvetica');
+      }
+
+      const itemAmount = material.rate * material.quantity;
+      totalAmount += itemAmount;
+
+      doc.text(material.itemName || 'N/A', 50, currentY, { width: 140 });
+      doc.text(material.quantity?.toString() || '0', 200, currentY);
+      doc.text(material.unit || 'pcs', 280, currentY);
+      doc.text(material.rate?.toLocaleString('en-IN') || '0', 350, currentY);
+      doc.text(itemAmount.toLocaleString('en-IN'), 450, currentY);
+      
+      currentY += 20;
+    });
+
+    // Total Section
+    currentY += 20;
+    doc.strokeColor('#2c3e50')
+       .lineWidth(2)
+       .moveTo(350, currentY)
+       .lineTo(545, currentY)
+       .stroke();
+    
+    currentY += 15;
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text('TOTAL AMOUNT: ₹', 350, currentY);
+    doc.text(totalAmount.toLocaleString('en-IN'), 470, currentY);
+
+    // Footer
+    const footerY = 750;
+    doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    doc.text('Generated from Personal Materials Management System', 50, footerY);
+    doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 50, footerY + 15);
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to generate PDF',
+        details: error.message 
+      });
+    }
+  }
+});
+
 // Transfer personal quotation to client quotation
 app.post('/api/personal-quotations/:id/transfer', async (req, res) => {
   try {

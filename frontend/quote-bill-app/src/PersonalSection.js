@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Sparkles, Upload } from 'lucide-react';
+import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
@@ -35,6 +35,14 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   });
 
   const [selectedMaterials, setSelectedMaterials] = useState([]);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredQuotations, setFilteredQuotations] = useState([]);
+  
+  // Edit quotation states
+  const [editingQuotation, setEditingQuotation] = useState(null);
+  const [showEditQuotation, setShowEditQuotation] = useState(false);
   
   // Custom category states
   const [customCategories, setCustomCategories] = useState([]);
@@ -350,6 +358,169 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     }
   };
 
+  // Edit quotation function
+  const editQuotation = (quotation) => {
+    setEditingQuotation(quotation);
+    setQuotationForm({
+      quotationName: quotation.quotationName,
+      description: quotation.description || ''
+    });
+    setSelectedMaterials(quotation.materials?.map(m => m._id || m.materialId) || []);
+    setShowEditQuotation(true);
+    setError('');
+  };
+
+  // Update quotation function
+  const updateQuotation = async () => {
+    if (!quotationForm.quotationName.trim()) {
+      setError('Please enter a quotation name');
+      return;
+    }
+
+    if (selectedMaterials.length === 0) {
+      setError('Please select at least one material');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const selectedMaterialsData = materials.filter(m => selectedMaterials.includes(m._id));
+      
+      const quotationData = {
+        quotationName: quotationForm.quotationName.trim(),
+        description: quotationForm.description?.trim() || '',
+        materials: selectedMaterialsData,
+        totalQuotationAmount: selectedMaterialsData.reduce((total, material) => {
+          return total + (material.rate * material.quantity);
+        }, 0),
+        status: 'ready'
+      };
+
+      const response = await fetch(`${API_BASE_URL}/personal-quotations/${editingQuotation._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quotationData)
+      });
+
+      if (response.ok) {
+        await fetchPersonalQuotations();
+        setQuotationForm({
+          quotationName: '',
+          description: ''
+        });
+        setSelectedMaterials([]);
+        setShowEditQuotation(false);
+        setEditingQuotation(null);
+        setError('');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update quotation');
+      }
+    } catch (error) {
+      console.error('Update quotation error:', error);
+      setError('Network error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete quotation function
+  const deleteQuotation = async (quotationId, quotationName) => {
+    if (!window.confirm(`Are you sure you want to delete "${quotationName}"?`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/personal-quotations/${quotationId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchPersonalQuotations();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete quotation');
+      }
+    } catch (error) {
+      console.error('Delete quotation error:', error);
+      setError('Network error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export to PDF function
+  const exportToPDF = async (quotation) => {
+    try {
+      setLoading(true);
+      
+      // First, let me check if there's a personal PDF endpoint, if not we'll create the data structure
+      const pdfData = {
+        type: 'estimate',
+        clientInfo: {
+          name: 'Personal Quotation',
+          email: '',
+          phone: '',
+          address: ''
+        },
+        items: quotation.materials.map(material => ({
+          itemName: material.itemName,
+          description: material.description || material.notes || '',
+          quantity: material.quantity,
+          unit: material.unit,
+          rate: material.rate,
+          amount: material.rate * material.quantity
+        })),
+        letterhead: {
+          companyName: 'Personal Quotation',
+          address: '',
+          phone: '',
+          email: '',
+          website: '',
+          logo: null
+        }
+      };
+
+      // We'll try to use the existing PDF generation endpoint
+      const response = await fetch(`${API_BASE_URL}/generate-personal-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quotation,
+          ...pdfData
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        // Fallback: open in new tab for manual save
+        window.open(`data:text/html,<h2>PDF Export Not Available</h2><p>Personal PDF export feature is being set up. Please contact support.</p>`, '_blank');
+      }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      setError('Failed to export PDF: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Custom Category Functions
   const addCustomCategory = async () => {
     if (!newCategory.name.trim()) {
@@ -565,6 +736,23 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
       fetchMaterials();
     }
   }, [searchQuery]);
+
+  // Filter quotations based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredQuotations(personalQuotations);
+    } else {
+      const filtered = personalQuotations.filter(quotation =>
+        quotation.quotationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quotation.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quotation.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quotation.materials?.some(material => 
+          material.itemName?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+      setFilteredQuotations(filtered);
+    }
+  }, [personalQuotations, searchTerm]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -958,14 +1146,45 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             <h2 className="text-xl font-semibold">Personal Quotations</h2>
             <button
               onClick={() => {
-                console.log('Create Quotation button clicked');
+                console.log('Create Quotation button clicked - New Button');
+                console.log('Materials available:', materials.length);
+                if (materials.length === 0) {
+                  setError('Please add some materials first before creating a quotation');
+                  setActiveTab('materials');
+                  return;
+                }
+                setError('');
                 setShowCreateQuotation(true);
+                setQuotationForm({
+                  quotationName: '',
+                  description: ''
+                });
+                setSelectedMaterials([]);
               }}
-              className="flex items-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-3 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-sm hover:shadow-md"
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              title="Create a new quotation from your materials"
             >
               <Plus size={20} />
-              <span>Create Quotation</span>
+              <span>Create New Quotation</span>
             </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search quotations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  isDarkTheme 
+                    ? 'bg-gray-800/50 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
+              />
+            </div>
           </div>
 
           {/* Quotations List */}
@@ -976,13 +1195,13 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {personalQuotations.map((quotation) => (
+              {filteredQuotations.map((quotation) => (
                 <div
                   key={quotation._id}
-                  className={`p-6 rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'}`}
+                  className={`p-6 rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 relative ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'}`}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div>
+                    <div className="flex-1 pr-4">
                       <h3 className="font-semibold text-lg">{quotation.quotationName}</h3>
                       {quotation.description && (
                         <p className="text-gray-500 mt-1">{quotation.description}</p>
@@ -995,12 +1214,61 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                         {quotation.status?.toUpperCase()}
                       </span>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-emerald-600">
-                        {formatCurrency(quotation.totalQuotationAmount)}
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-emerald-600">
+                          {formatCurrency(quotation.totalQuotationAmount)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {quotation.materials?.length || 0} materials
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {quotation.materials?.length || 0} materials
+                      
+                      {/* Action Buttons */}
+                      <div className="flex flex-col space-y-2 ml-4 min-w-[80px]">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('PDF button clicked for:', quotation.quotationName);
+                            exportToPDF(quotation);
+                          }}
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          title="Export to PDF"
+                          type="button"
+                        >
+                          <Download size={16} />
+                          <span>PDF</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Edit button clicked for:', quotation.quotationName);
+                            editQuotation(quotation);
+                          }}
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          title="Edit quotation"
+                          type="button"
+                        >
+                          <FileEdit size={16} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Delete button clicked for:', quotation.quotationName);
+                            deleteQuotation(quotation._id, quotation.quotationName);
+                          }}
+                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-sm hover:shadow-md text-sm cursor-pointer z-10 min-h-[36px]"
+                          title="Delete quotation"
+                          type="button"
+                        >
+                          <Trash2 size={16} />
+                          <span>Delete</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1027,11 +1295,19 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             </div>
           )}
 
-          {!loading && personalQuotations.length === 0 && (
+          {!loading && filteredQuotations.length === 0 && personalQuotations.length === 0 && (
             <div className="text-center py-12">
               <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-500 mb-2">No quotations found</h3>
               <p className="text-gray-400">Create your first personal quotation</p>
+            </div>
+          )}
+
+          {!loading && filteredQuotations.length === 0 && personalQuotations.length > 0 && (
+            <div className="text-center py-12">
+              <Search size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-500 mb-2">No quotations match your search</h3>
+              <p className="text-gray-400">Try adjusting your search terms</p>
             </div>
           )}
         </div>
@@ -2008,7 +2284,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                           className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
                             selectedMaterials.includes(material._id) 
                               ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm' 
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                              : 'hover:bg-blue-50 hover:border-blue-200 border border-transparent'
                           }`}
                         >
                           <input
@@ -2189,6 +2465,168 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 {editingCategory ? 'Update Category' : 'Add Category'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Quotation Modal */}
+      {showEditQuotation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDarkTheme ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Edit Quotation</h3>
+              <button
+                onClick={() => {
+                  setShowEditQuotation(false);
+                  setEditingQuotation(null);
+                  setSelectedMaterials([]);
+                  setQuotationForm({
+                    quotationName: '',
+                    description: ''
+                  });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); updateQuotation(); }}>
+              {/* Quotation Name */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Quotation Name *</label>
+                <input
+                  type="text"
+                  value={quotationForm.quotationName}
+                  onChange={(e) => setQuotationForm({...quotationForm, quotationName: e.target.value})}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                  placeholder="Enter quotation name"
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Description</label>
+                <textarea
+                  value={quotationForm.description}
+                  onChange={(e) => setQuotationForm({...quotationForm, description: e.target.value})}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none ${
+                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                  rows="3"
+                  placeholder="Enter quotation description (optional)"
+                />
+              </div>
+
+              {/* Material Selection */}
+              <div>
+                <h4 className="font-medium mb-3">Select Materials *</h4>
+                <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
+                  {materials.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No materials available. Add materials first.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {materials.map((material) => (
+                        <label
+                          key={material._id}
+                          className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
+                            selectedMaterials.includes(material._id) 
+                              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm' 
+                              : 'hover:bg-blue-50 hover:border-blue-200 border border-transparent'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedMaterials.includes(material._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedMaterials([...selectedMaterials, material._id]);
+                              } else {
+                                setSelectedMaterials(selectedMaterials.filter(id => id !== material._id));
+                              }
+                            }}
+                            className="mt-1 text-green-600 rounded focus:ring-green-500"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">{material.itemName}</div>
+                                <div className="text-sm text-gray-500">
+                                  {materialCategories.find(cat => cat.value === material.category)?.label}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium">{formatCurrency(material.rate * material.quantity)}</div>
+                                <div className="text-sm text-gray-500">
+                                  {material.quantity} {material.unit} × {formatCurrency(material.rate)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Selected Materials Summary */}
+              {selectedMaterials.length > 0 && (
+                <div className="mt-4 p-4 bg-emerald-50 rounded-lg">
+                  <h5 className="font-medium mb-2 text-emerald-700">Selected Materials Summary:</h5>
+                  <div className="space-y-1 text-sm">
+                    {materials.filter(m => selectedMaterials.includes(m._id)).map((material) => (
+                      <div key={material._id} className="flex justify-between text-emerald-600">
+                        <span>{material.itemName}</span>
+                        <span>{formatCurrency(material.rate * material.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-emerald-200 mt-2 pt-2 font-bold text-emerald-700">
+                    Total: {formatCurrency(
+                      materials.filter(m => selectedMaterials.includes(m._id))
+                        .reduce((sum, material) => sum + (material.rate * material.quantity), 0)
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Error Display */}
+              {error && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditQuotation(false);
+                    setEditingQuotation(null);
+                    setSelectedMaterials([]);
+                    setQuotationForm({
+                      quotationName: '',
+                      description: ''
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || selectedMaterials.length === 0}
+                  className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Updating...' : 'Update Quotation'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
