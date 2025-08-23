@@ -891,7 +891,10 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   const exportMaterialsToPDF = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/generate-materials-pdf`, {
+      console.log('Exporting materials to PDF:', filteredMaterials.length, 'materials');
+      console.log('Search query:', searchQuery);
+      
+      const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -901,6 +904,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
           searchQuery: searchQuery
         })
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
