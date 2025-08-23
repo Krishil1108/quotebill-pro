@@ -14,7 +14,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://quotebill-pro.onrender.com', 'https://quotebill-pro-frontend.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
@@ -1820,15 +1827,26 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
   }
 });
 
+// Handle OPTIONS request for materials PDF
+app.options('/api/generate-materials-pdf', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
+});
+
 // Generate Materials List PDF
 app.post('/api/generate-materials-pdf', async (req, res) => {
+  console.log('Materials PDF endpoint called with:', req.body);
   try {
     const { materials, searchQuery } = req.body;
     
     if (!materials || materials.length === 0) {
+      console.log('No materials provided');
       return res.status(400).json({ error: 'No materials provided for PDF generation' });
     }
 
+    console.log('Generating PDF for', materials.length, 'materials');
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument();
     
