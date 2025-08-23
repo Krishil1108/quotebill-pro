@@ -2004,67 +2004,126 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
        .lineTo(545, titleY + (searchQuery ? 65 : 45))
        .stroke();
 
-    // Table Header
-    let currentY = titleY + (searchQuery ? 85 : 65);
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
+    // MATERIALS INVENTORY TABLE (EXACT same styling as client PDF)
+    const tableY = titleY + (searchQuery ? 85 : 65);
+    const tableHeight = 25;
     
-    // Header background
-    doc.rect(50, currentY, 495, 25).fillColor('#34495e').fill();
+    // Table header with gradient effect (same as client PDF)
+    drawRect(40, tableY, pageWidth, tableHeight, '#3b82f6');
     
-    currentY += 8;
-    doc.text('Item Name', 55, currentY);
-    doc.text('Category', 180, currentY);
-    doc.text('Qty', 260, currentY);
-    doc.text('Rate (₹)', 300, currentY);
-    doc.text('Total (₹)', 380, currentY);
-    doc.text('Unit', 450, currentY);
-    doc.text('Supplier', 490, currentY);
+    // Column definitions (adjusted for materials)
+    const colWidths = [180, 80, 60, 80, 80, 60];
+    const colPositions = [50, 230, 310, 370, 450, 530];
+    const headers = ['ITEM NAME', 'CATEGORY', 'QTY', 'RATE', 'AMOUNT', 'UNIT'];
     
-    currentY += 25;
+    doc.fontSize(11)
+       .fillColor('white')
+       .font('Helvetica-Bold');
+    
+    headers.forEach((header, i) => {
+      doc.text(header, colPositions[i], tableY + 8, {
+        width: colWidths[i] - 10,
+        align: i === 0 ? 'left' : 'center'
+      });
+    });
 
-    // Materials Data
+    // Table rows with alternating colors (EXACT same as client PDF)
+    let rowY = tableY + tableHeight;
     let totalInventoryValue = 0;
-    doc.fontSize(9).font('Helvetica').fillColor('#2c3e50');
     
     materials.forEach((material, index) => {
-      // Alternate row colors
-      if (index % 2 === 0) {
-        doc.rect(50, currentY - 5, 495, 18).fillColor('#f8f9fa').fill();
+      if (rowY > 650) { // New page if needed
+        doc.addPage();
+        rowY = 60;
       }
-      
-      doc.fillColor('#2c3e50');
+
+      // Alternating row colors (same as client PDF)
+      const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+      drawRect(40, rowY, pageWidth, 22, rowColor);
+
+      doc.fontSize(10)
+         .fillColor('#1e293b')
+         .font('Helvetica');
+
       const totalValue = (material.rate || 0) * (material.quantity || 0);
       totalInventoryValue += totalValue;
 
-      doc.text(material.itemName || 'N/A', 55, currentY, { width: 120 });
-      doc.text(material.category || 'N/A', 180, currentY, { width: 75 });
-      doc.text((material.quantity || 0).toString(), 260, currentY);
-      doc.text((material.rate || 0).toLocaleString('en-IN'), 300, currentY);
-      doc.text(totalValue.toLocaleString('en-IN'), 380, currentY);
-      doc.text(material.unit || 'pcs', 450, currentY);
-      doc.text(material.supplier || 'N/A', 490, currentY, { width: 50 });
-      
-      currentY += 18;
-      
-      // Check for page break
-      if (currentY > 700) {
-        doc.addPage();
-        currentY = 50;
-      }
+      // Item Name
+      doc.text(material.itemName || 'N/A', colPositions[0], rowY + 6, {
+        width: colWidths[0] - 10
+      });
+
+      // Category
+      doc.text(material.category || 'N/A', colPositions[1], rowY + 6, {
+        width: colWidths[1] - 10,
+        align: 'center'
+      });
+
+      // Quantity
+      doc.text((material.quantity || 0).toString(), colPositions[2], rowY + 6, {
+        width: colWidths[2] - 10,
+        align: 'center'
+      });
+
+      // Rate (using Rs like client PDF)
+      doc.text(`Rs ${Number(material.rate || 0).toFixed(2)}`, colPositions[3], rowY + 6, {
+        width: colWidths[3] - 10,
+        align: 'center'
+      });
+
+      // Amount (bold like client PDF)
+      doc.font('Helvetica-Bold')
+         .text(`Rs ${Number(totalValue).toFixed(2)}`, colPositions[4], rowY + 6, {
+           width: colWidths[4] - 10,
+           align: 'center'
+         });
+
+      // Unit
+      doc.font('Helvetica')
+         .text(material.unit || 'pcs', colPositions[5], rowY + 6, {
+           width: colWidths[5] - 10,
+           align: 'center'
+         });
+
+      rowY += 22;
     });
 
-    // Summary Section
-    currentY += 20;
-    doc.strokeColor('#2c3e50')
-       .lineWidth(2)
-       .moveTo(300, currentY)
-       .lineTo(545, currentY)
-       .stroke();
+    // Table border (same as client PDF)
+    drawLine(40, tableY, 555, tableY, '#3b82f6', 2);
+    drawLine(40, rowY, 555, rowY, '#e5e7eb', 1);
+
+    // TOTAL SECTION (EXACT same styling as client PDF)
+    const totalY = rowY + 20;
     
-    currentY += 15;
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#2c3e50');
-    doc.text('TOTAL INVENTORY VALUE: ₹', 300, currentY);
-    doc.text(totalInventoryValue.toLocaleString('en-IN'), 450, currentY);
+    // Total box with shadow effect (same as client PDF)
+    drawRect(350, totalY, 205, 60, '#f8fafc', '#e2e8f0');
+    drawRect(352, totalY + 2, 205, 60, '#ffffff');
+    
+    // Subtotal section
+    doc.fontSize(11)
+       .fillColor('#64748b')
+       .font('Helvetica')
+       .text('Total Inventory Value:', 365, totalY + 15);
+    
+    doc.text(`Rs ${Number(totalInventoryValue).toFixed(2)}`, 460, totalY + 15, {
+      align: 'right',
+      width: 80
+    });
+
+    // Total amount with blue line and styling (same as client PDF)
+    drawLine(365, totalY + 35, 535, totalY + 35, '#3b82f6', 1);
+    
+    doc.fontSize(14)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text('TOTAL:', 365, totalY + 42);
+    
+    doc.fontSize(16)
+       .fillColor('#3b82f6')
+       .text(`Rs ${Number(totalInventoryValue).toFixed(2)}`, 460, totalY + 40, {
+         align: 'right',
+         width: 80
+       });
 
     // FOOTER SECTION (EXACT same styling as client PDF)
     const footerY = 720;
