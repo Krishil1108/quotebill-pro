@@ -360,12 +360,36 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   // Edit quotation function
   const editQuotation = (quotation) => {
+    console.log('Editing quotation:', quotation);
+    console.log('Quotation materials:', quotation.materials);
+    
     setEditingQuotation(quotation);
     setQuotationForm({
       quotationName: quotation.quotationName,
       description: quotation.description || ''
     });
-    setSelectedMaterials(quotation.materials?.map(m => m._id || m.materialId) || []);
+    
+    // Handle different material ID structures
+    const materialIds = [];
+    if (quotation.materials && Array.isArray(quotation.materials)) {
+      quotation.materials.forEach(material => {
+        // Try different possible ID fields
+        const materialId = material._id || material.materialId || material.id;
+        if (materialId) {
+          materialIds.push(materialId);
+        } else {
+          console.warn('Material without ID found:', material);
+          // If no ID found, try to match by name with existing materials
+          const matchingMaterial = materials.find(m => m.itemName === material.itemName);
+          if (matchingMaterial) {
+            materialIds.push(matchingMaterial._id);
+          }
+        }
+      });
+    }
+    
+    console.log('Selected material IDs:', materialIds);
+    setSelectedMaterials(materialIds);
     setShowEditQuotation(true);
     setError('');
   };
@@ -386,7 +410,17 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     setError('');
 
     try {
+      console.log('Updating quotation with selected materials:', selectedMaterials);
+      console.log('Available materials:', materials.map(m => ({ id: m._id, name: m.itemName })));
+      
       const selectedMaterialsData = materials.filter(m => selectedMaterials.includes(m._id));
+      
+      console.log('Filtered materials data:', selectedMaterialsData);
+      
+      if (selectedMaterialsData.length === 0) {
+        setError('No valid materials found for selected IDs. Please try refreshing and selecting materials again.');
+        return;
+      }
       
       const quotationData = {
         quotationName: quotationForm.quotationName.trim(),
@@ -397,6 +431,8 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         }, 0),
         status: 'ready'
       };
+
+      console.log('Sending quotation update:', quotationData);
 
       const response = await fetch(`${API_BASE_URL}/personal-quotations/${editingQuotation._id}`, {
         method: 'PUT',
@@ -418,6 +454,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         setError('');
       } else {
         const errorData = await response.json();
+        console.error('Update failed:', errorData);
         setError(errorData.error || 'Failed to update quotation');
       }
     } catch (error) {
@@ -458,8 +495,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   const exportToPDF = async (quotation) => {
     try {
       setLoading(true);
+      console.log('Exporting quotation to PDF:', quotation);
       
-      // First, let me check if there's a personal PDF endpoint, if not we'll create the data structure
+      // Create the PDF data structure
       const pdfData = {
         type: 'estimate',
         clientInfo: {
@@ -468,16 +506,16 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
           phone: '',
           address: ''
         },
-        items: quotation.materials.map(material => ({
-          itemName: material.itemName,
+        items: quotation.materials?.map(material => ({
+          itemName: material.itemName || 'Unknown Item',
           description: material.description || material.notes || '',
-          quantity: material.quantity,
-          unit: material.unit,
-          rate: material.rate,
-          amount: material.rate * material.quantity
-        })),
+          quantity: material.quantity || 1,
+          unit: material.unit || 'pcs',
+          rate: material.rate || 0,
+          amount: (material.rate || 0) * (material.quantity || 1)
+        })) || [],
         letterhead: {
-          companyName: 'Personal Quotation',
+          companyName: 'Personal Quotation System',
           address: '',
           phone: '',
           email: '',
@@ -486,7 +524,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         }
       };
 
-      // We'll try to use the existing PDF generation endpoint
+      console.log('PDF data prepared:', pdfData);
+
+      // Try the personal PDF generation endpoint
       const response = await fetch(`${API_BASE_URL}/generate-personal-pdf`, {
         method: 'POST',
         headers: {
@@ -494,9 +534,13 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         },
         body: JSON.stringify({
           quotation,
-          ...pdfData
+          clientInfo: pdfData.clientInfo,
+          items: pdfData.items,
+          letterhead: pdfData.letterhead
         })
       });
+
+      console.log('PDF Response status:', response.status);
 
       if (response.ok) {
         const blob = await response.blob();
@@ -509,9 +553,11 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        console.log('PDF downloaded successfully');
       } else {
-        // Fallback: open in new tab for manual save
-        window.open(`data:text/html,<h2>PDF Export Not Available</h2><p>Personal PDF export feature is being set up. Please contact support.</p>`, '_blank');
+        const errorText = await response.text();
+        console.error('PDF generation failed:', errorText);
+        setError(`Failed to generate PDF: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('PDF export error:', error);

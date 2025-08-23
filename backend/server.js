@@ -1555,10 +1555,10 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
     doc.pipe(res);
 
     // Company Logo and Header
-    const logoBase64 = DEFAULT_LOGO_BASE64;
-    if (logoBase64) {
+    if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
       try {
-        const logoBuffer = Buffer.from(logoBase64, 'base64');
+        const base64Data = DEFAULT_LOGO.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
         doc.image(logoBuffer, 50, 50, { width: 60 });
       } catch (logoError) {
         console.warn('Logo loading failed:', logoError.message);
