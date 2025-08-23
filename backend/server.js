@@ -1895,6 +1895,11 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
       logo: clientSettings?.letterhead?.logo || DEFAULT_LOGO
     };
 
+    console.log('Materials PDF Logo debug:');
+    console.log('clientSettings logo available:', !!clientSettings?.letterhead?.logo);
+    console.log('DEFAULT_LOGO available:', !!DEFAULT_LOGO);
+    console.log('Final logo available:', !!letterheadData.logo);
+
     // Extract company details from settings
     const companyName = letterheadData.firmName;
     const companyAddress = letterheadData.address;
@@ -1910,16 +1915,25 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
     // Blue top bar
     drawRect(40, 40, pageWidth, 8, '#3b82f6');
     
-    // Logo section
-    if (letterheadData.logo) {
+    // Logo section (EXACT same as quotation PDF)
+    if (letterheadData.logo && letterheadData.logo.startsWith('data:image/')) {
       try {
-        if (letterheadData.logo.startsWith('data:image/')) {
-          const base64Data = letterheadData.logo.split(',')[1];
-          const logoBuffer = Buffer.from(base64Data, 'base64');
-          doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
-        }
+        const base64Data = letterheadData.logo.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
+        doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
+        console.log('✅ Logo loaded successfully for materials PDF');
       } catch (logoError) {
         console.warn('Logo loading failed:', logoError.message);
+      }
+    } else if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
+      // Fallback to DEFAULT_LOGO if letterhead logo is not available
+      try {
+        const base64Data = DEFAULT_LOGO.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
+        doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
+        console.log('✅ Default logo loaded successfully for materials PDF');
+      } catch (logoError) {
+        console.warn('Default logo loading failed:', logoError.message);
       }
     }
     
