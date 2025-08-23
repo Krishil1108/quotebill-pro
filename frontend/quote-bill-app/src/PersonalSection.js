@@ -480,10 +480,17 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         return;
       }
       
+      // Transform materials to the format expected by backend
+      const transformedMaterials = selectedMaterialsData.map(material => ({
+        materialId: material._id,
+        quantity: material.quantity || 1,
+        rate: material.rate
+      }));
+
       const quotationData = {
         quotationName: quotationForm.quotationName.trim(),
         description: quotationForm.description?.trim() || '',
-        materials: selectedMaterialsData,
+        materials: transformedMaterials,
         totalQuotationAmount: selectedMaterialsData.reduce((total, material) => {
           return total + (material.rate * material.quantity);
         }, 0),
@@ -491,6 +498,16 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
       };
 
       console.log('Sending quotation update:', quotationData);
+      console.log('📋 Materials being sent to backend:');
+      quotationData.materials.forEach((material, index) => {
+        console.log(`  Material ${index}:`, {
+          _id: material._id,
+          materialId: material.materialId,
+          id: material.id,
+          itemName: material.itemName,
+          fullObject: material
+        });
+      });
 
       const response = await fetch(`${API_BASE_URL}/personal-quotations/${editingQuotation._id}`, {
         method: 'PUT',

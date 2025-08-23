@@ -1485,6 +1485,10 @@ app.post('/api/personal-quotations', async (req, res) => {
 // Update personal quotation
 app.put('/api/personal-quotations/:id', async (req, res) => {
   try {
+    console.log('🔧 UPDATE QUOTATION REQUEST:');
+    console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Materials received:', req.body.materials);
+    
     const { quotationName, description, materials, status } = req.body;
     
     const updateData = {};
@@ -1493,21 +1497,35 @@ app.put('/api/personal-quotations/:id', async (req, res) => {
     if (status) updateData.status = status;
     
     if (materials) {
+      console.log('🔄 Processing materials array:', materials.length, 'items');
       const processedMaterials = [];
       let totalQuotationAmount = 0;
       
-      for (const material of materials) {
-        const materialDoc = await Material.findById(material.materialId);
-        if (!materialDoc) {
-          return res.status(400).json({ error: `Material with ID ${material.materialId} not found` });
+      for (let i = 0; i < materials.length; i++) {
+        const material = materials[i];
+        console.log(`📦 Processing material ${i}:`, JSON.stringify(material, null, 2));
+        
+        // Handle both material object and materialId reference
+        const materialId = material.materialId || material._id || material.id;
+        console.log(`🔑 Extracted material ID: ${materialId}`);
+        
+        if (!materialId) {
+          console.error('❌ Material without ID found:', material);
+          return res.status(400).json({ error: `Material without ID found` });
         }
         
-        const quantity = parseFloat(material.quantity);
-        const rate = parseFloat(material.rate);
+        const materialDoc = await Material.findById(materialId);
+        if (!materialDoc) {
+          return res.status(400).json({ error: `Material with ID ${materialId} not found` });
+        }
+        
+        // Use provided quantity and rate, or fallback to material defaults
+        const quantity = parseFloat(material.quantity || materialDoc.quantity || 1);
+        const rate = parseFloat(material.rate || materialDoc.rate);
         const totalAmount = quantity * rate;
         
         processedMaterials.push({
-          materialId: material.materialId,
+          materialId: materialId,
           itemName: materialDoc.itemName,
           quantity,
           rate,
