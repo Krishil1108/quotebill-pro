@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle, X, Lightbulb, TrendingUp, Zap, Clock, ArrowRight } from 'lucide-react';
+import { Plus, CheckCircle, X, Lightbulb, TrendingUp, Zap, Clock, ArrowRight, Star } from 'lucide-react';
+import particularSequenceManager from '../utils/ParticularSequenceManager';
 
 const IntelligentItemSuggestions = ({ 
   lastAddedItem, 
@@ -179,9 +180,33 @@ const IntelligentItemSuggestions = ({
     const suggestions = [];
     const lastParticular = lastItem.particular.toLowerCase().trim();
     
-    // 1. Pattern-based suggestions
+    // 1. PRIORITY: PDF Sequence suggestions
+    if (particularSequenceManager.hasCustomSequence()) {
+      const pdfSuggestions = particularSequenceManager.getNextItemsInSequence(lastItem.particular, 3);
+      pdfSuggestions.forEach(pdfSuggestion => {
+        // Check if this item is not already added
+        const alreadyExists = allItems.some(item => 
+          item.particular.toLowerCase().trim() === pdfSuggestion.particular.toLowerCase().trim()
+        );
+        
+        if (!alreadyExists) {
+          suggestions.push({
+            particular: pdfSuggestion.particular,
+            quantity: lastItem.quantity, // Same quantity as last item
+            unit: lastItem.unit, // Same unit as previous item
+            rate: Math.round(parseFloat(lastItem.rate) * 0.9), // Slight price variation
+            amount: parseFloat(lastItem.quantity) * Math.round(parseFloat(lastItem.rate) * 0.9),
+            confidence: pdfSuggestion.confidence,
+            reason: `PDF sequence: ${pdfSuggestion.reason}`,
+            type: 'pdf-sequence'
+          });
+        }
+      });
+    }
+
+    // 2. Pattern-based suggestions (lower priority if PDF exists)
     const pattern = electricalPatterns[lastParticular];
-    if (pattern) {
+    if (pattern && (!particularSequenceManager.hasCustomSequence() || suggestions.length < 3)) {
       pattern.nextItems.forEach(nextItem => {
         // Check if this item is not already added
         const alreadyExists = allItems.some(item => 
@@ -198,7 +223,7 @@ const IntelligentItemSuggestions = ({
             unit: lastItem.unit, // Same unit as previous item initially
             rate: suggestedRate || 100,
             amount: (suggestedQuantity || 1) * (suggestedRate || 100),
-            confidence: nextItem.confidence,
+            confidence: particularSequenceManager.hasCustomSequence() ? nextItem.confidence * 0.7 : nextItem.confidence,
             reason: nextItem.reason,
             type: 'pattern'
           });
@@ -206,21 +231,27 @@ const IntelligentItemSuggestions = ({
       });
     }
 
-    // 2. Historical co-occurrence analysis
-    if (allDocuments.length > 0) {
+    // 3. Historical co-occurrence analysis
+    if (allDocuments.length > 0 && suggestions.length < 3) {
       const historicalSuggestions = getHistoricalSuggestions(lastParticular, lastItem);
       suggestions.push(...historicalSuggestions);
     }
 
-    // 3. Common electrical sequences (if no pattern found)
+    // 4. Common electrical sequences (if no pattern found)
     if (suggestions.length === 0) {
       const commonSuggestions = getCommonElectricalSuggestions(lastParticular, lastItem);
       suggestions.push(...commonSuggestions);
     }
 
-    // Sort by confidence and limit to top 3
+    // Sort by type priority and confidence and limit to top 3
     const finalSuggestions = suggestions
-      .sort((a, b) => b.confidence - a.confidence)
+      .sort((a, b) => {
+        // Prioritize PDF sequence suggestions
+        if (a.type === 'pdf-sequence' && b.type !== 'pdf-sequence') return -1;
+        if (b.type === 'pdf-sequence' && a.type !== 'pdf-sequence') return 1;
+        // Then sort by confidence
+        return b.confidence - a.confidence;
+      })
       .slice(0, 3);
 
     setSuggestions(finalSuggestions);

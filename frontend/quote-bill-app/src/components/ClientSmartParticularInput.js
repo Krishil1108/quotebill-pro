@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Lightbulb, TrendingUp, Zap, ArrowRight, Clock, ChevronDown } from 'lucide-react';
+import { Search, Lightbulb, TrendingUp, Zap, ArrowRight, Clock, ChevronDown, Star } from 'lucide-react';
+import particularSequenceManager from '../utils/ParticularSequenceManager';
 
 const ClientSmartParticularInput = ({ 
   value, 
@@ -124,7 +125,41 @@ const ClientSmartParticularInput = ({
   const generateAISuggestions = (input) => {
     const suggestions = new Set();
     
-    // 1. Pattern-based suggestions
+    // 1. PRIORITY: Custom PDF sequence suggestions
+    if (particularSequenceManager.hasCustomSequence()) {
+      const customSuggestions = particularSequenceManager.findInSequence(input, 5);
+      customSuggestions.forEach(suggestion => {
+        if (!particulars.some(p => p.toLowerCase() === suggestion.particular.toLowerCase())) {
+          suggestions.add({
+            text: suggestion.particular,
+            confidence: suggestion.confidence,
+            reason: `PDF Sequence #${suggestion.sequence}`,
+            category: 'pdf-sequence'
+          });
+        }
+      });
+
+      // Get next items based on current items in the document
+      if (currentItems.length > 0) {
+        const lastItem = currentItems[currentItems.length - 1];
+        if (lastItem?.particular) {
+          const nextInSequence = particularSequenceManager.getNextItemsInSequence(lastItem.particular, 3);
+          nextInSequence.forEach(suggestion => {
+            if (suggestion.particular.toLowerCase().includes(input) && 
+                !particulars.some(p => p.toLowerCase() === suggestion.particular.toLowerCase())) {
+              suggestions.add({
+                text: suggestion.particular,
+                confidence: suggestion.confidence,
+                reason: `Next in PDF sequence`,
+                category: 'pdf-next'
+              });
+            }
+          });
+        }
+      }
+    }
+
+    // 2. Pattern-based suggestions (lower priority if PDF sequence exists)
     Object.entries(electricalPatterns).forEach(([patternName, pattern]) => {
       const isTriggered = pattern.triggers.some(trigger => 
         input.includes(trigger.toLowerCase()) || 
@@ -138,7 +173,7 @@ const ClientSmartParticularInput = ({
               item.toLowerCase() !== input) {
             suggestions.add({
               text: item,
-              confidence: pattern.confidence,
+              confidence: particularSequenceManager.hasCustomSequence() ? pattern.confidence * 0.7 : pattern.confidence,
               reason: `Common in ${patternName.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
               category: 'pattern'
             });
@@ -147,21 +182,21 @@ const ClientSmartParticularInput = ({
       }
     });
 
-    // 2. Common items matching input
+    // 3. Common items matching input
     commonElectricalItems.forEach(item => {
       if (item.toLowerCase().includes(input) && 
           item.toLowerCase() !== input &&
           !particulars.some(p => p.toLowerCase() === item.toLowerCase())) {
         suggestions.add({
           text: item,
-          confidence: 0.7,
+          confidence: particularSequenceManager.hasCustomSequence() ? 0.5 : 0.7,
           reason: 'Common electrical item',
           category: 'common'
         });
       }
     });
 
-    // 3. Historical usage from documents
+    // 4. Historical usage from documents
     if (allDocuments.length > 0) {
       const historicalItems = new Map();
       allDocuments.forEach(doc => {
@@ -182,7 +217,7 @@ const ClientSmartParticularInput = ({
           if (itemName !== input && !particulars.some(p => p.toLowerCase() === itemName)) {
             suggestions.add({
               text: itemName,
-              confidence: Math.min(0.8, count * 0.2),
+              confidence: Math.min(0.6, count * 0.2),
               reason: `Used ${count} times before`,
               category: 'history'
             });
@@ -190,7 +225,7 @@ const ClientSmartParticularInput = ({
         });
     }
 
-    // 4. Sequential suggestions based on current document items
+    // 5. Sequential suggestions based on current document items
     const currentItems = getCurrentDocumentItems();
     if (currentItems.length > 0) {
       const sequentialSuggestions = getSequentialSuggestions(currentItems, input);
@@ -198,8 +233,17 @@ const ClientSmartParticularInput = ({
     }
 
     return Array.from(suggestions)
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 6);
+      .sort((a, b) => {
+        // Prioritize PDF sequence suggestions
+        if (a.category === 'pdf-sequence' && b.category !== 'pdf-sequence') return -1;
+        if (b.category === 'pdf-sequence' && a.category !== 'pdf-sequence') return 1;
+        if (a.category === 'pdf-next' && b.category !== 'pdf-next' && b.category !== 'pdf-sequence') return -1;
+        if (b.category === 'pdf-next' && a.category !== 'pdf-next' && a.category !== 'pdf-sequence') return 1;
+        
+        // Then sort by confidence
+        return b.confidence - a.confidence;
+      })
+      .slice(0, 8);
   };
 
   const getCurrentDocumentItems = () => {
@@ -317,8 +361,11 @@ const ClientSmartParticularInput = ({
     }
   };
 
-  const renderSuggestionIcon = (type, confidence) => {
-    switch (type) {
+  const renderSuggestionIcon = (type, confidence, category) => {
+    switch (category || type) {
+      case 'pdf-sequence':
+      case 'pdf-next':
+        return <Star size={14} className="text-purple-500" />;
       case 'existing':
         return <Search size={14} className="text-blue-500" />;
       case 'ai':
@@ -330,7 +377,7 @@ const ClientSmartParticularInput = ({
     }
   };
 
-  const getSuggestionStyle = (type, confidence, isHighlighted) => {
+  const getSuggestionStyle = (type, confidence, isHighlighted, category) => {
     let baseStyle = `flex items-center justify-between p-3 cursor-pointer transition-all duration-150 ${
       isDarkTheme ? 'text-white' : 'text-gray-800'
     }`;
@@ -345,8 +392,10 @@ const ClientSmartParticularInput = ({
         : ' hover:bg-gray-50';
     }
 
-    // Add type-specific styling
-    if (type === 'ai' && confidence > 0.8) {
+    // Add category-specific styling
+    if (category === 'pdf-sequence' || category === 'pdf-next') {
+      baseStyle += ' border-l-4 border-purple-400';
+    } else if (type === 'ai' && confidence > 0.8) {
       baseStyle += ' border-l-4 border-yellow-400';
     }
 
@@ -419,52 +468,60 @@ const ClientSmartParticularInput = ({
             </div>
           )}
 
-          {/* AI suggestions section */}
-          {aiSuggestions.length > 0 && (
-            <div>
-              <div className={`px-3 py-2 text-xs font-medium ${
-                isDarkTheme ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                <Lightbulb size={12} className="inline mr-1" />
-                AI Suggestions
-              </div>
-              {aiSuggestions.map((suggestion, index) => (
-                <div
-                  key={`ai-${index}`}
-                  className={getSuggestionStyle('ai', suggestion.confidence, 
-                    highlightedIndex === suggestions.length + index)}
-                  onClick={() => handleSelect(suggestion.text)}
-                >
-                  <div className="flex items-center gap-2">
-                    {renderSuggestionIcon('ai', suggestion.confidence)}
-                    <div>
-                      <div className="font-medium">{suggestion.text}</div>
-                      <div className={`text-xs ${
-                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
-                        <Clock size={10} className="inline mr-1" />
-                        {suggestion.reason}
+              {/* AI suggestions section */}
+              {aiSuggestions.length > 0 && (
+                <div>
+                  <div className={`px-3 py-2 text-xs font-medium ${
+                    isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    <Lightbulb size={12} className="inline mr-1" />
+                    AI Suggestions
+                    {particularSequenceManager.hasCustomSequence() && (
+                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                        PDF Sequence Active
+                      </span>
+                    )}
+                  </div>
+                  {aiSuggestions.map((suggestion, index) => (
+                    <div
+                      key={`ai-${index}`}
+                      className={getSuggestionStyle('ai', suggestion.confidence, 
+                        highlightedIndex === suggestions.length + index, suggestion.category)}
+                      onClick={() => handleSelect(suggestion.text)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {renderSuggestionIcon('ai', suggestion.confidence, suggestion.category)}
+                        <div>
+                          <div className="font-medium">{suggestion.text}</div>
+                          <div className={`text-xs ${
+                            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            <Clock size={10} className="inline mr-1" />
+                            {suggestion.reason}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`text-xs px-2 py-1 rounded ${
+                          suggestion.category === 'pdf-sequence' || suggestion.category === 'pdf-next'
+                            ? 'bg-purple-100 text-purple-700'
+                            : suggestion.confidence > 0.8 
+                              ? 'bg-green-100 text-green-700' 
+                              : suggestion.confidence > 0.6 
+                                ? 'bg-yellow-100 text-yellow-700' 
+                                : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {suggestion.category === 'pdf-sequence' || suggestion.category === 'pdf-next' 
+                            ? 'PDF' 
+                            : Math.round(suggestion.confidence * 100) + '%'
+                          }
+                        </div>
+                        <ArrowRight size={14} className="text-gray-400" />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`text-xs px-2 py-1 rounded ${
-                      suggestion.confidence > 0.8 
-                        ? 'bg-green-100 text-green-700' 
-                        : suggestion.confidence > 0.6 
-                          ? 'bg-yellow-100 text-yellow-700' 
-                          : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {Math.round(suggestion.confidence * 100)}%
-                    </div>
-                    <ArrowRight size={14} className="text-gray-400" />
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Footer hint */}
+              )}          {/* Footer hint */}
           <div className={`px-3 py-2 text-xs ${
             isDarkTheme ? 'text-gray-500' : 'text-gray-400'
           } border-t ${isDarkTheme ? 'border-gray-600' : 'border-gray-100'}`}>
