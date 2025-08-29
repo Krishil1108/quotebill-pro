@@ -21,20 +21,11 @@ const LandingPage = ({ onNavigate, isDarkTheme, toggleTheme }) => {
               <Sparkles className={`w-6 h-6 ${isDarkTheme ? 'text-yellow-400' : 'text-blue-500'}`} />
             </div>
           </div>
-          <p className={`text-lg sm:text-xl mb-4 sm:mb-6 transition-colors duration-500 max-w-2xl mx-auto ${
+          <p className={`text-lg sm:text-xl mb-6 sm:mb-8 transition-colors duration-500 max-w-2xl mx-auto ${
             isDarkTheme ? 'text-gray-300' : 'text-gray-600'
           }`}>
             Professional quotation and billing solution for modern businesses
           </p>
-          
-          {/* AI Features Description */}
-          <div className={`mb-6 sm:mb-8 max-w-3xl mx-auto text-center ${
-            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
-          }`}>
-            <p className="text-sm sm:text-base">
-              🤖 <span className="font-semibold">AI-Powered Smart Suggestions:</span> Intelligent electrical item sequencing based on industry standards and PDF manuals for faster, accurate quote creation.
-            </p>
-          </div>
           
           {/* Theme Toggle */}
           <button
@@ -160,11 +151,13 @@ const LandingPage = ({ onNavigate, isDarkTheme, toggleTheme }) => {
         </div>
         
         {/* Features Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto mt-12 sm:mt-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto mt-12 sm:mt-16">
           {[
+            { title: 'AI Smart Suggestions', desc: 'Intelligent electrical item sequencing' },
             { title: 'Dynamic UI', desc: 'Responsive design for all devices' },
             { title: 'Auto-Save', desc: 'Never lose your work again' },
-            { title: 'PDF Export', desc: 'Professional document output' }
+            { title: 'PDF Export', desc: 'Professional document output' },
+            { title: 'CSV Export', desc: 'Excel-compatible data export' }
           ].map((feature, idx) => (
             <div key={idx} className={`p-4 sm:p-6 rounded-2xl text-center transition-all duration-500 hover:scale-105 ${
               isDarkTheme 
@@ -181,42 +174,16 @@ const LandingPage = ({ onNavigate, isDarkTheme, toggleTheme }) => {
           ))}
         </div>
 
-        {/* Keyboard Shortcuts Help */}
-        <div className="mt-12 sm:mt-16 max-w-2xl mx-auto">
+        {/* Footer */}
+        <div className="mt-16 sm:mt-20 max-w-4xl mx-auto text-center">
           <div className={`p-6 rounded-2xl transition-all duration-500 ${
             isDarkTheme 
               ? 'bg-white/5 border border-white/10' 
               : 'bg-white/70 border border-white/50 backdrop-blur-sm'
           }`}>
-            <h3 className={`text-lg font-bold mb-4 text-center ${isDarkTheme ? 'text-white' : 'text-gray-800'}`}>
-              ⌨️ Keyboard Shortcuts
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className={`flex justify-between ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                <span>Navigate Back:</span>
-                <code className={`px-2 py-1 rounded text-xs ${
-                  isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}>ESC</code>
-              </div>
-              <div className={`flex justify-between ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                <span>Browser Back:</span>
-                <code className={`px-2 py-1 rounded text-xs ${
-                  isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}>Alt + ←</code>
-              </div>
-              <div className={`flex justify-between ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                <span>Close Modals:</span>
-                <code className={`px-2 py-1 rounded text-xs ${
-                  isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}>Alt + →</code>
-              </div>
-              <div className={`flex justify-between ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                <span>Browser Navigation:</span>
-                <code className={`px-2 py-1 rounded text-xs ${
-                  isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}>Back/Forward</code>
-              </div>
-            </div>
+            <p className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+              © 2025 QuoteBill Pro. All rights reserved.
+            </p>
           </div>
         </div>
       </div>
