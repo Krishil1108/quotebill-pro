@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit, FileSpreadsheet, Brain } from 'lucide-react';
+import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Download, FileEdit, FileSpreadsheet, Brain, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 import SmartItemInput from './components/SmartItemInput';
 import SmartSuggestionEngine from './components/SmartSuggestionEngine';
@@ -52,6 +52,12 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [newCategory, setNewCategory] = useState({ name: '', color: '#F0F8FF' });
+
+  // Message and warning dialog states
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showWarningDialog, setShowWarningDialog] = useState(false);
+  const [warningDialog, setWarningDialog] = useState({ title: '', message: '', onConfirm: null });
 
   const defaultCategories = [
     { value: 'tubelights', label: 'Tubelights', color: '#E8F4F8' },
@@ -133,6 +139,25 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     }
   };
 
+  // Utility functions for dialogs
+  const showSuccessToast = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessMessage(true);
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 3000);
+  };
+
+  const showWarning = (title, message, onConfirm) => {
+    setWarningDialog({ title, message, onConfirm });
+    setShowWarningDialog(true);
+  };
+
+  const hideWarning = () => {
+    setShowWarningDialog(false);
+    setWarningDialog({ title: '', message: '', onConfirm: null });
+  };
+
   const addMaterial = async (e) => {
     e.preventDefault();
     
@@ -184,6 +209,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         });
         setShowAddMaterial(false);
         setError('');
+        showSuccessToast(`✅ Material "${newMaterial.itemName}" added successfully!`);
       } else {
         const errorData = await response.json();
         console.error('Add material API error:', errorData);
@@ -198,26 +224,34 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   };
 
   const deleteMaterial = async (materialId) => {
-    if (!window.confirm('Are you sure you want to delete this material?')) return;
+    const material = materials.find(m => m._id === materialId);
+    const materialName = material?.itemName || 'this material';
     
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/materials/${materialId}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        setMaterials(materials.filter(m => m._id !== materialId));
-        setError('');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to delete material');
+    showWarning(
+      'Delete Material',
+      `Are you sure you want to delete "${materialName}"? This action cannot be undone.`,
+      async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${API_BASE_URL}/materials/${materialId}`, {
+            method: 'DELETE',
+          });
+          
+          if (response.ok) {
+            setMaterials(materials.filter(m => m._id !== materialId));
+            setError('');
+            showSuccessToast(`🗑️ Material "${materialName}" deleted successfully!`);
+          } else {
+            const errorData = await response.json();
+            setError(errorData.error || 'Failed to delete material');
+          }
+        } catch (error) {
+          setError('Network error: ' + error.message);
+        } finally {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      setError('Network error: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const editMaterial = async (e) => {
@@ -252,6 +286,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         setShowEditMaterial(false);
         setEditingMaterial(null);
         setError('');
+        showSuccessToast(`✏️ Material "${updatedMaterial.itemName}" updated successfully!`);
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to update material');
@@ -348,6 +383,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         setError('');
         // Switch to quotations tab to see the new quotation
         setActiveTab('quotations');
+        showSuccessToast(`📋 Quotation "${newQuotation.quotationName}" created successfully with ${selectedMaterials.length} materials!`);
       } else {
         const errorData = await response.json();
         console.error('API error response:', errorData);
@@ -545,104 +581,117 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   // Delete quotation function
   const deleteQuotation = async (quotationId, quotationName) => {
-    if (!window.confirm(`Are you sure you want to delete "${quotationName}"?`)) {
-      return;
-    }
+    showWarning(
+      'Delete Quotation',
+      `Are you sure you want to delete the quotation "${quotationName}"? This action cannot be undone and will remove all associated materials from this quotation.`,
+      async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`${API_BASE_URL}/personal-quotations/${quotationId}`, {
+            method: 'DELETE',
+          });
 
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/personal-quotations/${quotationId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchPersonalQuotations();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to delete quotation');
+          if (response.ok) {
+            await fetchPersonalQuotations();
+            showSuccessToast(`🗑️ Quotation "${quotationName}" deleted successfully!`);
+          } else {
+            const errorData = await response.json();
+            setError(errorData.error || 'Failed to delete quotation');
+          }
+        } catch (error) {
+          console.error('Delete quotation error:', error);
+          setError('Network error: ' + error.message);
+        } finally {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Delete quotation error:', error);
-      setError('Network error: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   // Export to PDF function
   const exportToPDF = async (quotation) => {
-    try {
-      setLoading(true);
-      console.log('Exporting quotation to PDF:', quotation);
-      
-      // Create the PDF data structure
-      const pdfData = {
-        type: 'estimate',
-        clientInfo: {
-          name: 'Personal Quotation',
-          email: '',
-          phone: '',
-          address: ''
-        },
-        items: quotation.materials?.map(material => ({
-          itemName: material.itemName || 'Unknown Item',
-          description: material.description || material.notes || '',
-          quantity: material.quantity || 1,
-          unit: material.unit || 'pcs',
-          rate: material.rate || 0,
-          amount: (material.rate || 0) * (material.quantity || 1)
-        })) || [],
-        letterhead: {
-          companyName: 'Personal Quotation System',
-          address: '',
-          phone: '',
-          email: '',
-          website: '',
-          logo: null
+    // Show warning dialog first
+    showWarning(
+      'Export Quotation to PDF',
+      `You are about to export the quotation "${quotation.quotationName}" with ${quotation.materials?.length || 0} items to PDF. This will download a file to your device. Do you want to continue?`,
+      async () => {
+        try {
+          setLoading(true);
+          console.log('Exporting quotation to PDF:', quotation);
+          
+          // Create the PDF data structure
+          const pdfData = {
+            type: 'estimate',
+            clientInfo: {
+              name: 'Personal Quotation',
+              email: '',
+              phone: '',
+              address: ''
+            },
+            items: quotation.materials?.map(material => ({
+              itemName: material.itemName || 'Unknown Item',
+              description: material.description || material.notes || '',
+              quantity: material.quantity || 1,
+              unit: material.unit || 'pcs',
+              rate: material.rate || 0,
+              amount: (material.rate || 0) * (material.quantity || 1)
+            })) || [],
+            letterhead: {
+              companyName: 'Personal Quotation System',
+              address: '',
+              phone: '',
+              email: '',
+              website: '',
+              logo: null
+            }
+          };
+
+          console.log('PDF data prepared:', pdfData);
+
+          // Try the personal PDF generation endpoint
+          const response = await fetch(`${API_BASE_URL}/generate-personal-pdf`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              quotation,
+              clientInfo: pdfData.clientInfo,
+              items: pdfData.items,
+              letterhead: pdfData.letterhead
+            })
+          });
+
+          console.log('PDF Response status:', response.status);
+
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            console.log('PDF downloaded successfully');
+            
+            // Show success message
+            showSuccessToast(`📄 Quotation "${quotation.quotationName}" downloaded successfully as PDF!`);
+          } else {
+            const errorText = await response.text();
+            console.error('PDF generation failed:', errorText);
+            setError(`Failed to generate PDF: ${response.status} ${response.statusText}`);
+          }
+        } catch (error) {
+          console.error('PDF export error:', error);
+          setError('Failed to export PDF: ' + error.message);
+        } finally {
+          setLoading(false);
         }
-      };
-
-      console.log('PDF data prepared:', pdfData);
-
-      // Try the personal PDF generation endpoint
-      const response = await fetch(`${API_BASE_URL}/generate-personal-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          quotation,
-          clientInfo: pdfData.clientInfo,
-          items: pdfData.items,
-          letterhead: pdfData.letterhead
-        })
-      });
-
-      console.log('PDF Response status:', response.status);
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        console.log('PDF downloaded successfully');
-      } else {
-        const errorText = await response.text();
-        console.error('PDF generation failed:', errorText);
-        setError(`Failed to generate PDF: ${response.status} ${response.statusText}`);
       }
-    } catch (error) {
-      console.error('PDF export error:', error);
-      setError('Failed to export PDF: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   // Custom Category Functions
@@ -892,82 +941,102 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
   // Export materials to PDF
   const exportMaterialsToPDF = async () => {
-    try {
-      setLoading(true);
-      console.log('Exporting materials to PDF:', filteredMaterials.length, 'materials');
-      console.log('Search query:', searchQuery);
-      
-      const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          materials: filteredMaterials,
-          searchQuery: searchQuery
-        })
-      });
+    // Show warning dialog first
+    showWarning(
+      'Export Materials to PDF',
+      `You are about to export ${filteredMaterials.length} materials to PDF. This will download a file to your device. Do you want to continue?`,
+      async () => {
+        try {
+          setLoading(true);
+          console.log('Exporting materials to PDF:', filteredMaterials.length, 'materials');
+          console.log('Search query:', searchQuery);
+          
+          const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              materials: filteredMaterials,
+              searchQuery: searchQuery
+            })
+          });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+          console.log('Response status:', response.status);
+          console.log('Response headers:', response.headers);
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+          if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+          }
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `materials-list-${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          // Show success message
+          showSuccessToast(`📄 Materials PDF downloaded successfully! (${filteredMaterials.length} items exported)`);
+        } catch (error) {
+          console.error('PDF export error:', error);
+          setError('Failed to export materials to PDF');
+        } finally {
+          setLoading(false);
+        }
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `materials-list-${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('PDF export error:', error);
-      setError('Failed to export materials to PDF');
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   // Export materials to Excel
   const exportMaterialsToExcel = () => {
-    try {
-      // Create CSV content
-      const headers = ['Item Name', 'Category', 'Rate (₹)', 'Quantity', 'Total Amount (₹)', 'Unit', 'Supplier', 'Purchase Date', 'Notes'];
-      const csvContent = [
-        headers.join(','),
-        ...filteredMaterials.map(material => [
-          `"${material.itemName || ''}"`,
-          `"${material.category || ''}"`,
-          material.rate || 0,
-          material.quantity || 0,
-          material.totalAmount || 0,
-          `"${material.unit || ''}"`,
-          `"${material.supplier || ''}"`,
-          material.purchaseDate ? new Date(material.purchaseDate).toLocaleDateString() : '',
-          `"${material.notes || ''}"`
-        ].join(','))
-      ].join('\n');
+    // Show warning dialog first
+    showWarning(
+      'Export Materials to Excel',
+      `You are about to export ${filteredMaterials.length} materials to Excel (CSV format). This will download a file to your device. Do you want to continue?`,
+      () => {
+        try {
+          // Create CSV content
+          const headers = ['Item Name', 'Category', 'Rate (₹)', 'Quantity', 'Total Amount (₹)', 'Unit', 'Supplier', 'Purchase Date', 'Notes'];
+          const csvContent = [
+            headers.join(','),
+            ...filteredMaterials.map(material => [
+              `"${material.itemName || ''}"`,
+              `"${material.category || ''}"`,
+              material.rate || 0,
+              material.quantity || 0,
+              material.totalAmount || 0,
+              `"${material.unit || ''}"`,
+              `"${material.supplier || ''}"`,
+              material.purchaseDate ? new Date(material.purchaseDate).toLocaleDateString() : '',
+              `"${material.notes || ''}"`
+            ].join(','))
+          ].join('\n');
 
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `materials-list-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Excel export error:', error);
-      setError('Failed to export materials to Excel');
-    }
+          // Create and download file
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `materials-list-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          // Show success message
+          showSuccessToast(`📊 Materials Excel file downloaded successfully! (${filteredMaterials.length} items exported)`);
+        } catch (error) {
+          console.error('Excel export error:', error);
+          setError('Failed to export materials to Excel');
+        }
+      }
+    );
   };
 
   return (
@@ -1086,33 +1155,10 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                   Settings
                 </button>
               </nav>
-
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className={`p-3 rounded-xl backdrop-blur-md transition-all duration-300 hover:scale-110 ${
-                  isDarkTheme 
-                    ? 'bg-white/10 hover:bg-white/20 text-yellow-300' 
-                    : 'bg-black/10 hover:bg-black/20 text-gray-700'
-                }`}
-                title={isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {isDarkTheme ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
             </div>
             
-            {/* Mobile menu button & Theme Toggle */}
+            {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-2">
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-xl transition-all duration-300 ${
-                  isDarkTheme 
-                    ? 'bg-white/10 text-yellow-300' 
-                    : 'bg-black/10 text-gray-700'
-                }`}
-              >
-                {isDarkTheme ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={`p-2 rounded-xl transition-all duration-300 ${
@@ -2025,40 +2071,44 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                   onClick={async () => {
-                    if (window.confirm('Are you sure you want to clear all materials? This action cannot be undone.')) {
-                      try {
-                        setLoading(true);
-                        setError(''); // Clear previous errors
-                        console.log('Clearing all materials...');
-                        
-                        const response = await fetch(`${API_BASE_URL}/materials/clear`, { 
-                          method: 'DELETE',
-                          headers: {
-                            'Content-Type': 'application/json',
+                    showWarning(
+                      'Clear All Materials',
+                      `Are you sure you want to clear all ${materials.length} materials? This action cannot be undone and will permanently delete all your saved materials.`,
+                      async () => {
+                        try {
+                          setLoading(true);
+                          setError(''); // Clear previous errors
+                          console.log('Clearing all materials...');
+                          
+                          const response = await fetch(`${API_BASE_URL}/materials/clear`, { 
+                            method: 'DELETE',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            }
+                          });
+                          
+                          console.log('Clear materials response status:', response.status);
+                          
+                          if (response.ok) {
+                            const result = await response.json();
+                            console.log('Clear materials result:', result);
+                            setMaterials([]);
+                            setSelectedMaterials([]);
+                            setError('');
+                            showSuccessToast(`🗑️ Successfully cleared ${result.deletedCount || 0} materials!`);
+                          } else {
+                            const errorData = await response.json();
+                            console.error('Clear materials error:', errorData);
+                            setError(errorData.error || 'Failed to clear materials');
                           }
-                        });
-                        
-                        console.log('Clear materials response status:', response.status);
-                        
-                        if (response.ok) {
-                          const result = await response.json();
-                          console.log('Clear materials result:', result);
-                          setMaterials([]);
-                          setSelectedMaterials([]);
-                          setError('');
-                          alert(`Successfully cleared ${result.deletedCount || 0} materials`);
-                        } else {
-                          const errorData = await response.json();
-                          console.error('Clear materials error:', errorData);
-                          setError(errorData.error || 'Failed to clear materials');
+                        } catch (error) {
+                          console.error('Clear materials network error:', error);
+                          setError('Network error: ' + error.message);
+                        } finally {
+                          setLoading(false);
                         }
-                      } catch (error) {
-                        console.error('Clear materials network error:', error);
-                        setError('Network error: ' + error.message);
-                      } finally {
-                        setLoading(false);
                       }
-                    }
+                    );
                   }}
                   disabled={loading}
                   className={`p-4 rounded-xl border transition-all duration-300 hover:scale-105 ${
@@ -2084,25 +2134,35 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 
                 <button
                   onClick={async () => {
-                    if (window.confirm('Are you sure you want to reset all data? This will clear materials, quotations, and custom categories. This action cannot be undone.')) {
-                      try {
-                        setLoading(true);
-                        const response = await fetch(`${API_BASE_URL}/personal/reset`, { method: 'DELETE' });
-                        if (response.ok) {
-                          setMaterials([]);
-                          setPersonalQuotations([]);
-                          setCustomCategories([]);
-                          setError('');
-                        } else {
-                          const errorData = await response.json();
-                          setError(errorData.error || 'Failed to reset data');
+                    showWarning(
+                      'Reset All Data',
+                      `Are you sure you want to reset ALL your personal data? This will permanently delete:
+                      • All ${materials.length} materials
+                      • All ${personalQuotations.length} quotations  
+                      • All ${customCategories.length} custom categories
+                      
+                      This action cannot be undone!`,
+                      async () => {
+                        try {
+                          setLoading(true);
+                          const response = await fetch(`${API_BASE_URL}/personal/reset`, { method: 'DELETE' });
+                          if (response.ok) {
+                            setMaterials([]);
+                            setPersonalQuotations([]);
+                            setCustomCategories([]);
+                            setError('');
+                            showSuccessToast(`🔄 All personal data has been reset successfully!`);
+                          } else {
+                            const errorData = await response.json();
+                            setError(errorData.error || 'Failed to reset data');
+                          }
+                        } catch (error) {
+                          setError('Network error: ' + error.message);
+                        } finally {
+                          setLoading(false);
                         }
-                      } catch (error) {
-                        setError('Network error: ' + error.message);
-                      } finally {
-                        setLoading(false);
                       }
-                    }
+                    );
                   }}
                   disabled={loading}
                   className={`p-4 rounded-xl border transition-all duration-300 hover:scale-105 ${
@@ -2931,6 +2991,82 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message Toast */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in">
+          <div className={`p-4 rounded-lg shadow-lg border-l-4 border-green-500 ${
+            isDarkTheme 
+              ? 'bg-gray-800 text-white' 
+              : 'bg-white text-gray-800'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-6 h-6 text-green-500" />
+              <span className="font-medium">{successMessage}</span>
+              <button
+                onClick={() => setShowSuccessMessage(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Dialog */}
+      {showWarningDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`max-w-md w-full rounded-2xl shadow-2xl ${
+            isDarkTheme 
+              ? 'bg-gray-800 border border-gray-700' 
+              : 'bg-white border border-gray-200'
+          }`}>
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h3 className={`text-lg font-semibold ${
+                  isDarkTheme ? 'text-white' : 'text-gray-900'
+                }`}>
+                  {warningDialog.title}
+                </h3>
+              </div>
+              
+              <div className={`mb-6 text-sm whitespace-pre-line ${
+                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                {warningDialog.message}
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={hideWarning}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    isDarkTheme 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    hideWarning();
+                    if (warningDialog.onConfirm) {
+                      warningDialog.onConfirm();
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all duration-300"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

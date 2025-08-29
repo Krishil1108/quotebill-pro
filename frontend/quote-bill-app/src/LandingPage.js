@@ -21,11 +21,20 @@ const LandingPage = ({ onNavigate, isDarkTheme, toggleTheme }) => {
               <Sparkles className={`w-6 h-6 ${isDarkTheme ? 'text-yellow-400' : 'text-blue-500'}`} />
             </div>
           </div>
-          <p className={`text-lg sm:text-xl mb-6 sm:mb-8 transition-colors duration-500 max-w-2xl mx-auto ${
+          <p className={`text-lg sm:text-xl mb-4 sm:mb-6 transition-colors duration-500 max-w-2xl mx-auto ${
             isDarkTheme ? 'text-gray-300' : 'text-gray-600'
           }`}>
             Professional quotation and billing solution for modern businesses
           </p>
+          
+          {/* AI Features Description */}
+          <div className={`mb-6 sm:mb-8 max-w-3xl mx-auto text-center ${
+            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            <p className="text-sm sm:text-base">
+              🤖 <span className="font-semibold">AI-Powered Smart Suggestions:</span> Intelligent electrical item sequencing based on industry standards and PDF manuals for faster, accurate quote creation.
+            </p>
+          </div>
           
           {/* Theme Toggle */}
           <button
