@@ -89,7 +89,7 @@ const ClientSmartParticularInput = ({
     }
   };
 
-  // Enhanced electrical items following the specified sequence
+  // Enhanced electrical items following the specified sequence ONLY
   const commonElectricalItems = [
     // 1. Points (Electrical Outlets/Switches) - Main sequence
     'Light point', 'Fan point', 'Two way point', 'Plug point', '15 ampere point',
@@ -112,20 +112,7 @@ const ClientSmartParticularInput = ({
     'Wall light fitting', 'Hanging light fitting', 'Zoomer fitting',
     
     // 6. Special Work
-    'Ground earthing work',
-    
-    // Legacy items for backward compatibility
-    'Switch board', '5 amp socket', 'Modular switch',
-    'Fan regulator', 'Dimmer switch', 'Bell push', 'Indicator lamp',
-    'Wire and cable', 'Flexible wire', 'Armoured cable', 'Coaxial cable',
-    'Conduit pipe', 'PVC conduit', 'GI conduit', 'Flexible conduit',
-    'Junction box', 'Cable tray', 'Cable tie', 'Insulation tape',
-    'Distribution board', 'MCB', 'RCCB', 'Isolator', 'Main switch',
-    'Meter', 'Energy meter', 'Neutral link', 'Phase link', 'Earthing',
-    'Installation charges', 'Labour charges', 'Testing charges',
-    'Transportation', 'Material handling', 'Site preparation',
-    'Wall cutting', 'Wall making', 'Plastering', 'Painting touch-up',
-    'Cleaning work', 'Debris removal'
+    'Ground earthing work'
   ];
 
   useEffect(() => {
@@ -200,73 +187,47 @@ const ClientSmartParticularInput = ({
       }
     }
 
-    // 2. Pattern-based suggestions (lower priority if PDF sequence exists)
-    Object.entries(electricalPatterns).forEach(([patternName, pattern]) => {
-      const isTriggered = pattern.triggers.some(trigger => 
-        input.includes(trigger.toLowerCase()) || 
-        trigger.toLowerCase().includes(input)
-      );
+    // 2. DISABLED OLD PATTERNS - Use new electrical sequence only
+    // Object.entries(electricalPatterns).forEach(([patternName, pattern]) => {
+    //   const isTriggered = pattern.triggers.some(trigger => 
+    //     input.includes(trigger.toLowerCase()) || 
+    //     trigger.toLowerCase().includes(input)
+    //   );
       
-      if (isTriggered) {
-        pattern.sequence.forEach(item => {
-          if (!particulars.some(p => p.toLowerCase() === item.toLowerCase()) &&
-              item.toLowerCase().includes(input) && 
-              item.toLowerCase() !== input) {
-            suggestions.add({
-              text: item,
-              confidence: particularSequenceManager.hasCustomSequence() ? pattern.confidence * 0.7 : pattern.confidence,
-              reason: `Common in ${patternName.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
-              category: 'pattern'
-            });
-          }
-        });
-      }
-    });
+    //   if (isTriggered) {
+    //     pattern.sequence.forEach(item => {
+    //       if (!particulars.some(p => p.toLowerCase() === item.toLowerCase()) &&
+    //           item.toLowerCase().includes(input) && 
+    //           item.toLowerCase() !== input) {
+    //         suggestions.add({
+    //           text: item,
+    //           confidence: particularSequenceManager.hasCustomSequence() ? pattern.confidence * 0.7 : pattern.confidence,
+    //           reason: `Common in ${patternName.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
+    //           category: 'pattern'
+    //         });
+    //       }
+    //     });
+    //   }
+    // });
 
-    // 3. Common items matching input
+    // 3. Common items matching input (ONLY from new electrical sequence)
     commonElectricalItems.forEach(item => {
       if (item.toLowerCase().includes(input) && 
           item.toLowerCase() !== input &&
           !particulars.some(p => p.toLowerCase() === item.toLowerCase())) {
         suggestions.add({
           text: item,
-          confidence: particularSequenceManager.hasCustomSequence() ? 0.5 : 0.7,
-          reason: 'Common electrical item',
+          confidence: 0.7,
+          reason: 'New electrical sequence item',
           category: 'common'
         });
       }
     });
 
-    // 4. Historical usage from documents
-    if (allDocuments.length > 0) {
-      const historicalItems = new Map();
-      allDocuments.forEach(doc => {
-        if (doc.items) {
-          doc.items.forEach(item => {
-            if (item.particular && item.particular.toLowerCase().includes(input)) {
-              const key = item.particular.toLowerCase();
-              historicalItems.set(key, (historicalItems.get(key) || 0) + 1);
-            }
-          });
-        }
-      });
+    // 4. NO HISTORICAL USAGE - Focus on new sequence only
+    // Removed historical suggestions to focus on new electrical sequence
 
-      Array.from(historicalItems.entries())
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 3)
-        .forEach(([itemName, count]) => {
-          if (itemName !== input && !particulars.some(p => p.toLowerCase() === itemName)) {
-            suggestions.add({
-              text: itemName,
-              confidence: Math.min(0.6, count * 0.2),
-              reason: `Used ${count} times before`,
-              category: 'history'
-            });
-          }
-        });
-    }
-
-    // 5. Sequential suggestions based on current document items
+    // 5. Sequential suggestions based on current document items (NEW ELECTRICAL SEQUENCE ONLY)
     const currentItems = getCurrentDocumentItems();
     if (currentItems.length > 0) {
       const sequentialSuggestions = getSequentialSuggestions(currentItems, input);
@@ -275,11 +236,19 @@ const ClientSmartParticularInput = ({
 
     return Array.from(suggestions)
       .sort((a, b) => {
-        // Prioritize PDF sequence suggestions
-        if (a.category === 'pdf-sequence' && b.category !== 'pdf-sequence') return -1;
-        if (b.category === 'pdf-sequence' && a.category !== 'pdf-sequence') return 1;
-        if (a.category === 'pdf-next' && b.category !== 'pdf-next' && b.category !== 'pdf-sequence') return -1;
-        if (b.category === 'pdf-next' && a.category !== 'pdf-next' && a.category !== 'pdf-sequence') return 1;
+        // HIGHEST PRIORITY: New electrical sequence suggestions
+        if (a.category === 'electrical-sequence' && b.category !== 'electrical-sequence') return -1;
+        if (b.category === 'electrical-sequence' && a.category !== 'electrical-sequence') return 1;
+        
+        // SECOND PRIORITY: PDF sequence suggestions
+        if (a.category === 'pdf-sequence' && b.category !== 'pdf-sequence' && b.category !== 'electrical-sequence') return -1;
+        if (b.category === 'pdf-sequence' && a.category !== 'pdf-sequence' && a.category !== 'electrical-sequence') return 1;
+        if (a.category === 'pdf-next' && b.category !== 'pdf-next' && b.category !== 'pdf-sequence' && b.category !== 'electrical-sequence') return -1;
+        if (b.category === 'pdf-next' && a.category !== 'pdf-next' && a.category !== 'pdf-sequence' && a.category !== 'electrical-sequence') return 1;
+        
+        // THIRD PRIORITY: Common items from new sequence
+        if (a.category === 'common' && b.category !== 'common' && !['electrical-sequence', 'pdf-sequence', 'pdf-next'].includes(b.category)) return -1;
+        if (b.category === 'common' && a.category !== 'common' && !['electrical-sequence', 'pdf-sequence', 'pdf-next'].includes(a.category)) return 1;
         
         // Then sort by confidence
         return b.confidence - a.confidence;
@@ -433,7 +402,7 @@ const ClientSmartParticularInput = ({
       return sequenceSuggestions.slice(0, 5); // Return top 5 suggestions
     };
 
-    // Generate sequence-based suggestions
+    // Generate sequence-based suggestions using ONLY the new electrical sequence
     if (lastItem) {
       const electricalSuggs = generateElectricalSuggestions(lastItem);
       electricalSuggs.forEach(sugg => {
@@ -449,57 +418,7 @@ const ClientSmartParticularInput = ({
       });
     }
 
-    // Legacy sequences for backward compatibility
-    const legacySequences = {
-      'light point': ['fan point', 'switch board', 'wire and cable'],
-      'fan point': ['light point', 'regulator', 'switch board'],
-      'switch board': ['wire and cable', 'conduit pipe', 'mcb'],
-      'wire and cable': ['conduit pipe', 'junction box', 'testing'],
-      'conduit pipe': ['junction box', 'wire and cable', 'earthing'],
-      'mcb': ['rccb', 'neutral link', 'phase link'],
-      'distribution board': ['mcb', 'rccb', 'main switch'],
-      'socket': ['switch board', 'wire and cable'],
-      'regulator': ['fan point', 'switch board'],
-      'junction box': ['earthing', 'wire and cable'],
-      'rccb': ['mcb', 'neutral link', 'earthing'],
-      'main switch': ['distribution board', 'meter', 'earthing'],
-      'testing': ['earthing', 'completion certificate'],
-      'earthing': ['testing', 'safety check']
-    };
-
-    if (sequences[lastItem]) {
-      sequences[lastItem].forEach(item => {
-        if (item.toLowerCase().includes(input) && 
-            !currentItems.some(ci => ci.particular?.toLowerCase() === item.toLowerCase())) {
-          suggestions.push({
-            text: item,
-            confidence: 0.8,
-            reason: 'Next in sequence',
-            category: 'sequence'
-          });
-        }
-      });
-    }
-
-    // Also check if any item in current list suggests the input
-    currentItems.forEach(currentItem => {
-      const currentParticular = currentItem.particular?.toLowerCase() || '';
-      if (sequences[currentParticular]) {
-        sequences[currentParticular].forEach(suggestion => {
-          if (suggestion.toLowerCase().includes(input) && 
-              !currentItems.some(ci => ci.particular?.toLowerCase() === suggestion.toLowerCase())) {
-            suggestions.push({
-              text: suggestion,
-              confidence: 0.75,
-              reason: `Often comes after "${currentParticular}"`,
-              category: 'sequence'
-            });
-          }
-        });
-      }
-    });
-
-    return suggestions;
+    return suggestions.slice(0, 5); // Return top 5 suggestions only
   };
 
   const handleInputChange = (e) => {
