@@ -13,79 +13,279 @@ const IntelligentItemSuggestions = ({
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Electrical work patterns with pricing and quantity relationships
+  // Enhanced electrical work patterns following the specified sequence
   const electricalPatterns = {
+    // 1. Points Sequence: Light → Fan → Two way → Plug → 15A
     'light point': {
       nextItems: [
         { 
-          particular: 'fan point', 
-          quantityRatio: 1.0, // Same quantity as light point
-          priceRatio: 0.8, // 80% of light point price
+          particular: 'Fan point', 
+          quantityRatio: 1.0, 
+          priceRatio: 0.9, 
           confidence: 0.95,
-          reason: 'Commonly installed together'
+          reason: 'Next in electrical points sequence'
         },
         { 
-          particular: 'switch board', 
-          quantityRatio: 0.5, // Half the quantity
-          priceRatio: 1.5, // 1.5x price per unit
+          particular: 'Two way point', 
+          quantityRatio: 0.5, 
+          priceRatio: 1.2, 
           confidence: 0.9,
-          reason: 'Controls multiple light points'
+          reason: 'Common after light point installation'
         },
         { 
-          particular: 'wire and cable', 
-          quantityRatio: 2.0, // Double the quantity (in meters)
-          priceRatio: 0.3, // Much cheaper per unit
+          particular: 'LED light fitting', 
+          quantityRatio: 1.0, 
+          priceRatio: 2.0, 
           confidence: 0.85,
-          reason: 'Required for electrical connection'
+          reason: 'Light fitting for light point'
+        },
+        { 
+          particular: 'Panel light fitting', 
+          quantityRatio: 0.3, 
+          priceRatio: 3.0, 
+          confidence: 0.8,
+          reason: 'Premium light fitting option'
         }
       ]
     },
     'fan point': {
       nextItems: [
         { 
-          particular: 'light point', 
+          particular: 'Two way point', 
           quantityRatio: 1.0, 
-          priceRatio: 1.25, 
+          priceRatio: 1.2, 
           confidence: 0.9,
-          reason: 'Usually installed with fans'
+          reason: 'Next in sequence after fan point'
         },
         { 
-          particular: 'regulator', 
+          particular: 'Fan hook fitting', 
           quantityRatio: 1.0, 
-          priceRatio: 2.0, 
-          confidence: 0.95,
-          reason: 'Essential for fan control'
+          priceRatio: 1.5, 
+          confidence: 0.9,
+          reason: 'Fan fitting for fan point'
         },
         { 
-          particular: 'switch board', 
-          quantityRatio: 0.5, 
-          priceRatio: 1.5, 
-          confidence: 0.8,
-          reason: 'Controls fan operation'
+          particular: 'Ceiling fan fitting', 
+          quantityRatio: 1.0, 
+          priceRatio: 2.5, 
+          confidence: 0.85,
+          reason: 'Complete ceiling fan installation'
+        },
+        { 
+          particular: 'Plug point', 
+          quantityRatio: 1.0, 
+          priceRatio: 0.8, 
+          confidence: 0.85,
+          reason: 'Standard outlet after fan point'
         }
       ]
     },
+    'two way point': {
+      nextItems: [
+        { 
+          particular: 'Plug point', 
+          quantityRatio: 1.0, 
+          priceRatio: 0.8, 
+          confidence: 0.9,
+          reason: 'Next in electrical points sequence'
+        },
+        { 
+          particular: '15 ampere point', 
+          quantityRatio: 0.5, 
+          priceRatio: 1.5, 
+          confidence: 0.85,
+          reason: 'High power outlet'
+        }
+      ]
+    },
+    'plug point': {
+      nextItems: [
+        { 
+          particular: '15 ampere point', 
+          quantityRatio: 0.5, 
+          priceRatio: 1.5, 
+          confidence: 0.85,
+          reason: 'Complete points sequence'
+        },
+        { 
+          particular: '1.0 sq mm line', 
+          quantityRatio: 10.0, 
+          priceRatio: 0.2, 
+          confidence: 0.8,
+          reason: 'Start wiring sequence'
+        }
+      ]
+    },
+    '15 ampere point': {
+      nextItems: [
+        { 
+          particular: '1.0 sq mm line', 
+          quantityRatio: 15.0, 
+          priceRatio: 0.15, 
+          confidence: 0.9,
+          reason: 'Start wiring for high power outlets'
+        },
+        { 
+          particular: '1.5 sq mm line', 
+          quantityRatio: 12.0, 
+          priceRatio: 0.2, 
+          confidence: 0.85,
+          reason: 'Standard wiring for power outlets'
+        }
+      ]
+    },
+    
+    // 2. Wiring Sequence: Progressive wire sizes
+    '1.0 sq mm line': {
+      nextItems: [
+        { 
+          particular: '1.5 sq mm line', 
+          quantityRatio: 1.0, 
+          priceRatio: 1.2, 
+          confidence: 0.95,
+          reason: 'Next wire size in sequence'
+        }
+      ]
+    },
+    '1.5 sq mm line': {
+      nextItems: [
+        { 
+          particular: '2.5 sq mm line single phase', 
+          quantityRatio: 0.8, 
+          priceRatio: 1.5, 
+          confidence: 0.9,
+          reason: 'Next wire size - single phase'
+        },
+        { 
+          particular: '2.5 sq mm line three phase', 
+          quantityRatio: 0.6, 
+          priceRatio: 2.0, 
+          confidence: 0.9,
+          reason: 'Next wire size - three phase'
+        }
+      ]
+    },
+    '2.5 sq mm line single phase': {
+      nextItems: [
+        { 
+          particular: '4.0 sq mm line single phase', 
+          quantityRatio: 0.7, 
+          priceRatio: 1.8, 
+          confidence: 0.85,
+          reason: 'Next wire size in sequence'
+        },
+        { 
+          particular: 'Single phase distribution', 
+          quantityRatio: 0.1, 
+          priceRatio: 15.0, 
+          confidence: 0.8,
+          reason: 'Distribution for single phase wiring'
+        }
+      ]
+    },
+    '2.5 sq mm line three phase': {
+      nextItems: [
+        { 
+          particular: '4.0 sq mm line three phase', 
+          quantityRatio: 0.7, 
+          priceRatio: 2.2, 
+          confidence: 0.85,
+          reason: 'Next wire size in sequence'
+        },
+        { 
+          particular: 'Three phase distribution', 
+          quantityRatio: 0.1, 
+          priceRatio: 20.0, 
+          confidence: 0.8,
+          reason: 'Distribution for three phase wiring'
+        }
+      ]
+    },
+
+    // 3. Distribution to Cabling
+    'single phase distribution': {
+      nextItems: [
+        { 
+          particular: 'Networking cable', 
+          quantityRatio: 5.0, 
+          priceRatio: 0.3, 
+          confidence: 0.85,
+          reason: 'Data cabling after power distribution'
+        },
+        { 
+          particular: 'CC tv cable', 
+          quantityRatio: 3.0, 
+          priceRatio: 0.4, 
+          confidence: 0.8,
+          reason: 'Security cabling'
+        }
+      ]
+    },
+    'three phase distribution': {
+      nextItems: [
+        { 
+          particular: 'Networking cable', 
+          quantityRatio: 8.0, 
+          priceRatio: 0.3, 
+          confidence: 0.85,
+          reason: 'Data cabling for commercial setup'
+        },
+        { 
+          particular: 'CC tv cable', 
+          quantityRatio: 5.0, 
+          priceRatio: 0.4, 
+          confidence: 0.8,
+          reason: 'Security system cabling'
+        }
+      ]
+    },
+
+    // 4. Cabling sequence
+    'networking cable': {
+      nextItems: [
+        { 
+          particular: 'CC tv cable', 
+          quantityRatio: 0.8, 
+          priceRatio: 1.2, 
+          confidence: 0.8,
+          reason: 'Complete low voltage cabling'
+        },
+        { 
+          particular: 'Ground earthing work', 
+          quantityRatio: 0.1, 
+          priceRatio: 8.0, 
+          confidence: 0.75,
+          reason: 'Earthing for complete installation'
+        }
+      ]
+    },
+    'cc tv cable': {
+      nextItems: [
+        { 
+          particular: 'Ground earthing work', 
+          quantityRatio: 0.1, 
+          priceRatio: 8.0, 
+          confidence: 0.9,
+          reason: 'Safety earthing for complete installation'
+        }
+      ]
+    },
+
+    // Legacy patterns for backward compatibility
     'switch board': {
       nextItems: [
         { 
           particular: 'wire and cable', 
           quantityRatio: 3.0, 
           priceRatio: 0.25, 
-          confidence: 0.9,
+          confidence: 0.7,
           reason: 'Wiring for switch connections'
-        },
-        { 
-          particular: '5 amp socket', 
-          quantityRatio: 2.0, 
-          priceRatio: 0.7, 
-          confidence: 0.75,
-          reason: 'Power outlets near switches'
         },
         { 
           particular: 'conduit pipe', 
           quantityRatio: 1.5, 
           priceRatio: 0.4, 
-          confidence: 0.8,
+          confidence: 0.6,
           reason: 'Protection for wires'
         }
       ]
@@ -96,7 +296,7 @@ const IntelligentItemSuggestions = ({
           particular: 'conduit pipe', 
           quantityRatio: 0.8, 
           priceRatio: 0.6, 
-          confidence: 0.85,
+          confidence: 0.6,
           reason: 'Wire protection system'
         },
         { 

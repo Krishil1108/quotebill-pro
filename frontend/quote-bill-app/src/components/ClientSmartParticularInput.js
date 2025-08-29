@@ -20,69 +20,110 @@ const ClientSmartParticularInput = ({
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
-  // Electrical work patterns specifically for client quotes
+  // Enhanced electrical work patterns specifically for client quotes
   const electricalPatterns = {
-    // Common electrical installation patterns for client work
-    lightingWork: {
-      triggers: ['light point', 'tubelight', 'led light', 'bulb point', 'light fixture'],
-      sequence: ['fan point', 'switch board', 'wire and cable', 'conduit pipe', 'junction box', 'earthing'],
-      confidence: 0.9
-    },
-    fanInstallation: {
-      triggers: ['fan point', 'ceiling fan', 'exhaust fan'],
-      sequence: ['light point', 'regulator', 'switch board', 'wire and cable', 'conduit pipe'],
-      confidence: 0.85
-    },
-    switchSocketWork: {
-      triggers: ['switch', 'socket', '5 amp socket', '15 amp socket', 'switch board'],
-      sequence: ['wire and cable', 'conduit pipe', 'junction box', 'earthing', 'mcb'],
-      confidence: 0.8
-    },
-    panelWork: {
-      triggers: ['panel', 'distribution board', 'mcb', 'main switch', 'meter'],
-      sequence: ['rccb', 'isolator', 'earthing', 'neutral link', 'phase link', 'wire and cable'],
+    // 1. Points (Electrical Outlets/Switches) - Main sequence
+    pointsSequence: {
+      triggers: ['light point', 'fan point', 'two way point', 'plug point', '15 ampere point'],
+      sequence: [
+        { item: 'Light point', next: ['Fan point', 'Two way point', 'Plug point', '15 ampere point'] },
+        { item: 'Fan point', next: ['Two way point', 'Plug point', '15 ampere point', 'Fan hook fitting', 'Ceiling fan fitting'] },
+        { item: 'Two way point', next: ['Plug point', '15 ampere point'] },
+        { item: 'Plug point', next: ['15 ampere point'] },
+        { item: '15 ampere point', next: ['1.0 sq mm line', '1.5 sq mm line'] }
+      ],
       confidence: 0.95
     },
-    wiringWork: {
-      triggers: ['wire', 'cable', 'wiring work', 'house wiring'],
-      sequence: ['conduit pipe', 'junction box', 'switch board', 'light point', 'fan point', 'earthing'],
-      confidence: 0.7
+    
+    // 2. Wiring (by Wire Size / Phase) - Progressive sequence
+    wiringSequence: {
+      triggers: ['sq mm line', 'wire', 'wiring'],
+      sequence: [
+        { item: '1.0 sq mm line', next: ['1.5 sq mm line'] },
+        { item: '1.5 sq mm line', next: ['2.5 sq mm line single phase', '2.5 sq mm line three phase'] },
+        { item: '2.5 sq mm line single phase', next: ['4.0 sq mm line single phase', 'Single phase distribution'] },
+        { item: '2.5 sq mm line three phase', next: ['4.0 sq mm line three phase', 'Three phase distribution'] },
+        { item: '4.0 sq mm line single phase', next: ['6.0 sq mm line three phase', 'Single phase distribution'] },
+        { item: '4.0 sq mm line three phase', next: ['6.0 sq mm line three phase', 'Three phase distribution'] },
+        { item: '6.0 sq mm line three phase', next: ['10.0 sq mm line three phase', 'Three phase distribution'] },
+        { item: '10.0 sq mm line three phase', next: ['Three phase distribution'] }
+      ],
+      confidence: 0.9
     },
-    // Common completion patterns
-    completionWork: {
-      triggers: ['testing', 'completion', 'final'],
-      sequence: ['earthing', 'safety check', 'installation certificate', 'warranty'],
-      confidence: 0.6
+
+    // 3. Distribution Systems
+    distributionSequence: {
+      triggers: ['distribution', 'phase distribution'],
+      sequence: [
+        { item: 'Single phase distribution', next: ['Networking cable', 'CC tv cable'] },
+        { item: 'Three phase distribution', next: ['Networking cable', 'CC tv cable'] }
+      ],
+      confidence: 0.85
+    },
+
+    // 4. Cabling (Low Voltage / Data / CCTV)
+    cablingSequence: {
+      triggers: ['networking cable', 'cc tv cable', 'cctv cable'],
+      sequence: [
+        { item: 'Networking cable', next: ['CC tv cable'] },
+        { item: 'CC tv cable', next: ['Ground earthing work'] }
+      ],
+      confidence: 0.8
+    },
+
+    // 5. Fittings (Lighting Fixtures & Accessories)
+    fittingsSequence: {
+      triggers: ['fitting', 'light fitting', 'fan fitting'],
+      lightFittings: ['LED light fitting', 'Panel light fitting', 'Cob light fitting', 'Wall light fitting', 'Hanging light fitting', 'Zoomer fitting'],
+      fanFittings: ['Fan hook fitting', 'Ceiling fan fitting'],
+      confidence: 0.85
+    },
+
+    // 6. Special Work - Final items
+    specialWork: {
+      triggers: ['earthing', 'ground earthing'],
+      sequence: [
+        { item: 'Ground earthing work', next: [] } // Final item
+      ],
+      confidence: 0.9
     }
   };
 
-  // Common electrical items for client quotes
+  // Enhanced electrical items following the specified sequence
   const commonElectricalItems = [
-    // Lighting
-    'Light point', 'Fan point', 'LED tubelight', 'CFL holder', 'Batten holder',
-    'Decorative light', 'Spotlight', 'Street light', 'Flood light',
+    // 1. Points (Electrical Outlets/Switches) - Main sequence
+    'Light point', 'Fan point', 'Two way point', 'Plug point', '15 ampere point',
     
-    // Switches and Sockets
-    'Switch board', '5 amp socket', '15 amp socket', 'Modular switch',
+    // 2. Wiring (by Wire Size / Phase) - Progressive sequence
+    '1.0 sq mm line', '1.5 sq mm line', 
+    '2.5 sq mm line single phase', '2.5 sq mm line three phase',
+    '4.0 sq mm line single phase', '4.0 sq mm line three phase',
+    '6.0 sq mm line three phase', '10.0 sq mm line three phase',
+    
+    // 3. Distribution Systems
+    'Single phase distribution', 'Three phase distribution',
+    
+    // 4. Cabling (Low Voltage / Data / CCTV)
+    'Networking cable', 'CC tv cable',
+    
+    // 5. Fittings (Lighting Fixtures & Accessories)
+    'Fan hook fitting', 'Ceiling fan fitting',
+    'LED light fitting', 'Panel light fitting', 'Cob light fitting',
+    'Wall light fitting', 'Hanging light fitting', 'Zoomer fitting',
+    
+    // 6. Special Work
+    'Ground earthing work',
+    
+    // Legacy items for backward compatibility
+    'Switch board', '5 amp socket', 'Modular switch',
     'Fan regulator', 'Dimmer switch', 'Bell push', 'Indicator lamp',
-    
-    // Wiring and Cables
-    'Wire and cable', '2.5 sq mm wire', '1.5 sq mm wire', '4 sq mm wire',
-    'Flexible wire', 'Armoured cable', 'Coaxial cable',
-    
-    // Conduits and Accessories
+    'Wire and cable', 'Flexible wire', 'Armoured cable', 'Coaxial cable',
     'Conduit pipe', 'PVC conduit', 'GI conduit', 'Flexible conduit',
     'Junction box', 'Cable tray', 'Cable tie', 'Insulation tape',
-    
-    // Panel and Protection
     'Distribution board', 'MCB', 'RCCB', 'Isolator', 'Main switch',
     'Meter', 'Energy meter', 'Neutral link', 'Phase link', 'Earthing',
-    
-    // Installation and Services
     'Installation charges', 'Labour charges', 'Testing charges',
     'Transportation', 'Material handling', 'Site preparation',
-    
-    // Finishing Work
     'Wall cutting', 'Wall making', 'Plastering', 'Painting touch-up',
     'Cleaning work', 'Debris removal'
   ];
@@ -254,10 +295,162 @@ const ClientSmartParticularInput = ({
   const getSequentialSuggestions = (currentItems, input) => {
     const suggestions = [];
     
-    // Analyze current items and suggest what typically comes next
+    // Get the last added item for context
     const lastItem = currentItems[currentItems.length - 1]?.particular?.toLowerCase() || '';
+    const existingItems = currentItems.map(item => item.particular?.toLowerCase() || '');
     
-    const sequences = {
+    // Enhanced electrical work suggestion engine following the specified sequence
+    const generateElectricalSuggestions = (lastItem) => {
+      if (!lastItem) return [];
+      
+      const sequenceSuggestions = [];
+      const itemLower = lastItem.toLowerCase();
+
+      // 1. Points Sequence Logic: Light → Fan → Two way → Plug → 15A
+      if (itemLower.includes('light point')) {
+        sequenceSuggestions.push(
+          { item: 'Fan point', reason: 'Next in electrical points sequence', confidence: 0.95 },
+          { item: 'Two way point', reason: 'Common after light point', confidence: 0.9 },
+          { item: 'Plug point', reason: 'Standard outlet installation', confidence: 0.85 },
+          { item: '15 ampere point', reason: 'High power outlet', confidence: 0.8 },
+          { item: 'LED light fitting', reason: 'Light fitting for light point', confidence: 0.85 },
+          { item: 'Panel light fitting', reason: 'Panel light fitting option', confidence: 0.8 },
+          { item: 'Wall light fitting', reason: 'Wall mounted light fitting', confidence: 0.8 }
+        );
+      }
+      
+      if (itemLower.includes('fan point')) {
+        sequenceSuggestions.push(
+          { item: 'Two way point', reason: 'Next in sequence after fan point', confidence: 0.9 },
+          { item: 'Plug point', reason: 'Standard outlet installation', confidence: 0.85 },
+          { item: '15 ampere point', reason: 'High power outlet', confidence: 0.8 },
+          { item: 'Fan hook fitting', reason: 'Fan fitting for fan point', confidence: 0.9 },
+          { item: 'Ceiling fan fitting', reason: 'Ceiling fan installation', confidence: 0.85 }
+        );
+      }
+      
+      if (itemLower.includes('two way point')) {
+        sequenceSuggestions.push(
+          { item: 'Plug point', reason: 'Next in electrical points sequence', confidence: 0.9 },
+          { item: '15 ampere point', reason: 'High power outlet', confidence: 0.85 }
+        );
+      }
+      
+      if (itemLower.includes('plug point')) {
+        sequenceSuggestions.push(
+          { item: '15 ampere point', reason: 'Complete points sequence', confidence: 0.85 }
+        );
+      }
+      
+      if (itemLower.includes('15 ampere point')) {
+        sequenceSuggestions.push(
+          { item: '1.0 sq mm line', reason: 'Start wiring sequence', confidence: 0.9 },
+          { item: '1.5 sq mm line', reason: 'Standard wiring', confidence: 0.85 }
+        );
+      }
+
+      // 2. Wiring Sequence Logic: Progressive wire sizes
+      if (itemLower.includes('1.0 sq mm line')) {
+        sequenceSuggestions.push(
+          { item: '1.5 sq mm line', reason: 'Next wire size in sequence', confidence: 0.95 }
+        );
+      }
+      
+      if (itemLower.includes('1.5 sq mm line')) {
+        sequenceSuggestions.push(
+          { item: '2.5 sq mm line single phase', reason: 'Next wire size - single phase', confidence: 0.9 },
+          { item: '2.5 sq mm line three phase', reason: 'Next wire size - three phase', confidence: 0.9 }
+        );
+      }
+      
+      if (itemLower.includes('2.5 sq mm line')) {
+        const isSinglePhase = itemLower.includes('single');
+        sequenceSuggestions.push(
+          { item: '4.0 sq mm line single phase', reason: 'Next wire size - single phase', confidence: 0.85 },
+          { item: '4.0 sq mm line three phase', reason: 'Next wire size - three phase', confidence: 0.85 },
+          { item: isSinglePhase ? 'Single phase distribution' : 'Three phase distribution', 
+            reason: 'Distribution system for current wiring', confidence: 0.8 }
+        );
+      }
+      
+      if (itemLower.includes('4.0 sq mm line')) {
+        const isSinglePhase = itemLower.includes('single');
+        sequenceSuggestions.push(
+          { item: '6.0 sq mm line three phase', reason: 'Next wire size in sequence', confidence: 0.85 },
+          { item: isSinglePhase ? 'Single phase distribution' : 'Three phase distribution', 
+            reason: 'Distribution system for current wiring', confidence: 0.85 }
+        );
+      }
+      
+      if (itemLower.includes('6.0 sq mm line')) {
+        sequenceSuggestions.push(
+          { item: '10.0 sq mm line three phase', reason: 'Final wire size in sequence', confidence: 0.8 },
+          { item: 'Three phase distribution', reason: 'Distribution for heavy wiring', confidence: 0.9 }
+        );
+      }
+      
+      if (itemLower.includes('10.0 sq mm line')) {
+        sequenceSuggestions.push(
+          { item: 'Three phase distribution', reason: 'Distribution for heavy duty wiring', confidence: 0.95 }
+        );
+      }
+
+      // 3. Distribution to Cabling Logic
+      if (itemLower.includes('distribution')) {
+        sequenceSuggestions.push(
+          { item: 'Networking cable', reason: 'Data cabling after power distribution', confidence: 0.85 },
+          { item: 'CC tv cable', reason: 'Security cabling after power distribution', confidence: 0.8 }
+        );
+      }
+
+      // 4. Cabling Sequence Logic
+      if (itemLower.includes('networking cable')) {
+        sequenceSuggestions.push(
+          { item: 'CC tv cable', reason: 'Complete low voltage cabling', confidence: 0.8 }
+        );
+      }
+      
+      if (itemLower.includes('cc tv cable') || itemLower.includes('cctv cable')) {
+        sequenceSuggestions.push(
+          { item: 'Ground earthing work', reason: 'Safety earthing for complete installation', confidence: 0.9 }
+        );
+      }
+
+      // 6. Final Special Work - Ground earthing
+      const hasElectricalWork = existingItems.some(item => 
+        item.includes('point') || 
+        item.includes('distribution') ||
+        item.includes('cable') ||
+        item.includes('line')
+      );
+      
+      if (hasElectricalWork && !existingItems.some(item => item.includes('earthing'))) {
+        sequenceSuggestions.push(
+          { item: 'Ground earthing work', reason: 'Essential safety work for electrical installation', confidence: 0.85 }
+        );
+      }
+
+      return sequenceSuggestions.slice(0, 5); // Return top 5 suggestions
+    };
+
+    // Generate sequence-based suggestions
+    if (lastItem) {
+      const electricalSuggs = generateElectricalSuggestions(lastItem);
+      electricalSuggs.forEach(sugg => {
+        if (sugg.item.toLowerCase().includes(input) &&
+            !existingItems.includes(sugg.item.toLowerCase())) {
+          suggestions.push({
+            text: sugg.item,
+            confidence: sugg.confidence,
+            reason: sugg.reason,
+            category: 'electrical-sequence'
+          });
+        }
+      });
+    }
+
+    // Legacy sequences for backward compatibility
+    const legacySequences = {
       'light point': ['fan point', 'switch board', 'wire and cable'],
       'fan point': ['light point', 'regulator', 'switch board'],
       'switch board': ['wire and cable', 'conduit pipe', 'mcb'],
