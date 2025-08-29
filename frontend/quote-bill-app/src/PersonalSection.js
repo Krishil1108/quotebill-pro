@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit, FileSpreadsheet } from 'lucide-react';
+import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Sun, Moon, Download, FileEdit, FileSpreadsheet, Brain } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
+import SmartItemInput from './components/SmartItemInput';
+import SmartSuggestionEngine from './components/SmartSuggestionEngine';
+import AIInsightsDashboard from './components/AIInsightsDashboard';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
 
@@ -1061,6 +1064,17 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                   Analytics
                 </button>
                 <button
+                  onClick={() => setActiveTab('ai-insights')}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    activeTab === 'ai-insights'
+                      ? (isDarkTheme ? 'bg-green-600 text-white shadow-lg shadow-green-500/25' : 'bg-green-500 text-white shadow-lg shadow-green-500/25')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-green-600 hover:bg-white/70')
+                  }`}
+                >
+                  <Brain className="w-4 h-4 inline mr-1" />
+                  AI Insights
+                </button>
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                     activeTab === 'settings'
@@ -1160,6 +1174,20 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
               >
                 <BarChart3 className="w-5 h-5" />
                 <span>Analytics</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('ai-insights');
+                  setIsMenuOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
+                  activeTab === 'ai-insights'
+                    ? (isDarkTheme ? 'bg-green-600 text-white shadow-lg shadow-green-500/25' : 'bg-green-500 text-white shadow-lg shadow-green-500/25')
+                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-green-600 hover:bg-white/50')
+                }`}
+              >
+                <Brain className="w-5 h-5" />
+                <span>AI Insights</span>
               </button>
               <button
                 onClick={() => {
@@ -1692,6 +1720,17 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         </div>
       )}
 
+      {/* AI Insights Tab */}
+      {activeTab === 'ai-insights' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <AIInsightsDashboard 
+            materials={materials}
+            quotations={personalQuotations}
+            isDarkTheme={isDarkTheme}
+          />
+        </div>
+      )}
+
       {/* Settings Tab */}
       {activeTab === 'settings' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -2158,14 +2197,22 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             <form onSubmit={addMaterial} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <input
-                  type="text"
+                <SmartItemInput
                   value={materialForm.itemName}
-                  onChange={(e) => setMaterialForm({...materialForm, itemName: e.target.value})}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  required
+                  onChange={(value) => setMaterialForm({...materialForm, itemName: value})}
+                  materials={materials}
+                  quotations={personalQuotations}
+                  placeholder="Enter item name..."
+                  isDarkTheme={isDarkTheme}
+                />
+                
+                {/* Smart Suggestions Component */}
+                <SmartSuggestionEngine
+                  currentItemName={materialForm.itemName}
+                  materials={materials}
+                  quotations={personalQuotations}
+                  onSuggestionSelect={(suggestion) => setMaterialForm({...materialForm, itemName: suggestion.itemName})}
+                  isDarkTheme={isDarkTheme}
                 />
               </div>
 
@@ -2322,14 +2369,22 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             <form onSubmit={editMaterial} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <input
-                  type="text"
+                <SmartItemInput
                   value={materialForm.itemName}
-                  onChange={(e) => setMaterialForm({...materialForm, itemName: e.target.value})}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  required
+                  onChange={(value) => setMaterialForm({...materialForm, itemName: value})}
+                  materials={materials}
+                  quotations={personalQuotations}
+                  placeholder="Enter item name..."
+                  isDarkTheme={isDarkTheme}
+                />
+                
+                {/* Smart Suggestions Component for Edit */}
+                <SmartSuggestionEngine
+                  currentItemName={materialForm.itemName}
+                  materials={materials}
+                  quotations={personalQuotations}
+                  onSuggestionSelect={(suggestion) => setMaterialForm({...materialForm, itemName: suggestion.itemName})}
+                  isDarkTheme={isDarkTheme}
                 />
               </div>
 
