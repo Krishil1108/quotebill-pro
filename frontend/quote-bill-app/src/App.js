@@ -1876,33 +1876,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
               )}
             </div>
             
-            {/* Smart Duplicate Feature Help Banner */}
-            {filteredDocuments.length > 0 && itemCountFilter && (
-              <div className="mx-8 mb-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <Copy className="h-8 w-8 text-emerald-600 bg-emerald-100 rounded-full p-2" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-emerald-800 mb-1">
-                      🎯 Perfect Match Found!
-                    </h3>
-                    <p className="text-xs text-emerald-700">
-                      Found {filteredDocuments.length} quote{filteredDocuments.length !== 1 ? 's' : ''} with {itemCountFilter} items (same as your current draft). 
-                      Click <Copy className="h-3 w-3 inline mx-1" /> <strong>duplicate</strong> to copy one and customize it with new details!
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setItemCountFilter('')}
-                    className="flex-shrink-0 text-emerald-600 hover:text-emerald-800 transition-colors"
-                    title="Clear item filter"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-            
+            {/* Start of table section */}
           </div>
         )}
 
