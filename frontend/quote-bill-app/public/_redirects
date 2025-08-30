@@ -1,0 +1,7 @@
+# Netlify redirects for SPA routing
+/*    /index.html   200
+
+# Specific routes
+/create    /index.html   200
+/history   /index.html   200
+/settings  /index.html   200

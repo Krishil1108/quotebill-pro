@@ -193,6 +193,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [documentType, setDocumentType] = useState('quote');
+  const [isAppInitialized, setIsAppInitialized] = useState(false);
   const [items, setItems] = useState([
     { id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }
   ]);
@@ -426,7 +427,13 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
       setActiveTab('history');
     } else if (currentPath === '/settings') {
       setActiveTab('settings');
+    } else {
+      // For unrecognized paths, redirect to home and set create tab
+      setActiveTab('create');
+      window.history.replaceState(null, '', '/');
     }
+    // Mark app as initialized after setting the initial tab
+    setIsAppInitialized(true);
     
     // Listen for browser back/forward button clicks
     const handlePopState = (event) => {
@@ -437,6 +444,10 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
         setActiveTab('history');
       } else if (path === '/settings') {
         setActiveTab('settings');
+      } else {
+        // For unrecognized paths, redirect to home and set create tab
+        setActiveTab('create');
+        window.history.replaceState(null, '', '/');
       }
     };
 
@@ -1130,11 +1141,32 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-all duration-500 ${
-      isDarkTheme 
-        ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
-        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
-    }`}>
+    <>
+      {/* Show loading screen until app is initialized */}
+      {!isAppInitialized && (
+        <div className={`min-h-screen flex items-center justify-center transition-all duration-500 ${
+          isDarkTheme 
+            ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+            : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+        }`}>
+          <div className="text-center">
+            <div className={`animate-spin rounded-full h-12 w-12 border-4 border-t-transparent mb-4 mx-auto ${
+              isDarkTheme ? 'border-blue-400' : 'border-blue-600'
+            }`}></div>
+            <p className={`text-lg font-medium ${
+              isDarkTheme ? 'text-white' : 'text-gray-700'
+            }`}>Loading QuoteBill Pro...</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Main app content - only show when initialized */}
+      {isAppInitialized && (
+        <div className={`min-h-screen relative overflow-hidden transition-all duration-500 ${
+          isDarkTheme 
+            ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' 
+            : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+        }`}>
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse transition-colors duration-500 ${
@@ -2377,7 +2409,9 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           </div>
         </div>
       )}
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 

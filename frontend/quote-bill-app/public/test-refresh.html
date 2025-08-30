@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - QuoteBill Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .test-container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .test-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+        .test-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            background: rgba(0,255,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Browser Refresh Test - QuoteBill Pro</h1>
+        
+        <div class="status">
+            <h3>✅ Routing Fixes Applied</h3>
+            <ul>
+                <li>Added initialization state to prevent blank pages</li>
+                <li>Created _redirects file for Netlify/Render hosting</li>
+                <li>Created .htaccess file for Apache servers</li>
+                <li>Enhanced browser navigation handling in App.js</li>
+            </ul>
+        </div>
+
+        <h3>🔗 Test These Routes</h3>
+        <p>Click the links below and then refresh the browser page to test routing:</p>
+        
+        <a href="/create" class="test-link">📝 Create Tab</a>
+        <a href="/history" class="test-link">📋 History Tab</a>
+        <a href="/settings" class="test-link">⚙️ Settings Tab</a>
+        <a href="/nonexistent" class="test-link">❌ Invalid Route</a>
+        
+        <h3>🧪 How to Test</h3>
+        <ol>
+            <li>Click on any of the links above</li>
+            <li>Press F5 or Ctrl+R to refresh the page</li>
+            <li>The app should load properly without showing a blank page</li>
+            <li>Invalid routes should redirect to the home page</li>
+        </ol>
+
+        <div class="status">
+            <h4>Expected Behavior:</h4>
+            <ul>
+                <li>✅ /create and / should show the Create tab</li>
+                <li>✅ /history should show the History tab</li>
+                <li>✅ /settings should show the Settings tab</li>
+                <li>✅ Invalid routes should redirect to Create tab</li>
+                <li>✅ No blank pages on browser refresh</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 30px; text-align: center; opacity: 0.8;">
+            <strong>Note:</strong> This test page will be removed after testing is complete.
+        </p>
+    </div>
+
+    <script>
+        // Log current route for debugging
+        console.log('Current route:', window.location.pathname);
+        
+        // Test if the main app is working
+        setTimeout(() => {
+            if (window.location.pathname !== '/test-refresh.html') {
+                console.log('Route navigation working correctly');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
