@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Settings } from 'lucide-react';
+import { Plus, Download, FileText, Menu, X, Eye, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Settings, Copy } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PersonalSection from './PersonalSection';
 import ClientSmartParticularInput from './components/ClientSmartParticularInput';
@@ -830,6 +830,84 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
     }
   };
 
+  // Duplicate Document Function
+  const duplicateDocument = async (doc) => {
+    try {
+      if (!doc || !doc._id) {
+        showError('Invalid document selected for duplication');
+        return;
+      }
+
+      // Load the document data first
+      const response = await fetch(`${API_BASE_URL}/documents/${doc._id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch document data');
+      }
+      
+      const docData = await response.json();
+      console.log('Document to duplicate:', docData);
+
+      // Create a new document number
+      const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const newDocNumber = `${doc.type.toUpperCase()}-${timestamp}-${randomSuffix}`;
+
+      // Prepare duplicate data with modified name
+      const originalName = docData.clientInfo?.name || docData.customerName || 'Unknown Client';
+      const duplicateData = {
+        ...docData,
+        _id: undefined, // Remove the original ID
+        documentNumber: newDocNumber,
+        clientInfo: {
+          ...docData.clientInfo,
+          name: `${originalName} (Copy)`
+        },
+        customerName: docData.customerName ? `${docData.customerName} (Copy)` : undefined,
+        createdAt: undefined, // Will be set by server
+        updatedAt: undefined, // Will be set by server
+        items: docData.items ? docData.items.map(item => ({
+          ...item,
+          id: Date.now() + Math.random() // Generate new IDs for items
+        })) : []
+      };
+
+      // Set the duplicate data in the form
+      setDocumentType(duplicateData.type || 'quote');
+      setClientInfo({
+        name: duplicateData.clientInfo?.name || '',
+        address: duplicateData.clientInfo?.address || '',
+        phone: duplicateData.clientInfo?.phone || '',
+        email: duplicateData.clientInfo?.email || ''
+      });
+      
+      if (duplicateData.items && duplicateData.items.length > 0) {
+        setItems(duplicateData.items.map(item => ({
+          ...item,
+          id: Date.now() + Math.random()
+        })));
+      } else {
+        setItems([{ id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }]);
+      }
+
+      if (duplicateData.letterhead) {
+        setLetterhead(duplicateData.letterhead);
+      }
+
+      // Clear current document state since this is a new document
+      setCurrentDocument(null);
+      
+      // Switch to create tab
+      setActiveTab('create');
+      
+      // Show success message
+      showSuccess(`📋 Document duplicated successfully! You can now modify "${duplicateData.clientInfo?.name || 'the copy'}" and save it as a new document.`);
+      
+    } catch (error) {
+      console.error('Error duplicating document:', error);
+      showError(`Failed to duplicate document: ${error.message}`);
+    }
+  };
+
   const uploadLogo = async (file) => {
     try {
       const formData = new FormData();
@@ -1656,11 +1734,12 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                   <div className="relative">
                     <input
                       type="number"
-                      placeholder="Filter by item count..."
+                      placeholder="e.g. 20 to find similar quotes"
                       value={itemCountFilter}
                       onChange={(e) => setItemCountFilter(e.target.value)}
                       className="pl-4 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 w-full sm:w-48 bg-white shadow-sm hover:shadow-md"
                       min="1"
+                      title="Enter number of items to find quotes with exact item count, then use duplicate button to copy"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                       <span className="text-xs text-gray-400">items</span>
@@ -1725,8 +1804,18 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 <span>Showing {filteredDocuments.length} of {pastDocuments.length} documents</span>
                 {searchQuery && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Search: "{searchQuery}"</span>}
                 {documentFilter !== 'all' && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Type: {documentFilter}s</span>}
-                {itemCountFilter && <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">Items: {itemCountFilter}</span>}
+                {itemCountFilter && (
+                  <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded flex items-center">
+                    Items: {itemCountFilter} 
+                    <Copy className="h-3 w-3 ml-1" title="Use duplicate button to copy quotes" />
+                  </span>
+                )}
                 {aiSuggestedDocs.length > 0 && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded flex items-center"><Sparkles className="h-3 w-3 mr-1" />AI Suggested</span>}
+                {filteredDocuments.length > 0 && (itemCountFilter || aiSuggestedDocs.length > 0) && (
+                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded flex items-center text-xs">
+                    💡 Found what you need? Use <Copy className="h-3 w-3 mx-1" /> to duplicate and modify!
+                  </span>
+                )}
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -1806,21 +1895,28 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => generatePDF(doc._id)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
                             title="Download PDF"
                           >
                             <Download size={16} />
                           </button>
                           <button 
                             onClick={() => loadDocument(doc._id)}
-                            className="text-gray-600 hover:text-gray-900"
-                            title="Edit"
+                            className="text-gray-600 hover:text-gray-900 transition-colors"
+                            title="Edit Original"
                           >
                             <Edit3 size={16} />
                           </button>
                           <button 
+                            onClick={() => duplicateDocument(doc)}
+                            className="text-green-600 hover:text-green-900 transition-colors"
+                            title="Duplicate Quote - Create a copy to modify"
+                          >
+                            <Copy size={16} />
+                          </button>
+                          <button 
                             onClick={() => deleteDocument(doc._id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 transition-colors"
                             title="Delete"
                           >
                             <Trash2 size={16} />
@@ -1843,6 +1939,34 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 </div>
               )}
             </div>
+            
+            {/* Duplicate Feature Help Banner */}
+            {filteredDocuments.length > 0 && itemCountFilter && (
+              <div className="mx-8 mb-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <Copy className="h-8 w-8 text-emerald-600 bg-emerald-100 rounded-full p-2" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-emerald-800 mb-1">
+                      💡 Tip: Save Time with Duplicate Feature
+                    </h3>
+                    <p className="text-xs text-emerald-700">
+                      Found a quotation with {itemCountFilter} items? Click the <Copy className="h-3 w-3 inline mx-1" /> <strong>green duplicate button</strong> to create a copy, 
+                      then modify it with new client details and pricing. No need to recreate everything from scratch!
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setItemCountFilter('')}
+                    className="flex-shrink-0 text-emerald-600 hover:text-emerald-800 transition-colors"
+                    title="Clear item filter"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
           </div>
         )}
 

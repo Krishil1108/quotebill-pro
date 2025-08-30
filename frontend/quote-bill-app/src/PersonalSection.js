@@ -2218,13 +2218,15 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             <form onSubmit={addMaterial} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <SmartItemInput
+                <input
+                  type="text"
                   value={materialForm.itemName}
-                  onChange={(value) => setMaterialForm({...materialForm, itemName: value})}
-                  materials={materials}
-                  quotations={personalQuotations}
+                  onChange={(e) => setMaterialForm({...materialForm, itemName: e.target.value})}
                   placeholder="Enter item name..."
-                  isDarkTheme={isDarkTheme}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                  required
                 />
               </div>
 
@@ -2381,13 +2383,15 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
             <form onSubmit={editMaterial} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Item Name *</label>
-                <SmartItemInput
+                <input
+                  type="text"
                   value={materialForm.itemName}
-                  onChange={(value) => setMaterialForm({...materialForm, itemName: value})}
-                  materials={materials}
-                  quotations={personalQuotations}
+                  onChange={(e) => setMaterialForm({...materialForm, itemName: e.target.value})}
                   placeholder="Enter item name..."
-                  isDarkTheme={isDarkTheme}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    isDarkTheme ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                  required
                 />
               </div>
 
