@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Download, FileText, Menu, X, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Settings, Copy } from 'lucide-react';
+import { Plus, Download, FileText, Menu, X, Edit3, Trash2, Upload, ChevronDown, Check, Search, DollarSign, Users, Sparkles, Zap, Settings, Copy, Package } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PersonalSection from './PersonalSection';
 import ClientSmartParticularInput from './components/ClientSmartParticularInput';
@@ -1198,19 +1198,19 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
               </div>
             </div>
 
-            {/* Document Type Selection */}
-            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-8 transition-all duration-500 ${
+            {/* Document Type Selection - Mobile Optimized */}
+            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-6 transition-all duration-500 ${
               isDarkTheme 
                 ? 'bg-white/10 border-white/20' 
                 : 'bg-white/70 border-gray-200/50'
             }`}>
-              <h2 className={`text-xl font-bold mb-6 transition-colors duration-500 ${
+              <h2 className={`text-xl font-bold mb-4 transition-colors duration-500 ${
                 isDarkTheme ? 'text-white' : 'text-gray-800'
               }`}>Document Type</h2>
-              <div className="flex space-x-4">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setDocumentType('quote')}
-                  className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
+                  className={`py-4 px-4 rounded-xl font-bold text-base transition-all duration-200 transform hover:scale-[1.02] ${
                     documentType === 'quote'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                       : (isDarkTheme 
@@ -1222,7 +1222,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 </button>
                 <button
                   onClick={() => setDocumentType('bill')}
-                  className={`px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 ${
+                  className={`py-4 px-4 rounded-xl font-bold text-base transition-all duration-200 transform hover:scale-[1.02] ${
                     documentType === 'bill'
                       ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
                       : (isDarkTheme 
@@ -1300,106 +1300,118 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 </h2>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {items.map((item, index) => (
-                  <div key={item.id} className={`grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 border rounded-2xl transition-all duration-500 hover:shadow-lg ${
+                  <div key={item.id} className={`p-4 sm:p-6 border rounded-xl transition-all duration-500 hover:shadow-lg ${
                     isDarkTheme 
                       ? 'border-white/20 bg-gradient-to-r from-black/30 to-blue-900/30 backdrop-blur-xl' 
                       : 'border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50'
                   }`}>
-                    <div className="lg:col-span-4">
-                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
-                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
-                      }`}>Particulars</label>
-                      <ClientSmartParticularInput
-                        value={item.particular}
-                        onChange={(value) => updateItem(item.id, 'particular', value)}
-                        particulars={appSettings.particulars}
-                        onAddParticular={(newParticular) => {
-                          const updatedParticulars = [...appSettings.particulars, newParticular];
-                          setAppSettings({...appSettings, particulars: updatedParticulars});
-                          autoSaveParticulars(updatedParticulars);
-                          updateItem(item.id, 'particular', newParticular);
-                        }}
-                        allDocuments={pastDocuments}
-                        currentItems={items}
-                        isDarkTheme={isDarkTheme}
-                        placeholder="Select or enter particulars"
-                      />
-                    </div>
-
-                    <div className="lg:col-span-2">
-                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
-                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
-                      }`}>Quantity</label>
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                        className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md ${
-                          isDarkTheme 
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
-                        }`}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="lg:col-span-2">
-                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
-                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
-                      }`}>Unit</label>
-                      <UnitDropdown
-                        value={item.unit}
-                        onChange={(value) => updateItem(item.id, 'unit', value)}
-                        units={appSettings.units}
-                        isDark={isDarkTheme}
-                      />
-                    </div>
-
-                    <div className="lg:col-span-2">
-                      <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
-                        isDarkTheme ? 'text-white/90' : 'text-gray-700'
-                      }`}>Rate (Rs)</label>
-                      <input
-                        type="number"
-                        value={item.rate}
-                        onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
-                        className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md ${
-                          isDarkTheme 
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
-                        }`}
-                        placeholder="0.00"
-                        step="0.01"
-                      />
-                    </div>
-
-                    <div className="lg:col-span-2 flex items-end">
-                      <div className="w-full">
-                        <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${
+                    
+                    {/* Mobile-First Layout */}
+                    <div className="space-y-4">
+                      
+                      {/* Particulars - Full Width on Mobile */}
+                      <div>
+                        <label className={`block text-sm font-bold mb-2 transition-colors duration-500 ${
                           isDarkTheme ? 'text-white/90' : 'text-gray-700'
-                        }`}>Amount (Rs)</label>
-                        <div className={`p-4 border-2 rounded-xl text-right font-bold text-lg transition-all duration-500 ${
-                          isDarkTheme 
-                            ? 'bg-gradient-to-r from-emerald-900/50 to-green-800/50 border-emerald-500/30 text-emerald-300' 
-                            : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800'
-                        }`}>
-                          ₹{item.amount.toFixed(2)}
+                        }`}>Particulars</label>
+                        <ClientSmartParticularInput
+                          value={item.particular}
+                          onChange={(value) => updateItem(item.id, 'particular', value)}
+                          particulars={appSettings.particulars}
+                          onAddParticular={(newParticular) => {
+                            const updatedParticulars = [...appSettings.particulars, newParticular];
+                            setAppSettings({...appSettings, particulars: updatedParticulars});
+                            autoSaveParticulars(updatedParticulars);
+                            updateItem(item.id, 'particular', newParticular);
+                          }}
+                          allDocuments={pastDocuments}
+                          currentItems={items}
+                          isDarkTheme={isDarkTheme}
+                          placeholder="Select or enter particulars"
+                        />
+                      </div>
+
+                      {/* Quantity and Unit - Side by Side */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-sm font-bold mb-2 transition-colors duration-500 ${
+                            isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                          }`}>Quantity</label>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                            className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md text-base ${
+                              isDarkTheme 
+                                ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                                : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
+                            }`}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label className={`block text-sm font-bold mb-2 transition-colors duration-500 ${
+                            isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                          }`}>Unit</label>
+                          <UnitDropdown
+                            value={item.unit}
+                            onChange={(value) => updateItem(item.id, 'unit', value)}
+                            units={appSettings.units}
+                            isDark={isDarkTheme}
+                          />
                         </div>
                       </div>
-                      {items.length > 1 && (
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className={`ml-3 p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
+
+                      {/* Rate - Full Width */}
+                      <div>
+                        <label className={`block text-sm font-bold mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                        }`}>Rate (Rs)</label>
+                        <input
+                          type="number"
+                          value={item.rate}
+                          onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
+                          className={`w-full p-4 border rounded-xl focus:ring-3 transition-all duration-300 shadow-sm hover:shadow-md text-base ${
                             isDarkTheme 
-                              ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20' 
-                              : 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                              ? 'border-white/20 bg-black/30 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                              : 'border-gray-200 bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
                           }`}
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      )}
+                          placeholder="0.00"
+                          step="0.01"
+                        />
+                      </div>
+
+                      {/* Amount and Delete - Side by Side */}
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <label className={`block text-sm font-bold mb-2 transition-colors duration-500 ${
+                            isDarkTheme ? 'text-white/90' : 'text-gray-700'
+                          }`}>Amount (Rs)</label>
+                          <div className={`p-4 border-2 rounded-xl text-center font-bold text-lg transition-all duration-500 ${
+                            isDarkTheme 
+                              ? 'bg-gradient-to-r from-emerald-900/50 to-green-800/50 border-emerald-500/30 text-emerald-300' 
+                              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800'
+                          }`}>
+                            ₹{item.amount.toFixed(2)}
+                          </div>
+                        </div>
+                        {items.length > 1 && (
+                          <button
+                            onClick={() => handleDeleteItem(item.id)}
+                            className={`p-4 rounded-xl transition-all duration-300 hover:scale-110 mb-2 ${
+                              isDarkTheme 
+                                ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20' 
+                                : 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                            }`}
+                            title="Delete item"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1415,27 +1427,27 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 isDarkTheme={isDarkTheme}
               />
 
-              {/* Add Item Button & Items Count */}
-              <div className="mt-6 flex justify-between items-center gap-6">
+              {/* Add Item Button & Items Count - Mobile Optimized */}
+              <div className="flex flex-col space-y-4">
                 <button
                   onClick={addItem}
-                  className={`flex items-center px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold ${
+                  className={`w-full flex items-center justify-center py-4 px-6 rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] font-bold text-lg ${
                     isDarkTheme 
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white' 
                       : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
                   }`}
                 >
-                  <Plus size={20} className="mr-2" />
+                  <Plus size={24} className="mr-3" />
                   Add Item
                 </button>
                 
-                <div className={`flex items-center px-6 py-3 rounded-xl backdrop-blur-sm transition-all duration-500 ${
+                <div className={`flex items-center justify-center py-3 px-4 rounded-xl backdrop-blur-sm transition-all duration-500 ${
                   isDarkTheme 
                     ? 'bg-white/10 text-white/90 border border-white/20' 
                     : 'bg-gray-100/80 text-gray-700 border border-gray-200'
                 }`}>
-                  <FileText size={18} className="mr-2" />
-                  <span className="font-semibold">
+                  <FileText size={20} className="mr-2" />
+                  <span className="font-bold">
                     {items.length} {items.length === 1 ? 'Item' : 'Items'} Added
                   </span>
                 </div>
@@ -1477,22 +1489,22 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+            {/* Action Buttons - Mobile Optimized */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={saveDocument}
                 disabled={loading}
-                className="flex items-center justify-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:transform-none font-semibold"
+                className="flex items-center justify-center py-4 px-6 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none font-bold text-lg"
               >
-                <FileText size={20} className="mr-2" />
+                <FileText size={24} className="mr-3" />
                 {loading ? 'Saving...' : `Save ${documentType.charAt(0).toUpperCase() + documentType.slice(1)}`}
               </button>
               <button
                 onClick={() => generatePDF()}
                 disabled={loading}
-                className="flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:transform-none font-semibold"
+                className="flex items-center justify-center py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none font-bold text-lg"
               >
-                <Download size={20} className="mr-2" />
+                <Download size={24} className="mr-3" />
                 {loading ? 'Generating...' : 'Export PDF'}
               </button>
             </div>
@@ -1722,41 +1734,80 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           </div>
         )}
 
-        {/* Settings Tab */}
+        {/* Settings Tab - Mobile Optimized */}
         {activeTab === 'settings' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <Settings className="w-6 h-6 mr-3 text-blue-600" />
-              Settings
-            </h2>
+          <div className="space-y-4">
+            {/* Settings Header */}
+            <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/80 border-gray-200/50'
+            }`}>
+              <h2 className={`text-2xl font-black flex items-center transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>
+                <Settings className="w-6 h-6 mr-3 text-blue-500" />
+                Settings
+              </h2>
+              <p className={`text-sm mt-1 transition-colors duration-500 ${
+                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                Configure your application preferences
+              </p>
+            </div>
 
-            {/* Theme Toggle */}
-            <div className="bg-white rounded-lg shadow-md p-6">
+            {/* Theme Toggle - Mobile Friendly */}
+            <div className={`backdrop-blur-sm rounded-xl border p-5 shadow-lg transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-black/20 border-white/20' 
+                : 'bg-white/80 border-white/30'
+            }`}>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Dark Mode</h3>
-                  <p className="text-gray-600">Toggle between light and dark themes</p>
+                <div className="flex-1">
+                  <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    Dark Mode
+                  </h3>
+                  <p className={`text-sm transition-colors duration-500 ${
+                    isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    Toggle between light and dark themes
+                  </p>
                 </div>
                 <button
                   onClick={toggleTheme}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 shadow-lg hover:scale-105 ${
                     isDarkTheme ? 'bg-blue-600' : 'bg-gray-300'
                   }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
-                    isDarkTheme ? 'translate-x-6' : 'translate-x-1'
+                  <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-md ${
+                    isDarkTheme ? 'translate-x-7' : 'translate-x-1'
                   }`} />
                 </button>
               </div>
             </div>
 
-            {/* Letterhead Settings */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Company Letterhead</h3>
+            {/* Letterhead Settings - Mobile Stack */}
+            <div className={`backdrop-blur-sm rounded-xl border p-5 shadow-lg transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-black/20 border-white/20' 
+                : 'bg-white/80 border-white/30'
+            }`}>
+              <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>
+                Company Letterhead
+              </h3>
               <div className="space-y-4">
+                {/* Logo Upload - Full Width on Mobile */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
-                  <div className="flex items-center space-x-4">
+                  <label className={`block text-sm font-medium mb-3 transition-colors duration-500 ${
+                    isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Company Logo
+                  </label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -1770,73 +1821,126 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      className={`w-full sm:w-auto flex items-center justify-center px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                        isDarkTheme 
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white' 
+                          : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                      }`}
                     >
-                      <Upload size={16} className="mr-2" />
+                      <Upload size={20} className="mr-2" />
                       Upload Logo
                     </button>
                     {letterhead.logo && (
-                      <img src={letterhead.logo} alt="Current Logo" className="h-12 w-12 object-contain border rounded" />
+                      <div className="flex justify-center sm:justify-start">
+                        <img src={letterhead.logo} alt="Current Logo" className="h-16 w-16 object-contain border-2 border-gray-200 rounded-lg shadow-sm" />
+                      </div>
                     )}
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Form Fields - Stack on Mobile */}
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Firm Name</label>
+                    <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Firm Name
+                    </label>
                     <input
                       type="text"
                       value={letterhead.firmName}
                       onChange={(e) => setLetterhead({...letterhead, firmName: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-4 border rounded-xl transition-all duration-300 focus:ring-3 text-base ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-100 focus:border-blue-500'
+                      }`}
                       placeholder="Enter your firm name"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Phone Number
+                    </label>
                     <input
                       type="text"
                       value={letterhead.phone}
                       onChange={(e) => setLetterhead({...letterhead, phone: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-4 border rounded-xl transition-all duration-300 focus:ring-3 text-base ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-100 focus:border-blue-500'
+                      }`}
                       placeholder="Enter phone number"
                     />
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Firm Address</label>
-                  <textarea
-                    value={letterhead.address}
-                    onChange={(e) => setLetterhead({...letterhead, address: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                    rows="3"
-                    placeholder="Enter your firm address"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
-                  <input
-                    type="text"
-                    value={letterhead.tagline}
-                    onChange={(e) => setLetterhead({...letterhead, tagline: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your tagline"
-                  />
+                  
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Firm Address
+                    </label>
+                    <textarea
+                      value={letterhead.address}
+                      onChange={(e) => setLetterhead({...letterhead, address: e.target.value})}
+                      className={`w-full p-4 border rounded-xl transition-all duration-300 focus:ring-3 text-base resize-none ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-100 focus:border-blue-500'
+                      }`}
+                      rows="3"
+                      placeholder="Enter your firm address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={letterhead.tagline}
+                      onChange={(e) => setLetterhead({...letterhead, tagline: e.target.value})}
+                      className={`w-full p-4 border rounded-xl transition-all duration-300 focus:ring-3 text-base ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                          : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-100 focus:border-blue-500'
+                      }`}
+                      placeholder="Enter your tagline"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Particulars Management */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Manage Particulars</h3>
+            {/* Particulars Management - Mobile Optimized */}
+            <div className={`backdrop-blur-sm rounded-xl border p-5 shadow-lg transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-black/20 border-white/20' 
+                : 'bg-white/80 border-white/30'
+            }`}>
+              <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>
+                Manage Particulars
+              </h3>
               <div className="space-y-4">
-                <div className="flex gap-2">
+                {/* Add New Particular - Mobile Stack */}
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
                     placeholder="Add new particular..."
-                    className="flex-1 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`flex-1 p-4 border rounded-xl transition-all duration-300 focus:ring-3 text-base ${
+                      isDarkTheme 
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-green-500/30 focus:border-green-400' 
+                        : 'bg-white border-gray-300 text-gray-900 focus:ring-green-100 focus:border-green-500'
+                    }`}
                     ref={addParticularInputRef}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && e.target.value.trim()) {
@@ -1862,43 +1966,75 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                         input.value = '';
                       }
                     }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    className={`w-full sm:w-auto px-6 py-4 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                      isDarkTheme 
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' 
+                        : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                    }`}
                   >
-                    <Plus size={20} />
+                    <Plus size={20} className="sm:mr-2" />
+                    <span className="hidden sm:inline">Add</span>
                   </button>
                 </div>
                 
+                {/* Particulars List - Mobile Cards */}
                 {appSettings.particulars.length > 0 && (
-                  <div className="max-h-64 overflow-y-auto">
-                    <div className="space-y-2">
-                      {appSettings.particulars.map((particular, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="text-gray-800">{particular}</span>
-                          <button
-                            onClick={() => {
-                              const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
-                              setAppSettings({...appSettings, particulars: updatedParticulars});
-                              autoSaveParticulars(updatedParticulars);
-                            }}
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                            title="Delete particular"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {appSettings.particulars.map((particular, index) => (
+                      <div key={index} className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:scale-[1.01] ${
+                        isDarkTheme 
+                          ? 'bg-black/30 border-white/10 hover:border-white/20' 
+                          : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <span className={`font-medium flex-1 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          {particular}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
+                            setAppSettings({...appSettings, particulars: updatedParticulars});
+                            autoSaveParticulars(updatedParticulars);
+                          }}
+                          className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
+                            isDarkTheme 
+                              ? 'text-red-400 hover:bg-red-500/20' 
+                              : 'text-red-600 hover:bg-red-50'
+                          }`}
+                          title="Delete particular"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {appSettings.particulars.length === 0 && (
+                  <div className={`text-center py-8 rounded-xl border-2 border-dashed ${
+                    isDarkTheme 
+                      ? 'border-white/20 text-white/60' 
+                      : 'border-gray-300 text-gray-500'
+                  }`}>
+                    <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="font-medium text-sm">No particulars added yet</p>
+                    <p className="text-xs mt-1">Add your first item above</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Save Button */}
+            {/* Save Button - Prominent on Mobile */}
             <button 
               onClick={saveSettings}
-              className="w-full py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+              className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-[1.02] shadow-xl ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-green-500/25' 
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-green-500/25'
+              }`}
             >
-              Save Settings
+              💾 Save Settings
             </button>
           </div>
         )}

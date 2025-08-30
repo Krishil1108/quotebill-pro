@@ -16,6 +16,7 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   
   // Material form state
   const [materialForm, setMaterialForm] = useState({
@@ -1429,177 +1430,205 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
               </div>
             </div>
             
-            {/* Search and Filter Controls */}
+            {/* Search and Filter Controls - Mobile Optimized */}
             <div className="space-y-4">
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                  <Search size={20} className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-500 ${
-                    isDarkTheme ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <input
-                    type="text"
-                    placeholder="Search materials by name, category, or supplier..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
-                      isDarkTheme 
-                        ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
-                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
-                    }`}
-                  />
-                </div>
-                
-                {/* Category Filter */}
-                <div className="min-w-[200px]">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
-                      isDarkTheme 
-                        ? 'bg-black/30 border-white/20 text-white focus:ring-purple-500/30 focus:border-purple-400' 
-                        : 'bg-white border-gray-200 text-gray-900 focus:ring-purple-100 focus:border-purple-400'
-                    }`}
-                  >
-                    <option value="">All Categories</option>
-                    {materialCategories.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Sort Options */}
-                <div className="min-w-[160px]">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
-                      isDarkTheme 
-                        ? 'bg-black/30 border-white/20 text-white focus:ring-green-500/30 focus:border-green-400' 
-                        : 'bg-white border-gray-200 text-gray-900 focus:ring-green-100 focus:border-green-400'
-                    }`}
-                  >
-                    <option value="name">Sort by Name</option>
-                    <option value="date">Sort by Date</option>
-                    <option value="value">Sort by Value</option>
-                    <option value="category">Sort by Category</option>
-                  </select>
-                </div>
+              {/* Search Bar - Full Width on Mobile */}
+              <div className="relative w-full">
+                <Search size={20} className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-500 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                }`} />
+                <input
+                  type="text"
+                  placeholder="Search materials..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-4 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 text-base ${
+                    isDarkTheme 
+                      ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                      : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
+                  }`}
+                />
               </div>
               
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                  {/* Bulk Actions */}
-                  {selectedMaterials.length > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-sm font-medium transition-colors duration-500 ${
-                        isDarkTheme ? 'text-white' : 'text-gray-700'
-                      }`}>
-                        {selectedMaterials.length} selected
-                      </span>
+              {/* Filters Row - Stack on Mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Category Filter */}
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className={`w-full px-4 py-4 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 text-base ${
+                    isDarkTheme 
+                      ? 'bg-black/30 border-white/20 text-white focus:ring-purple-500/30 focus:border-purple-400' 
+                      : 'bg-white border-gray-200 text-gray-900 focus:ring-purple-100 focus:border-purple-400'
+                  }`}
+                >
+                  <option value="">All Categories</option>
+                  {materialCategories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* Sort Options */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className={`w-full px-4 py-4 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 text-base ${
+                    isDarkTheme 
+                      ? 'bg-black/30 border-white/20 text-white focus:ring-green-500/30 focus:border-green-400' 
+                      : 'bg-white border-gray-200 text-gray-900 focus:ring-green-100 focus:border-green-400'
+                  }`}
+                >
+                  <option value="name">Sort by Name</option>
+                  <option value="date">Sort by Date</option>
+                  <option value="value">Sort by Value</option>
+                  <option value="category">Sort by Category</option>
+                </select>
+              </div>
+              
+              {/* Primary Action Button - Prominent on Mobile */}
+              <div className="w-full">
+                <button
+                  onClick={() => setShowAddMaterial(true)}
+                  className={`w-full flex items-center justify-center space-x-3 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-[1.02] shadow-xl ${
+                    isDarkTheme 
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
+                      : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
+                  }`}
+                >
+                  <Plus size={24} />
+                  <span>Add Material</span>
+                </button>
+              </div>
+              
+              {/* Secondary Actions - Mobile Responsive Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* View Toggle */}
+                <div className={`flex rounded-xl border transition-all duration-500 ${
+                  isDarkTheme ? 'border-white/20 bg-black/20' : 'border-gray-200 bg-white'
+                }`}>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`flex-1 py-3 px-4 rounded-l-xl transition-all duration-300 text-sm font-medium ${
+                      viewMode === 'grid'
+                        ? isDarkTheme 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-blue-500 text-white'
+                        : isDarkTheme 
+                          ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Grid
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`flex-1 py-3 px-4 rounded-r-xl transition-all duration-300 text-sm font-medium ${
+                      viewMode === 'list'
+                        ? isDarkTheme 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-blue-500 text-white'
+                        : isDarkTheme 
+                          ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
+                
+                {/* Export Menu Button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportMenu(!showExportMenu)}
+                    className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+                      isDarkTheme 
+                        ? 'bg-gray-600/50 hover:bg-gray-600 text-white border border-white/20' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <Download size={16} />
+                    <span className="text-sm">Export</span>
+                  </button>
+                  
+                  {/* Export Dropdown */}
+                  {showExportMenu && (
+                    <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl z-50 overflow-hidden ${
+                      isDarkTheme 
+                        ? 'bg-gray-800 border-white/20' 
+                        : 'bg-white border-gray-200'
+                    }`}>
                       <button
-                        onClick={handleBulkDelete}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                          isDarkTheme 
-                            ? 'bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30' 
-                            : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                        onClick={() => {
+                          exportMaterialsToPDF();
+                          setShowExportMenu(false);
+                        }}
+                        disabled={loading || filteredMaterials.length === 0}
+                        className={`w-full flex items-center space-x-3 py-3 px-4 text-left transition-all duration-200 ${
+                          loading || filteredMaterials.length === 0
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : isDarkTheme 
+                              ? 'text-white hover:bg-gray-700' 
+                              : 'text-gray-700 hover:bg-gray-50'
                         }`}
                       >
-                        Delete Selected
+                        <Download size={16} className="text-red-500" />
+                        <span className="text-sm font-medium">Export as PDF</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          exportMaterialsToExcel();
+                          setShowExportMenu(false);
+                        }}
+                        disabled={filteredMaterials.length === 0}
+                        className={`w-full flex items-center space-x-3 py-3 px-4 text-left transition-all duration-200 ${
+                          filteredMaterials.length === 0
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : isDarkTheme 
+                              ? 'text-white hover:bg-gray-700' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <FileSpreadsheet size={16} className="text-green-500" />
+                        <span className="text-sm font-medium">Export as Excel</span>
                       </button>
                     </div>
                   )}
                 </div>
-                
-                <div className="flex items-center space-x-3">
-                  {/* View Toggle */}
-                  <div className={`flex rounded-xl border transition-all duration-500 ${
-                    isDarkTheme ? 'border-white/20 bg-black/20' : 'border-gray-200 bg-white'
-                  }`}>
+              </div>
+              
+              {/* Bulk Actions - Show when items selected */}
+              {selectedMaterials.length > 0 && (
+                <div className={`p-4 rounded-xl border ${
+                  isDarkTheme 
+                    ? 'bg-red-500/10 border-red-500/30' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-medium ${
+                      isDarkTheme ? 'text-red-300' : 'text-red-700'
+                    }`}>
+                      {selectedMaterials.length} items selected
+                    </span>
                     <button
-                      onClick={() => setViewMode('grid')}
-                      className={`px-3 py-2 rounded-l-xl transition-all duration-300 ${
-                        viewMode === 'grid'
-                          ? isDarkTheme 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-blue-500 text-white'
-                          : isDarkTheme 
-                            ? 'text-white/70 hover:text-white hover:bg-white/10' 
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      onClick={handleBulkDelete}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        isDarkTheme 
+                          ? 'bg-red-600 hover:bg-red-700 text-white' 
+                          : 'bg-red-600 hover:bg-red-700 text-white'
                       }`}
                     >
-                      Grid
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`px-3 py-2 rounded-r-xl transition-all duration-300 ${
-                        viewMode === 'list'
-                          ? isDarkTheme 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-blue-500 text-white'
-                          : isDarkTheme 
-                            ? 'text-white/70 hover:text-white hover:bg-white/10' 
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      List
+                      <Trash2 size={16} className="inline mr-2" />
+                      Delete Selected
                     </button>
                   </div>
-                  
-                  {/* Export Buttons */}
-                  <button
-                    onClick={exportMaterialsToPDF}
-                    disabled={loading || filteredMaterials.length === 0}
-                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                      loading || filteredMaterials.length === 0
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : isDarkTheme 
-                          ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-red-500/25' 
-                          : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-red-500/25'
-                    }`}
-                    title="Export materials to PDF"
-                  >
-                    <Download size={18} />
-                    <span className="hidden sm:inline">PDF</span>
-                  </button>
-                  
-                  <button
-                    onClick={exportMaterialsToExcel}
-                    disabled={filteredMaterials.length === 0}
-                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                      filteredMaterials.length === 0
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : isDarkTheme 
-                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-500/25' 
-                          : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25'
-                    }`}
-                    title="Export materials to Excel (CSV)"
-                  >
-                    <FileSpreadsheet size={18} />
-                    <span className="hidden sm:inline">Excel</span>
-                  </button>
-
-                  {/* Add Material Button */}
-                  <button
-                    onClick={() => setShowAddMaterial(true)}
-                    className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                      isDarkTheme 
-                        ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
-                        : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
-                    }`}
-                  >
-                    <Plus size={20} />
-                    <span>Add Material</span>
-                  </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Materials Grid */}
+          {/* Materials Display - Mobile-First Design */}
           {loading ? (
             <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-8 text-center transition-all duration-500 ${
               isDarkTheme 
@@ -1613,37 +1642,187 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                 isDarkTheme ? 'text-white/80' : 'text-gray-600'
               }`}>Loading materials...</p>
             </div>
+          ) : viewMode === 'list' ? (
+            /* List View - Mobile Optimized */
+            <div className="space-y-3">
+              {filteredMaterials.map((material) => {
+                const categoryInfo = materialCategories.find(cat => cat.value === material.category);
+                return (
+                  <div
+                    key={material._id}
+                    className={`backdrop-blur-sm rounded-xl border p-4 transition-all duration-300 hover:scale-[1.01] ${
+                      isDarkTheme 
+                        ? 'bg-black/20 border-white/20 hover:border-white/40 hover:bg-black/30' 
+                        : 'bg-white/70 border-white/20 hover:border-green-200 hover:bg-white/90'
+                    }`}
+                  >
+                    {/* Header Row */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-bold text-lg truncate ${
+                          isDarkTheme ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          {material.itemName}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${
+                            isDarkTheme ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {categoryInfo?.label || material.category}
+                          </span>
+                          {material.supplier && (
+                            <span className={`inline-block px-2 py-1 text-xs rounded-full font-medium ${
+                              isDarkTheme ? 'bg-gray-600/50 text-gray-300' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {material.supplier}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2 ml-3">
+                        <button
+                          onClick={() => openEditMaterial(material)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isDarkTheme 
+                              ? 'text-blue-400 hover:bg-blue-500/20' 
+                              : 'text-blue-600 hover:bg-blue-50'
+                          }`}
+                          title="Edit material"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => deleteMaterial(material._id)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isDarkTheme 
+                              ? 'text-red-400 hover:bg-red-500/20' 
+                              : 'text-red-600 hover:bg-red-50'
+                          }`}
+                          title="Delete material"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Details Grid - Mobile Responsive */}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-2">
+                        <div>
+                          <span className={`block text-xs font-medium ${
+                            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            Rate per {material.unit}
+                          </span>
+                          <span className={`block font-bold ${
+                            isDarkTheme ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {formatCurrency(material.rate)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className={`block text-xs font-medium ${
+                            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            Quantity
+                          </span>
+                          <span className={`block font-bold ${
+                            isDarkTheme ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {material.quantity} {material.unit}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div>
+                          <span className={`block text-xs font-medium ${
+                            isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            Total Value
+                          </span>
+                          <span className={`block font-bold text-lg ${
+                            isDarkTheme ? 'text-green-400' : 'text-green-600'
+                          }`}>
+                            {formatCurrency(material.totalAmount)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Notes - If Available */}
+                    {material.notes && (
+                      <div className={`mt-3 pt-3 border-t ${
+                        isDarkTheme ? 'border-white/10' : 'border-gray-200'
+                      }`}>
+                        <span className={`text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Notes:
+                        </span>
+                        <p className={`text-sm mt-1 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          {material.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            /* Grid View - Better Mobile Cards */
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredMaterials.map((material) => {
                 const categoryInfo = materialCategories.find(cat => cat.value === material.category);
                 return (
                 <div
                   key={material._id}
-                  className={`group backdrop-blur-sm rounded-2xl shadow-xl border p-6 transition-all duration-500 hover:scale-105 hover:rotate-1 ${
+                  className={`backdrop-blur-sm rounded-xl border p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
                     isDarkTheme 
                       ? 'bg-black/20 border-white/20 hover:border-white/40 hover:bg-black/30' 
-                      : 'bg-white/70 border-white/20 hover:border-green-200 hover:bg-white/90'
+                      : 'bg-white/80 border-white/30 hover:border-green-200 hover:bg-white/95 shadow-lg'
                   }`}
                 >
+                  {/* Card Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg">{material.itemName}</h3>
-                      <span className={`inline-block px-3 py-1 text-xs rounded-full font-medium ${isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-white bg-opacity-80 text-gray-700'} shadow-sm`}>
-                        {materialCategories.find(cat => cat.value === material.category)?.label || material.category}
+                      <h3 className={`font-bold text-lg leading-tight ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>
+                        {material.itemName}
+                      </h3>
+                      <span 
+                        className={`inline-block px-3 py-1 text-xs rounded-full font-medium mt-2 ${
+                          isDarkTheme ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                        }`}
+                        style={{ backgroundColor: categoryInfo?.color + '40' }}
+                      >
+                        {categoryInfo?.label || material.category}
                       </span>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1 ml-3">
                       <button
                         onClick={() => openEditMaterial(material)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        className={`p-2 rounded-lg transition-all duration-200 ${
+                          isDarkTheme 
+                            ? 'text-blue-400 hover:bg-blue-500/20 hover:scale-110' 
+                            : 'text-blue-600 hover:bg-blue-50 hover:scale-110'
+                        }`}
                         title="Edit material"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => deleteMaterial(material._id)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
+                        className={`p-2 rounded-lg transition-all duration-200 ${
+                          isDarkTheme 
+                            ? 'text-red-400 hover:bg-red-500/20 hover:scale-110' 
+                            : 'text-red-600 hover:bg-red-50 hover:scale-110'
+                        }`}
                         title="Delete material"
                       >
                         <Trash2 size={16} />
@@ -1651,29 +1830,79 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Rate:</span>
-                      <span className="font-medium">{formatCurrency(material.rate)}/{material.unit}</span>
+                  {/* Card Content */}
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Rate
+                        </span>
+                        <span className={`block font-bold ${
+                          isDarkTheme ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {formatCurrency(material.rate)}/{material.unit}
+                        </span>
+                      </div>
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Quantity
+                        </span>
+                        <span className={`block font-bold ${
+                          isDarkTheme ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {material.quantity} {material.unit}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Quantity:</span>
-                      <span className="font-medium">{material.quantity} {material.unit}</span>
+                    
+                    <div className={`pt-3 border-t ${
+                      isDarkTheme ? 'border-white/10' : 'border-gray-200'
+                    }`}>
+                      <div className="flex justify-between items-center">
+                        <span className={`text-sm font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Total Value:
+                        </span>
+                        <span className={`font-bold text-lg ${
+                          isDarkTheme ? 'text-green-400' : 'text-green-600'
+                        }`}>
+                          {formatCurrency(material.totalAmount)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Total:</span>
-                      <span className="font-medium text-blue-600">{formatCurrency(material.totalAmount)}</span>
-                    </div>
+                    
                     {material.supplier && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Supplier:</span>
-                        <span className="font-medium">{material.supplier}</span>
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Supplier
+                        </span>
+                        <span className={`block text-sm font-medium ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          {material.supplier}
+                        </span>
                       </div>
                     )}
+                    
                     {material.notes && (
-                      <div className="mt-2">
-                        <span className="text-gray-500 text-xs">Notes:</span>
-                        <p className="text-xs mt-1">{material.notes}</p>
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Notes
+                        </span>
+                        <p className={`text-sm mt-1 line-clamp-2 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          {material.notes}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1695,188 +1924,316 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         </div>
       )}
 
-      {/* Personal Quotations Tab */}
+      {/* Personal Quotations Tab - Mobile Optimized */}
       {activeTab === 'quotations' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          {/* Quotations Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Personal Quotations</h2>
-            <button
-              onClick={() => {
-                console.log('Create Quotation button clicked - New Button');
-                console.log('Materials available:', materials.length);
-                if (materials.length === 0) {
-                  setError('Please add some materials first before creating a quotation');
-                  setActiveTab('materials');
-                  return;
-                }
-                setError('');
-                setShowCreateQuotation(true);
-                setQuotationForm({
-                  quotationName: '',
-                  description: ''
-                });
-                setSelectedMaterials([]);
-              }}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-              title="Create a new quotation from your materials"
-            >
-              <Plus size={20} />
-              <span>Create New Quotation</span>
-            </button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search quotations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+          
+          {/* Mobile-First Header */}
+          <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 mb-6 ${
+            isDarkTheme 
+              ? 'bg-white/10 border-white/20' 
+              : 'bg-white/80 border-gray-200/50'
+          }`}>
+            <div className="flex flex-col space-y-4">
+              <div>
+                <h2 className={`text-2xl font-black flex items-center transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white' : 'text-gray-800'
+                }`}>
+                  <ShoppingCart className="w-6 h-6 mr-3 text-purple-500" />
+                  Personal Quotations
+                </h2>
+                <p className={`text-sm mt-1 transition-colors duration-500 ${
+                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Create and manage your quotations
+                </p>
+              </div>
+              
+              {/* Primary Create Button - Full Width on Mobile */}
+              <button
+                onClick={() => {
+                  console.log('Create Quotation button clicked - New Button');
+                  console.log('Materials available:', materials.length);
+                  if (materials.length === 0) {
+                    setError('Please add some materials first before creating a quotation');
+                    setActiveTab('materials');
+                    return;
+                  }
+                  setError('');
+                  setShowCreateQuotation(true);
+                  setQuotationForm({
+                    quotationName: '',
+                    description: ''
+                  });
+                  setSelectedMaterials([]);
+                }}
+                className={`w-full flex items-center justify-center space-x-3 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-[1.02] shadow-xl ${
                   isDarkTheme 
-                    ? 'bg-gray-800/50 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white/70 border-gray-300 text-gray-900 placeholder-gray-500'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-purple-500/25' 
+                    : 'bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white shadow-purple-500/25'
                 }`}
-              />
+                title="Create a new quotation from your materials"
+              >
+                <Plus size={24} />
+                <span>Create New Quotation</span>
+              </button>
+              
+              {/* Search Bar - Full Width */}
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search quotations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-4 rounded-xl border transition-all duration-300 focus:ring-3 text-base ${
+                    isDarkTheme 
+                      ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-purple-500/30 focus:border-purple-400' 
+                      : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-purple-100 focus:border-purple-400'
+                  }`}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Quotations List */}
+          {/* Quotations List - Mobile Optimized */}
           {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-              <p className="mt-2">Loading quotations...</p>
+            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-8 text-center transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-black/20 border-white/20' 
+                : 'bg-white/70 border-white/20'
+            }`}>
+              <div className={`inline-block animate-spin rounded-full h-8 w-8 border-b-2 transition-colors duration-500 ${
+                isDarkTheme ? 'border-purple-400' : 'border-purple-600'
+              }`}></div>
+              <p className={`mt-2 transition-colors duration-500 ${
+                isDarkTheme ? 'text-white/80' : 'text-gray-600'
+              }`}>Loading quotations...</p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredQuotations.map((quotation) => (
                 <div
                   key={quotation._id}
-                  className={`p-6 rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 relative ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'}`}
+                  className={`backdrop-blur-sm rounded-xl border p-5 transition-all duration-300 hover:scale-[1.01] hover:shadow-xl ${
+                    isDarkTheme 
+                      ? 'bg-black/20 border-white/20 hover:border-white/40 hover:bg-black/30' 
+                      : 'bg-white/80 border-white/30 hover:border-purple-200 hover:bg-white/95 shadow-lg'
+                  }`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 pr-4">
-                      <h3 className="font-semibold text-lg">{quotation.quotationName}</h3>
-                      {quotation.description && (
-                        <p className="text-gray-500 mt-1">{quotation.description}</p>
-                      )}
-                      <span className={`inline-block px-3 py-1 text-xs rounded-full mt-2 font-medium shadow-sm ${
-                        quotation.status === 'draft' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                        quotation.status === 'ready' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                        'bg-blue-100 text-blue-700 border border-blue-200'
-                      }`}>
-                        {quotation.status?.toUpperCase()}
-                      </span>
+                  {/* Mobile-First Header */}
+                  <div className="flex flex-col space-y-4">
+                    
+                    {/* Quotation Info */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`font-bold text-lg leading-tight ${
+                            isDarkTheme ? 'text-white' : 'text-gray-800'
+                          }`}>
+                            {quotation.quotationName}
+                          </h3>
+                          {quotation.description && (
+                            <p className={`text-sm mt-1 ${
+                              isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                            }`}>
+                              {quotation.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Status Badge */}
+                        <span className={`inline-block px-3 py-1 text-xs rounded-full font-medium ml-3 ${
+                          quotation.status === 'draft' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                          quotation.status === 'ready' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                          'bg-blue-100 text-blue-700 border border-blue-200'
+                        }`}>
+                          {quotation.status?.toUpperCase() || 'DRAFT'}
+                        </span>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-emerald-600">
+                    {/* Amount and Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Total Amount
+                        </span>
+                        <span className={`block text-xl font-bold ${
+                          isDarkTheme ? 'text-green-400' : 'text-green-600'
+                        }`}>
                           {formatCurrency(quotation.totalQuotationAmount)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {quotation.materials?.length || 0} materials
-                        </div>
+                        </span>
                       </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex flex-col space-y-2 ml-4 min-w-[80px] z-20 relative">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('PDF button clicked for:', quotation.quotationName);
-                            exportToPDF(quotation);
-                          }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium"
-                          title="Export to PDF"
-                          type="button"
-                        >
-                          <Download size={16} />
-                          <span>PDF</span>
-                        </button>
-                        <button
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Edit button mouse down for:', quotation.quotationName);
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Edit button clicked for:', quotation.quotationName);
-                            console.log('Edit function exists:', typeof editQuotation);
-                            try {
-                              editQuotation(quotation);
-                              console.log('Edit function called successfully');
-                            } catch (error) {
-                              console.error('Error calling editQuotation:', error);
-                            }
-                          }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-3 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium border-2 border-transparent hover:border-yellow-300"
-                          title="Edit quotation"
-                          type="button"
-                          style={{ pointerEvents: 'auto' }}
-                        >
-                          <FileEdit size={16} />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Delete button clicked for:', quotation.quotationName);
-                            deleteQuotation(quotation._id, quotation.quotationName);
-                          }}
-                          className="flex items-center justify-center space-x-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm cursor-pointer min-h-[36px] font-medium"
-                          title="Delete quotation"
-                          type="button"
-                        >
-                          <Trash2 size={16} />
-                          <span>Delete</span>
-                        </button>
+                      <div>
+                        <span className={`block text-xs font-medium ${
+                          isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Materials
+                        </span>
+                        <span className={`block text-xl font-bold ${
+                          isDarkTheme ? 'text-blue-400' : 'text-blue-600'
+                        }`}>
+                          {quotation.materials?.length || 0} items
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  
-                  {quotation.materials && quotation.materials.length > 0 && (
-                    <div className="mt-4 border-t pt-4">
-                      <h4 className="font-medium mb-2">Materials:</h4>
-                      <div className="space-y-1 text-sm">
-                        {quotation.materials.map((material, index) => (
-                          <div key={index} className="flex justify-between">
-                            <span>{material.itemName}</span>
-                            <span>{material.quantity} × {formatCurrency(material.rate)} = {formatCurrency(material.totalAmount)}</span>
-                          </div>
-                        ))}
-                      </div>
+                    
+                    {/* Action Buttons - Mobile Grid */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('PDF button clicked for:', quotation.quotationName);
+                          exportToPDF(quotation);
+                        }}
+                        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm font-medium"
+                        title="Export to PDF"
+                        type="button"
+                      >
+                        <Download size={16} />
+                        <span className="hidden sm:inline">PDF</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Edit button clicked for:', quotation.quotationName);
+                          console.log('Edit function exists:', typeof editQuotation);
+                          try {
+                            editQuotation(quotation);
+                            console.log('Edit function called successfully');
+                          } catch (error) {
+                            console.error('Error calling editQuotation:', error);
+                          }
+                        }}
+                        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 px-3 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm font-medium"
+                        title="Edit quotation"
+                        type="button"
+                      >
+                        <FileEdit size={16} />
+                        <span className="hidden sm:inline">Edit</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Delete button clicked for:', quotation.quotationName);
+                          deleteQuotation(quotation._id, quotation.quotationName);
+                        }}
+                        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-3 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm font-medium"
+                        title="Delete quotation"
+                        type="button"
+                      >
+                        <Trash2 size={16} />
+                        <span className="hidden sm:inline">Delete</span>
+                      </button>
                     </div>
-                  )}
-                  
-                  <div className="mt-4 text-xs text-gray-500">
-                    Created: {new Date(quotation.createdAt).toLocaleDateString('en-IN')}
+                    
+                    {/* Materials List - Collapsible on Mobile */}
+                    {quotation.materials && quotation.materials.length > 0 && (
+                      <div className={`pt-4 border-t ${
+                        isDarkTheme ? 'border-white/10' : 'border-gray-200'
+                      }`}>
+                        <h4 className={`font-medium text-sm mb-3 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Materials ({quotation.materials.length} items):
+                        </h4>
+                        <div className="space-y-2">
+                          {quotation.materials.slice(0, 3).map((material, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                              <span className={`font-medium truncate flex-1 mr-2 ${
+                                isDarkTheme ? 'text-white' : 'text-gray-800'
+                              }`}>
+                                {material.itemName}
+                              </span>
+                              <span className={`text-xs font-mono ${
+                                isDarkTheme ? 'text-gray-400' : 'text-gray-600'
+                              }`}>
+                                {material.quantity} × {formatCurrency(material.rate)}
+                              </span>
+                              <span className={`font-bold ml-2 ${
+                                isDarkTheme ? 'text-green-400' : 'text-green-600'
+                              }`}>
+                                {formatCurrency(material.totalAmount)}
+                              </span>
+                            </div>
+                          ))}
+                          {quotation.materials.length > 3 && (
+                            <div className={`text-xs text-center pt-2 ${
+                              isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              +{quotation.materials.length - 3} more items
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Created Date */}
+                    <div className={`text-xs ${
+                      isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      Created: {new Date(quotation.createdAt).toLocaleDateString('en-IN')}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
+          {/* Empty States */}
           {!loading && filteredQuotations.length === 0 && personalQuotations.length === 0 && (
-            <div className="text-center py-12">
-              <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-500 mb-2">No quotations found</h3>
-              <p className="text-gray-400">Create your first personal quotation</p>
+            <div className={`text-center py-12 rounded-xl ${
+              isDarkTheme ? 'bg-black/10' : 'bg-white/50'
+            }`}>
+              <ShoppingCart size={48} className={`mx-auto mb-4 ${
+                isDarkTheme ? 'text-gray-400' : 'text-gray-400'
+              }`} />
+              <h3 className={`text-lg font-medium mb-2 ${
+                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                No quotations found
+              </h3>
+              <p className={`mb-4 ${
+                isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Create your first personal quotation
+              </p>
+              <button
+                onClick={() => setActiveTab('materials')}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+                  isDarkTheme 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                Add Materials First
+              </button>
             </div>
           )}
 
           {!loading && filteredQuotations.length === 0 && personalQuotations.length > 0 && (
-            <div className="text-center py-12">
-              <Search size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-500 mb-2">No quotations match your search</h3>
-              <p className="text-gray-400">Try adjusting your search terms</p>
+            <div className={`text-center py-12 rounded-xl ${
+              isDarkTheme ? 'bg-black/10' : 'bg-white/50'
+            }`}>
+              <Search size={48} className={`mx-auto mb-4 ${
+                isDarkTheme ? 'text-gray-400' : 'text-gray-400'
+              }`} />
+              <h3 className={`text-lg font-medium mb-2 ${
+                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                No quotations match your search
+              </h3>
+              <p className={`${
+                isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Try adjusting your search terms
+              </p>
             </div>
           )}
         </div>
