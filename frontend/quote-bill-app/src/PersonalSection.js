@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Download, FileEdit, FileSpreadsheet, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Plus, X, Trash2, Search, ShoppingCart, Package, ArrowLeft, Settings, Edit, BarChart3, TrendingUp, PieChart, Menu, Download, FileEdit, FileSpreadsheet, CheckCircle, AlertTriangle, XCircle, DollarSign } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://quotebill-pro.onrender.com/api';
@@ -39,6 +39,9 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredQuotations, setFilteredQuotations] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [viewMode, setViewMode] = useState('grid');
   
   // Edit quotation states
   const [editingQuotation, setEditingQuotation] = useState(null);
@@ -924,18 +927,6 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
     }
   }, [personalQuotations, searchTerm]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR'
-    }).format(amount);
-  };
-
-  const filteredMaterials = materials.filter(material =>
-    material.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    material.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   // Export materials to PDF
   const exportMaterialsToPDF = async () => {
     // Show warning dialog first
@@ -1034,6 +1025,165 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
         }
       }
     );
+  };
+
+  // Additional utility functions for enhanced materials management
+  const handleBulkDelete = () => {
+    if (selectedMaterials.length === 0) {
+      setError('Please select materials to delete');
+      return;
+    }
+
+    showWarning(
+      'Delete Multiple Materials',
+      `Are you sure you want to delete ${selectedMaterials.length} selected materials? This action cannot be undone.`,
+      async () => {
+        try {
+          setLoading(true);
+          const deletePromises = selectedMaterials.map(materialId =>
+            fetch(`${API_BASE_URL}/materials/${materialId}`, { method: 'DELETE' })
+          );
+          
+          await Promise.all(deletePromises);
+          await fetchMaterials();
+          setSelectedMaterials([]);
+          showSuccessToast(`🗑️ Successfully deleted ${selectedMaterials.length} materials!`);
+        } catch (error) {
+          setError('Failed to delete materials: ' + error.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+    );
+  };
+
+  const handleBulkExport = (format) => {
+    if (selectedMaterials.length === 0) {
+      setError('Please select materials to export');
+      return;
+    }
+
+    const selectedMaterialsData = materials.filter(m => selectedMaterials.includes(m._id));
+    
+    if (format === 'pdf') {
+      showWarning(
+        'Export Selected Materials to PDF',
+        `You are about to export ${selectedMaterialsData.length} selected materials to PDF. This will download a file to your device. Do you want to continue?`,
+        async () => {
+          try {
+            setLoading(true);
+            const response = await fetch(`${API_BASE_URL}/generate-materials-pdf`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                materials: selectedMaterialsData,
+                searchQuery: 'Selected Materials'
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to generate PDF');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `selected-materials-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showSuccessToast(`📄 Selected materials PDF downloaded successfully! (${selectedMaterialsData.length} items exported)`);
+          } catch (error) {
+            setError('Failed to export selected materials to PDF');
+          } finally {
+            setLoading(false);
+          }
+        }
+      );
+    } else if (format === 'excel') {
+      try {
+        const headers = ['Item Name', 'Category', 'Rate (₹)', 'Quantity', 'Total Amount (₹)', 'Unit', 'Supplier', 'Purchase Date', 'Notes'];
+        const csvContent = [
+          headers.join(','),
+          ...selectedMaterialsData.map(material => [
+            `"${material.itemName || ''}"`,
+            `"${material.category || ''}"`,
+            material.rate || 0,
+            material.quantity || 0,
+            material.totalAmount || 0,
+            `"${material.unit || ''}"`,
+            `"${material.supplier || ''}"`,
+            material.purchaseDate ? new Date(material.purchaseDate).toLocaleDateString() : '',
+            `"${material.notes || ''}"`
+          ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `selected-materials-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showSuccessToast(`📊 Selected materials Excel file downloaded successfully! (${selectedMaterialsData.length} items exported)`);
+      } catch (error) {
+        setError('Failed to export selected materials to Excel');
+      }
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedMaterials.length === filteredMaterials.length) {
+      setSelectedMaterials([]);
+    } else {
+      setSelectedMaterials(filteredMaterials.map(m => m._id));
+    }
+  };
+
+  // Enhanced filtering logic
+  const filteredMaterials = materials.filter(material => {
+    const matchesSearch = material.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         material.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (material.supplier && material.supplier.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === '' || material.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.itemName.localeCompare(b.itemName);
+      case 'category':
+        return a.category.localeCompare(b.category);
+      case 'rate':
+        return b.rate - a.rate;
+      case 'quantity':
+        return b.quantity - a.quantity;
+      case 'total':
+        return b.totalAmount - a.totalAmount;
+      default:
+        return 0;
+    }
+  });
+
+  // Format currency helper
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(amount || 0);
   };
 
   return (
@@ -1250,77 +1400,201 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
       {/* Materials Tab */}
       {activeTab === 'materials' && (
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8">
-          {/* Materials Header */}
-          <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-6 mb-6 transition-all duration-500 ${
+          {/* Enhanced Materials Header */}
+          <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 ${
             isDarkTheme 
-              ? 'bg-black/20 border-white/20' 
-              : 'bg-white/70 border-white/20'
+              ? 'bg-white/10 border-white/20' 
+              : 'bg-white/80 border-gray-200/50'
           }`}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center space-x-4 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-initial">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className={`text-2xl font-black flex items-center transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white' : 'text-gray-800'
+                }`}>
+                  <Package className="w-6 h-6 mr-3 text-blue-500" />
+                  Materials Inventory
+                </h2>
+                <p className={`text-sm mt-1 transition-colors duration-500 ${
+                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Manage your materials and track inventory
+                </p>
+              </div>
+              <div className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-500 ${
+                isDarkTheme 
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                  : 'bg-blue-50 text-blue-700 border border-blue-200'
+              }`}>
+                {materials.length} Items
+              </div>
+            </div>
+            
+            {/* Search and Filter Controls */}
+            <div className="space-y-4">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search Bar */}
+                <div className="relative flex-1">
                   <Search size={20} className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-500 ${
                     isDarkTheme ? 'text-gray-400' : 'text-gray-500'
                   }`} />
                   <input
                     type="text"
-                    placeholder="Search materials..."
+                    placeholder="Search materials by name, category, or supplier..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full sm:w-64 pl-10 pr-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
                       isDarkTheme 
-                        ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-green-500/30 focus:border-green-400' 
-                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-green-100 focus:border-green-400'
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:ring-blue-500/30 focus:border-blue-400' 
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-100 focus:border-blue-400'
                     }`}
                   />
                 </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                {/* Export Buttons */}
-                <button
-                  onClick={exportMaterialsToPDF}
-                  disabled={loading || filteredMaterials.length === 0}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                    loading || filteredMaterials.length === 0
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : isDarkTheme 
-                        ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-red-500/25' 
-                        : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-red-500/25'
-                  }`}
-                  title="Export materials to PDF"
-                >
-                  <Download size={18} />
-                  <span className="hidden sm:inline">PDF</span>
-                </button>
                 
-                <button
-                  onClick={exportMaterialsToExcel}
-                  disabled={filteredMaterials.length === 0}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                    filteredMaterials.length === 0
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : isDarkTheme 
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-500/25' 
-                        : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25'
-                  }`}
-                  title="Export materials to Excel (CSV)"
-                >
-                  <FileSpreadsheet size={18} />
-                  <span className="hidden sm:inline">Excel</span>
-                </button>
+                {/* Category Filter */}
+                <div className="min-w-[200px]">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
+                      isDarkTheme 
+                        ? 'bg-black/30 border-white/20 text-white focus:ring-purple-500/30 focus:border-purple-400' 
+                        : 'bg-white border-gray-200 text-gray-900 focus:ring-purple-100 focus:border-purple-400'
+                    }`}
+                  >
+                    <option value="">All Categories</option>
+                    {materialCategories.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Sort Options */}
+                <div className="min-w-[160px]">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md focus:ring-3 ${
+                      isDarkTheme 
+                        ? 'bg-black/30 border-white/20 text-white focus:ring-green-500/30 focus:border-green-400' 
+                        : 'bg-white border-gray-200 text-gray-900 focus:ring-green-100 focus:border-green-400'
+                    }`}
+                  >
+                    <option value="name">Sort by Name</option>
+                    <option value="date">Sort by Date</option>
+                    <option value="value">Sort by Value</option>
+                    <option value="category">Sort by Category</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  {/* Bulk Actions */}
+                  {selectedMaterials.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-sm font-medium transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-700'
+                      }`}>
+                        {selectedMaterials.length} selected
+                      </span>
+                      <button
+                        onClick={handleBulkDelete}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                          isDarkTheme 
+                            ? 'bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30' 
+                            : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        Delete Selected
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  {/* View Toggle */}
+                  <div className={`flex rounded-xl border transition-all duration-500 ${
+                    isDarkTheme ? 'border-white/20 bg-black/20' : 'border-gray-200 bg-white'
+                  }`}>
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`px-3 py-2 rounded-l-xl transition-all duration-300 ${
+                        viewMode === 'grid'
+                          ? isDarkTheme 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-blue-500 text-white'
+                          : isDarkTheme 
+                            ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Grid
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-2 rounded-r-xl transition-all duration-300 ${
+                        viewMode === 'list'
+                          ? isDarkTheme 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-blue-500 text-white'
+                          : isDarkTheme 
+                            ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      List
+                    </button>
+                  </div>
+                  
+                  {/* Export Buttons */}
+                  <button
+                    onClick={exportMaterialsToPDF}
+                    disabled={loading || filteredMaterials.length === 0}
+                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                      loading || filteredMaterials.length === 0
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : isDarkTheme 
+                          ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white shadow-red-500/25' 
+                          : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-red-500/25'
+                    }`}
+                    title="Export materials to PDF"
+                  >
+                    <Download size={18} />
+                    <span className="hidden sm:inline">PDF</span>
+                  </button>
+                  
+                  <button
+                    onClick={exportMaterialsToExcel}
+                    disabled={filteredMaterials.length === 0}
+                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                      filteredMaterials.length === 0
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : isDarkTheme 
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-500/25' 
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25'
+                    }`}
+                    title="Export materials to Excel (CSV)"
+                  >
+                    <FileSpreadsheet size={18} />
+                    <span className="hidden sm:inline">Excel</span>
+                  </button>
 
-                {/* Add Material Button */}
-                <button
-                  onClick={() => setShowAddMaterial(true)}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
-                    isDarkTheme 
-                      ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
-                      : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
-                  }`}
-                >
-                  <Plus size={20} />
-                  <span>Add Material</span>
-                </button>
+                  {/* Add Material Button */}
+                  <button
+                    onClick={() => setShowAddMaterial(true)}
+                    className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg ${
+                      isDarkTheme 
+                        ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-green-500/25' 
+                        : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-green-500/25'
+                    }`}
+                  >
+                    <Plus size={20} />
+                    <span>Add Material</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1610,62 +1884,224 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-8">
           <div className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'} border shadow-sm`}>
-                <div className="flex items-center">
-                  <Package className="h-10 w-10 text-blue-600" />
-                  <div className="ml-4">
-                    <p className="text-2xl font-bold text-blue-600">{materials.length}</p>
-                    <p className="text-sm text-gray-600">Total Materials</p>
+            {/* Analytics Header */}
+            <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/80 border-gray-200/50'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-2xl font-black flex items-center transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    <BarChart3 className="w-6 h-6 mr-3 text-purple-500" />
+                    Analytics Dashboard
+                  </h2>
+                  <p className={`text-sm mt-1 transition-colors duration-500 ${
+                    isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    Insights into your materials and quotations
+                  </p>
+                </div>
+                <div className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' 
+                    : 'bg-purple-50 text-purple-700 border border-purple-200'
+                }`}>
+                  📊 Real-time Data
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className={`group backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/30 hover:border-blue-400/50' 
+                  : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:border-blue-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-3xl font-black transition-colors duration-500 ${
+                      isDarkTheme ? 'text-blue-300' : 'text-blue-600'
+                    }`}>
+                      {materials.length}
+                    </p>
+                    <p className={`text-sm font-medium transition-colors duration-500 ${
+                      isDarkTheme ? 'text-blue-200' : 'text-blue-700'
+                    }`}>
+                      Total Materials
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-110 ${
+                    isDarkTheme ? 'bg-blue-500/20' : 'bg-blue-500/10'
+                  }`}>
+                    <Package className={`h-8 w-8 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-blue-300' : 'text-blue-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className={`mt-3 pt-3 border-t transition-colors duration-500 ${
+                  isDarkTheme ? 'border-blue-500/30' : 'border-blue-200'
+                }`}>
+                  <div className="flex items-center text-xs">
+                    <TrendingUp className={`h-3 w-3 mr-1 ${
+                      isDarkTheme ? 'text-green-400' : 'text-green-600'
+                    }`} />
+                    <span className={`${isDarkTheme ? 'text-green-400' : 'text-green-600'}`}>
+                      +{materials.filter(m => new Date(m.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length} this month
+                    </span>
                   </div>
                 </div>
               </div>
               
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-green-50 to-green-100 border-green-200'} border shadow-sm`}>
-                <div className="flex items-center">
-                  <ShoppingCart className="h-10 w-10 text-green-600" />
-                  <div className="ml-4">
-                    <p className="text-2xl font-bold text-green-600">{personalQuotations.length}</p>
-                    <p className="text-sm text-gray-600">Quotations Made</p>
+              <div className={`group backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/30 hover:border-green-400/50' 
+                  : 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:border-green-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-3xl font-black transition-colors duration-500 ${
+                      isDarkTheme ? 'text-green-300' : 'text-green-600'
+                    }`}>
+                      {personalQuotations.length}
+                    </p>
+                    <p className={`text-sm font-medium transition-colors duration-500 ${
+                      isDarkTheme ? 'text-green-200' : 'text-green-700'
+                    }`}>
+                      Quotations Made
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-110 ${
+                    isDarkTheme ? 'bg-green-500/20' : 'bg-green-500/10'
+                  }`}>
+                    <ShoppingCart className={`h-8 w-8 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-green-300' : 'text-green-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className={`mt-3 pt-3 border-t transition-colors duration-500 ${
+                  isDarkTheme ? 'border-green-500/30' : 'border-green-200'
+                }`}>
+                  <div className="flex items-center text-xs">
+                    <CheckCircle className={`h-3 w-3 mr-1 ${
+                      isDarkTheme ? 'text-green-400' : 'text-green-600'
+                    }`} />
+                    <span className={`${isDarkTheme ? 'text-green-400' : 'text-green-600'}`}>
+                      Active projects
+                    </span>
                   </div>
                 </div>
               </div>
               
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200'} border shadow-sm`}>
-                <div className="flex items-center">
-                  <TrendingUp className="h-10 w-10 text-purple-600" />
-                  <div className="ml-4">
-                    <p className="text-2xl font-bold text-purple-600">
+              <div className={`group backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-br from-purple-900/40 to-purple-800/40 border-purple-500/30 hover:border-purple-400/50' 
+                  : 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:border-purple-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-2xl font-black transition-colors duration-500 ${
+                      isDarkTheme ? 'text-purple-300' : 'text-purple-600'
+                    }`}>
                       {formatCurrency(materials.reduce((sum, m) => sum + ((parseFloat(m.rate) || 0) * (parseFloat(m.quantity) || 0)), 0))}
                     </p>
-                    <p className="text-sm text-gray-600">Stock Value</p>
+                    <p className={`text-sm font-medium transition-colors duration-500 ${
+                      isDarkTheme ? 'text-purple-200' : 'text-purple-700'
+                    }`}>
+                      Stock Value
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-110 ${
+                    isDarkTheme ? 'bg-purple-500/20' : 'bg-purple-500/10'
+                  }`}>
+                    <TrendingUp className={`h-8 w-8 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-purple-300' : 'text-purple-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className={`mt-3 pt-3 border-t transition-colors duration-500 ${
+                  isDarkTheme ? 'border-purple-500/30' : 'border-purple-200'
+                }`}>
+                  <div className="flex items-center text-xs">
+                    <Package className={`h-3 w-3 mr-1 ${
+                      isDarkTheme ? 'text-purple-400' : 'text-purple-600'
+                    }`} />
+                    <span className={`${isDarkTheme ? 'text-purple-400' : 'text-purple-600'}`}>
+                      Inventory value
+                    </span>
                   </div>
                 </div>
               </div>
               
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200'} border shadow-sm`}>
-                <div className="flex items-center">
-                  <BarChart3 className="h-10 w-10 text-orange-600" />
-                  <div className="ml-4">
-                    <p className="text-2xl font-bold text-orange-600">
+              <div className={`group backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 hover:scale-105 hover:shadow-2xl ${
+                isDarkTheme 
+                  ? 'bg-gradient-to-br from-orange-900/40 to-orange-800/40 border-orange-500/30 hover:border-orange-400/50' 
+                  : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:border-orange-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-2xl font-black transition-colors duration-500 ${
+                      isDarkTheme ? 'text-orange-300' : 'text-orange-600'
+                    }`}>
                       {formatCurrency(getQuotationStats().totalQuotationValue)}
                     </p>
-                    <p className="text-sm text-gray-600">Quotation Value</p>
+                    <p className={`text-sm font-medium transition-colors duration-500 ${
+                      isDarkTheme ? 'text-orange-200' : 'text-orange-700'
+                    }`}>
+                      Quotation Value
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-110 ${
+                    isDarkTheme ? 'bg-orange-500/20' : 'bg-orange-500/10'
+                  }`}>
+                    <BarChart3 className={`h-8 w-8 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-orange-300' : 'text-orange-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className={`mt-3 pt-3 border-t transition-colors duration-500 ${
+                  isDarkTheme ? 'border-orange-500/30' : 'border-orange-200'
+                }`}>
+                  <div className="flex items-center text-xs">
+                    <DollarSign className={`h-3 w-3 mr-1 ${
+                      isDarkTheme ? 'text-orange-400' : 'text-orange-600'
+                    }`} />
+                    <span className={`${isDarkTheme ? 'text-orange-400' : 'text-orange-600'}`}>
+                      Business value
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Category Distribution Chart */}
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border shadow-sm`}>
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <PieChart className="mr-2" size={20} />
-                  Material Categories
-                </h3>
+              {/* Enhanced Category Distribution Chart */}
+              <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
+                isDarkTheme 
+                  ? 'bg-white/10 border-white/20' 
+                  : 'bg-white/80 border-gray-200/50'
+              }`}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-lg font-bold flex items-center transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    <PieChart className="mr-3 text-indigo-500" size={20} />
+                    Material Categories
+                  </h3>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                  }`}>
+                    {getCategoryAnalytics().length} Categories
+                  </div>
+                </div>
                 <div style={{ width: '100%', height: 300 }}>
                   <ResponsiveContainer>
                     <RechartsPieChart>
@@ -1674,62 +2110,166 @@ const PersonalSection = ({ onBack, isDarkTheme, toggleTheme }) => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </PieChart>
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                          border: isDarkTheme ? '1px solid #374151' : '1px solid #e5e7eb',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                        }}
+                      />
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* Monthly Purchase Trend */}
-              <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border shadow-sm`}>
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <BarChart3 className="mr-2" size={20} />
-                  Purchase Trends (Last 6 Months)
-                </h3>
+              {/* Enhanced Monthly Purchase Trend */}
+              <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
+                isDarkTheme 
+                  ? 'bg-white/10 border-white/20' 
+                  : 'bg-white/80 border-gray-200/50'
+              }`}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-lg font-bold flex items-center transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    <BarChart3 className="mr-3 text-emerald-500" size={20} />
+                    Purchase Trends
+                  </h3>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                    Last 6 Months
+                  </div>
+                </div>
                 <div style={{ width: '100%', height: 300 }}>
                   <ResponsiveContainer>
                     <BarChart data={getMonthlyPurchaseData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDarkTheme ? '#374151' : '#e5e7eb'} />
+                      <XAxis 
+                        dataKey="month" 
+                        tick={{ fill: isDarkTheme ? '#d1d5db' : '#6b7280', fontSize: 12 }}
+                      />
+                      <YAxis 
+                        tick={{ fill: isDarkTheme ? '#d1d5db' : '#6b7280', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                          border: isDarkTheme ? '1px solid #374151' : '1px solid #e5e7eb',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                        }}
+                      />
                       <Legend />
-                      <Bar dataKey="purchases" fill="#8884d8" name="Purchases" />
-                      <Bar dataKey="value" fill="#82ca9d" name="Value (₹)" />
+                      <Bar dataKey="purchases" fill="#8b5cf6" name="Purchases" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="value" fill="#10b981" name="Value (₹)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
 
-            {/* Category Details Table */}
-            <div className={`p-6 rounded-lg ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border shadow-sm`}>
-              <h3 className="text-lg font-semibold mb-4">Category Breakdown</h3>
+            {/* Enhanced Category Details Table */}
+            <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/80 border-gray-200/50'
+            }`}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-lg font-bold flex items-center transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white' : 'text-gray-800'
+                }`}>
+                  📊 Category Breakdown
+                </h3>
+                <button className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                  isDarkTheme 
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30' 
+                    : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                }`}>
+                  Export Data
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className={`${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-                      <th className="text-left py-2">Category</th>
-                      <th className="text-left py-2">Items Count</th>
-                      <th className="text-left py-2">Total Value</th>
-                      <th className="text-left py-2">Average Value</th>
+                    <tr className={`transition-colors duration-500 ${
+                      isDarkTheme ? 'border-white/20' : 'border-gray-200'
+                    } border-b-2`}>
+                      <th className={`text-left py-4 px-2 font-bold transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>Category</th>
+                      <th className={`text-left py-4 px-2 font-bold transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>Items</th>
+                      <th className={`text-left py-4 px-2 font-bold transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>Total Value</th>
+                      <th className={`text-left py-4 px-2 font-bold transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>Avg Value</th>
+                      <th className={`text-left py-4 px-2 font-bold transition-colors duration-500 ${
+                        isDarkTheme ? 'text-white' : 'text-gray-800'
+                      }`}>% Share</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {getCategoryAnalytics().map((category, index) => (
-                      <tr key={index} className={`${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-                        <td className="py-3">
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 rounded-full mr-3" style={{ backgroundColor: category.color }}></div>
-                            {category.category}
-                          </div>
-                        </td>
-                        <td className="py-3">{category.count}</td>
-                        <td className="py-3">{formatCurrency(category.totalValue)}</td>
-                        <td className="py-3">{formatCurrency(category.totalValue / category.count)}</td>
-                      </tr>
-                    ))}
+                    {getCategoryAnalytics().map((category, index) => {
+                      const totalValue = materials.reduce((sum, m) => sum + ((parseFloat(m.rate) || 0) * (parseFloat(m.quantity) || 0)), 0);
+                      const percentage = totalValue > 0 ? ((category.totalValue / totalValue) * 100).toFixed(1) : 0;
+                      return (
+                        <tr key={index} className={`group hover:scale-[1.01] transition-all duration-300 ${
+                          isDarkTheme ? 'border-white/10 hover:bg-white/5' : 'border-gray-100 hover:bg-gray-50'
+                        } border-b`}>
+                          <td className="py-4 px-2">
+                            <div className="flex items-center">
+                              <div 
+                                className="w-4 h-4 rounded-full mr-3 shadow-md" 
+                                style={{ backgroundColor: category.color }}
+                              ></div>
+                              <span className={`font-medium transition-colors duration-500 ${
+                                isDarkTheme ? 'text-white' : 'text-gray-800'
+                              }`}>
+                                {category.category}
+                              </span>
+                            </div>
+                          </td>
+                          <td className={`py-4 px-2 font-semibold transition-colors duration-500 ${
+                            isDarkTheme ? 'text-blue-300' : 'text-blue-600'
+                          }`}>
+                            {category.count}
+                          </td>
+                          <td className={`py-4 px-2 font-semibold transition-colors duration-500 ${
+                            isDarkTheme ? 'text-green-300' : 'text-green-600'
+                          }`}>
+                            {formatCurrency(category.totalValue)}
+                          </td>
+                          <td className={`py-4 px-2 font-medium transition-colors duration-500 ${
+                            isDarkTheme ? 'text-purple-300' : 'text-purple-600'
+                          }`}>
+                            {formatCurrency(category.totalValue / category.count)}
+                          </td>
+                          <td className={`py-4 px-2 transition-colors duration-500 ${
+                            isDarkTheme ? 'text-orange-300' : 'text-orange-600'
+                          }`}>
+                            <div className="flex items-center">
+                              <div className={`w-12 h-2 rounded-full mr-2 ${
+                                isDarkTheme ? 'bg-white/20' : 'bg-gray-200'
+                              }`}>
+                                <div 
+                                  className="h-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                                  style={{ width: `${Math.min(percentage, 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className="font-medium">{percentage}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
