@@ -1625,6 +1625,16 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                   <span className="font-semibold">
                     {items.length} {items.length === 1 ? 'Item' : 'Items'} Added
                   </span>
+                  {items.length >= 3 && (
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      className="ml-3 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200 transition-colors flex items-center"
+                      title="Find similar quotes in history to duplicate and save time"
+                    >
+                      <Search className="h-3 w-3 mr-1" />
+                      Find Similar
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1730,20 +1740,28 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                     <option value="bill">Bills Only</option>
                   </select>
 
-                  {/* Item Count Filter */}
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="e.g. 20 to find similar quotes"
-                      value={itemCountFilter}
-                      onChange={(e) => setItemCountFilter(e.target.value)}
-                      className="pl-4 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 w-full sm:w-48 bg-white shadow-sm hover:shadow-md"
-                      min="1"
-                      title="Enter number of items to find quotes with exact item count, then use duplicate button to copy"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-xs text-gray-400">items</span>
+                  {/* Smart Item Count Filter - Uses current items */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center px-4 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl">
+                      <span className="text-sm font-medium text-orange-800">
+                        Current: {items.length} items
+                      </span>
                     </div>
+                    <button
+                      onClick={() => {
+                        if (items.length === 0) {
+                          showError('Add some items in the Create tab first to find similar quotes');
+                          return;
+                        }
+                        setItemCountFilter(items.length.toString());
+                      }}
+                      disabled={items.length === 0}
+                      className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Find quotes with same number of items as your current draft"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      Find Similar
+                    </button>
                   </div>
 
                   {/* AI Relevance Filter */}
@@ -1806,14 +1824,14 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 {documentFilter !== 'all' && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Type: {documentFilter}s</span>}
                 {itemCountFilter && (
                   <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded flex items-center">
-                    Items: {itemCountFilter} 
+                    Matching {itemCountFilter} items 
                     <Copy className="h-3 w-3 ml-1" title="Use duplicate button to copy quotes" />
                   </span>
                 )}
                 {aiSuggestedDocs.length > 0 && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded flex items-center"><Sparkles className="h-3 w-3 mr-1" />AI Suggested</span>}
                 {filteredDocuments.length > 0 && (itemCountFilter || aiSuggestedDocs.length > 0) && (
                   <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded flex items-center text-xs">
-                    💡 Found what you need? Use <Copy className="h-3 w-3 mx-1" /> to duplicate and modify!
+                    💡 Found matches? Use <Copy className="h-3 w-3 mx-1" /> to duplicate and save time!
                   </span>
                 )}
               </div>
@@ -1940,7 +1958,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
               )}
             </div>
             
-            {/* Duplicate Feature Help Banner */}
+            {/* Smart Duplicate Feature Help Banner */}
             {filteredDocuments.length > 0 && itemCountFilter && (
               <div className="mx-8 mb-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl">
                 <div className="flex items-center space-x-3">
@@ -1949,11 +1967,11 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-emerald-800 mb-1">
-                      💡 Tip: Save Time with Duplicate Feature
+                      🎯 Perfect Match Found!
                     </h3>
                     <p className="text-xs text-emerald-700">
-                      Found a quotation with {itemCountFilter} items? Click the <Copy className="h-3 w-3 inline mx-1" /> <strong>green duplicate button</strong> to create a copy, 
-                      then modify it with new client details and pricing. No need to recreate everything from scratch!
+                      Found {filteredDocuments.length} quote{filteredDocuments.length !== 1 ? 's' : ''} with {itemCountFilter} items (same as your current draft). 
+                      Click <Copy className="h-3 w-3 inline mx-1" /> <strong>duplicate</strong> to copy one and customize it with new details!
                     </p>
                   </div>
                   <button 
