@@ -1905,274 +1905,456 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className={`rounded-lg shadow p-6 transition-all duration-500 ${
-            isDarkTheme 
-              ? 'bg-white/10 backdrop-blur-xl border border-white/20' 
-              : 'bg-white border border-gray-200/50'
-          }`}>
-            <h2 className={`text-lg font-semibold mb-6 transition-colors duration-500 ${
-              isDarkTheme ? 'text-white' : 'text-gray-800'
-            }`}>Settings</h2>
-
-            {/* Theme Settings Section */}
-            <div className="mb-8">
-              <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${
-                isDarkTheme ? 'text-white' : 'text-gray-800'
-              }`}>Theme Settings</h3>
-              <div className={`p-4 rounded-xl border transition-all duration-500 ${
-                isDarkTheme 
-                  ? 'bg-black/10 border-white/10' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className={`font-semibold transition-colors duration-500 ${
-                      isDarkTheme ? 'text-white' : 'text-gray-800'
-                    }`}>
-                      Dark Mode
-                    </h4>
-                    <p className={`text-sm transition-colors duration-500 ${
-                      isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                    }`}>
-                      Toggle between light and dark themes
-                    </p>
+          <div className="space-y-6">
+            {/* Settings Header */}
+            <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-2xl transition-all duration-500 ${
+              isDarkTheme 
+                ? 'bg-white/10 border-white/20' 
+                : 'bg-white/80 border-gray-200/50'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-2xl font-black flex items-center transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    <Settings className="w-6 h-6 mr-3 text-blue-500" />
+                    Settings & Configuration
+                  </h2>
+                  <p className={`text-sm mt-1 transition-colors duration-500 ${
+                    isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
+                    Customize your QuoteBill Pro experience
+                  </p>
+                </div>
+                <div className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                    : 'bg-green-50 text-green-700 border border-green-200'
+                }`}>
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${
+                      isDarkTheme ? 'bg-green-400' : 'bg-green-500'
+                    }`}></div>
+                    Auto-Save Enabled
                   </div>
-                  <button
-                    onClick={toggleTheme}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
-                      isDarkTheme ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-300 ${
-                      isDarkTheme ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
                 </div>
               </div>
             </div>
-            
-            {/* Particulars Management Section */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className={`text-lg font-bold transition-colors duration-500 ${
-                  isDarkTheme ? 'text-white' : 'text-gray-800'
-                }`}>Manage Particulars</h3>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-500 ${
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Configuration */}
+              <div className="space-y-6">
+                {/* Theme Settings */}
+                <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
                   isDarkTheme 
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                    ? 'bg-white/10 border-white/20' 
+                    : 'bg-white/80 border-gray-200/50'
                 }`}>
-                  {appSettings.particulars.length} {appSettings.particulars.length === 1 ? 'Item' : 'Items'}
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                      isDarkTheme ? 'text-white' : 'text-gray-800'
+                    }`}>
+                      🎨 Appearance
+                    </h3>
+                  </div>
+                  
+                  <div className={`p-4 rounded-xl border transition-all duration-500 ${
+                    isDarkTheme 
+                      ? 'bg-black/20 border-white/10' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className={`font-semibold transition-colors duration-500 ${
+                          isDarkTheme ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          Dark Mode
+                        </h4>
+                        <p className={`text-sm transition-colors duration-500 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          Toggle between light and dark themes
+                        </p>
+                      </div>
+                      <button
+                        onClick={toggleTheme}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 transform hover:scale-105 ${
+                          isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 shadow-lg ${
+                          isDarkTheme ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Particulars Management */}
+                <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-white/10 border-white/20' 
+                    : 'bg-white/80 border-gray-200/50'
+                }`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                      isDarkTheme ? 'text-white' : 'text-gray-800'
+                    }`}>
+                      📋 Manage Particulars
+                    </h3>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-500 ${
+                      isDarkTheme 
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                    }`}>
+                      {appSettings.particulars.length} Items
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Add New Particular */}
+                    <div className={`p-4 rounded-xl border transition-all duration-500 ${
+                      isDarkTheme 
+                        ? 'bg-black/20 border-white/20' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Add New Particular
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter item name..."
+                          className={`flex-1 px-4 py-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                            isDarkTheme 
+                              ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-400 focus:ring-blue-100'
+                          }`}
+                          ref={addParticularInputRef}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && e.target.value.trim()) {
+                              const newParticular = e.target.value.trim();
+                              if (!appSettings.particulars.includes(newParticular)) {
+                                const updatedParticulars = [...appSettings.particulars, newParticular];
+                                setAppSettings({
+                                  ...appSettings, 
+                                  particulars: updatedParticulars
+                                });
+                                autoSaveParticulars(updatedParticulars);
+                                e.target.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            const input = addParticularInputRef.current;
+                            if (!input) return;
+                            const newParticular = input.value.trim();
+                            if (newParticular && !appSettings.particulars.includes(newParticular)) {
+                              const updatedParticulars = [...appSettings.particulars, newParticular];
+                              setAppSettings({
+                                ...appSettings, 
+                                particulars: updatedParticulars
+                              });
+                              autoSaveParticulars(updatedParticulars);
+                              input.value = '';
+                            }
+                          }}
+                          className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${
+                            isDarkTheme 
+                              ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' 
+                              : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                          }`}
+                        >
+                          <Plus size={20} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Particulars List */}
+                    {appSettings.particulars.length > 0 ? (
+                      <div className={`p-4 rounded-xl border transition-all duration-500 ${
+                        isDarkTheme 
+                          ? 'bg-black/10 border-white/10' 
+                          : 'bg-white border-gray-200'
+                      }`}>
+                        <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+                          <div className="space-y-2">
+                            {appSettings.particulars.map((particular, index) => (
+                              <div key={index} className={`group flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
+                                isDarkTheme 
+                                  ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-white/10 hover:border-white/20' 
+                                  : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-200'
+                              }`}>
+                                <div className="flex items-center min-w-0 flex-1">
+                                  <div className={`w-2 h-2 rounded-full mr-3 ${
+                                    isDarkTheme ? 'bg-blue-400' : 'bg-blue-500'
+                                  }`}></div>
+                                  <span className={`font-medium truncate transition-colors duration-500 ${
+                                    isDarkTheme ? 'text-white/90' : 'text-gray-800'
+                                  }`}>
+                                    {particular}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
+                                    setAppSettings({...appSettings, particulars: updatedParticulars});
+                                    autoSaveParticulars(updatedParticulars);
+                                  }}
+                                  className={`ml-3 p-1.5 rounded-md transition-all duration-200 hover:scale-110 opacity-70 hover:opacity-100 ${
+                                    isDarkTheme 
+                                      ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300' 
+                                      : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                                  }`}
+                                  title="Delete particular"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {appSettings.particulars.length > 6 && (
+                          <div className={`text-center mt-3 pt-2 border-t transition-colors duration-500 ${
+                            isDarkTheme ? 'border-white/10 text-white/50' : 'border-gray-200 text-gray-400'
+                          }`}>
+                            <p className="text-xs">Scroll to see more items</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={`text-center py-8 rounded-xl border-2 border-dashed transition-all duration-500 ${
+                        isDarkTheme 
+                          ? 'border-white/20 text-white/60' 
+                          : 'border-gray-300 text-gray-500'
+                      }`}>
+                        <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="font-medium text-sm">No particulars added yet</p>
+                        <p className="text-xs mt-1">Add your first item above</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              
-              <div className="space-y-4">
-                {/* Add New Particular Form - Moved to Top */}
-                <div className={`p-3 rounded-xl border transition-all duration-500 ${
+
+              {/* Right Column - Letterhead & Preview */}
+              <div className="space-y-6">
+                {/* Letterhead Configuration */}
+                <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
                   isDarkTheme 
-                    ? 'bg-black/20 border-white/20' 
-                    : 'bg-gray-50 border-gray-200'
+                    ? 'bg-white/10 border-white/20' 
+                    : 'bg-white/80 border-gray-200/50'
                 }`}>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add new particular..."
-                      className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-all duration-300 focus:ring-2 focus:outline-none ${
-                        isDarkTheme 
-                          ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-400 focus:ring-blue-100'
-                      }`}
-                      ref={addParticularInputRef}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                          const newParticular = e.target.value.trim();
-                          if (!appSettings.particulars.includes(newParticular)) {
-                            const updatedParticulars = [...appSettings.particulars, newParticular];
-                            setAppSettings({
-                              ...appSettings, 
-                              particulars: updatedParticulars
-                            });
-                            autoSaveParticulars(updatedParticulars);
-                            e.target.value = '';
-                          }
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => {
-                        const input = addParticularInputRef.current;
-                        if (!input) return;
-                        const newParticular = input.value.trim();
-                        if (newParticular && !appSettings.particulars.includes(newParticular)) {
-                          const updatedParticulars = [...appSettings.particulars, newParticular];
-                          setAppSettings({
-                            ...appSettings, 
-                            particulars: updatedParticulars
-                          });
-                          autoSaveParticulars(updatedParticulars);
-                          input.value = '';
-                        }
-                      }}
-                      className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 hover:shadow-md transform hover:scale-105 ${
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className={`text-lg font-bold transition-colors duration-500 ${
+                      isDarkTheme ? 'text-white' : 'text-gray-800'
+                    }`}>
+                      🏢 Letterhead Settings
+                    </h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Logo Upload */}
+                    <div>
+                      <label className={`block text-sm font-medium mb-3 transition-colors duration-500 ${
+                        isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Company Logo
+                      </label>
+                      <div className="flex items-center space-x-4">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files[0]) {
+                              uploadLogo(e.target.files[0]);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className={`flex items-center px-4 py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${
+                            isDarkTheme 
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white' 
+                              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                          }`}
+                        >
+                          <Upload size={18} className="mr-2" />
+                          Upload Logo
+                        </button>
+                        {letterhead.logo && (
+                          <div className={`p-2 rounded-xl border transition-all duration-500 ${
+                            isDarkTheme ? 'bg-black/20 border-white/20' : 'bg-gray-50 border-gray-200'
+                          }`}>
+                            <img 
+                              src={letterhead.logo} 
+                              alt="Current Logo" 
+                              className="h-12 w-12 object-contain"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Firm Details */}
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Firm Name
+                        </label>
+                        <input
+                          type="text"
+                          value={letterhead.firmName}
+                          onChange={(e) => setLetterhead({...letterhead, firmName: e.target.value})}
+                          className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                            isDarkTheme 
+                              ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400 focus:ring-blue-100'
+                          }`}
+                          placeholder="Enter your firm name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Firm Address
+                        </label>
+                        <textarea
+                          value={letterhead.address}
+                          onChange={(e) => setLetterhead({...letterhead, address: e.target.value})}
+                          className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none resize-none ${
+                            isDarkTheme 
+                              ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400 focus:ring-blue-100'
+                          }`}
+                          rows="3"
+                          placeholder="Enter your firm address"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          value={letterhead.phone}
+                          onChange={(e) => setLetterhead({...letterhead, phone: e.target.value})}
+                          className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                            isDarkTheme 
+                              ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400 focus:ring-blue-100'
+                          }`}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
+                          isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Tagline
+                        </label>
+                        <input
+                          type="text"
+                          value={letterhead.tagline}
+                          onChange={(e) => setLetterhead({...letterhead, tagline: e.target.value})}
+                          className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:ring-2 focus:outline-none ${
+                            isDarkTheme 
+                              ? 'bg-black/30 border-white/20 text-white placeholder-white/50 focus:border-blue-400 focus:ring-blue-500/30' 
+                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400 focus:ring-blue-100'
+                          }`}
+                          placeholder="Enter your tagline"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <button 
+                      onClick={saveSettings}
+                      className={`w-full py-4 rounded-xl font-bold transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02] ${
                         isDarkTheme 
                           ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' 
                           : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
                       }`}
                     >
-                      <Plus size={16} />
+                      💾 Save All Settings
                     </button>
                   </div>
                 </div>
 
-                {/* Particulars Display - Mobile Optimized */}
-                {appSettings.particulars.length > 0 ? (
+                {/* Live Preview */}
+                <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-xl transition-all duration-500 ${
+                  isDarkTheme 
+                    ? 'bg-white/10 border-white/20' 
+                    : 'bg-white/80 border-gray-200/50'
+                }`}>
+                  <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${
+                    isDarkTheme ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    👀 Live Preview
+                  </h3>
+                  
+                  {/* Letterhead Preview */}
                   <div className={`p-4 rounded-xl border transition-all duration-500 ${
-                    isDarkTheme 
-                      ? 'bg-black/10 border-white/10' 
-                      : 'bg-white border-gray-200'
+                    isDarkTheme ? 'bg-black/20 border-white/20' : 'bg-gray-50 border-gray-200'
                   }`}>
-                    <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-                      <div className="space-y-2">
-                        {appSettings.particulars.map((particular, index) => (
-                          <div key={index} className={`group flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
-                            isDarkTheme 
-                              ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-white/10 hover:border-white/20' 
-                              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-200'
-                          }`}>
-                            <div className="flex items-center min-w-0 flex-1">
-                              <div className={`w-2 h-2 rounded-full mr-3 ${
-                                isDarkTheme ? 'bg-blue-400' : 'bg-blue-500'
-                              }`}></div>
-                              <span className={`font-medium truncate transition-colors duration-500 ${
-                                isDarkTheme ? 'text-white/90' : 'text-gray-800'
-                              }`}>
-                                {particular}
-                              </span>
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          {letterhead.logo && (
+                            <div className="bg-white p-1 rounded">
+                              <img 
+                                src={letterhead.logo} 
+                                alt="Logo Preview" 
+                                className="h-8 w-8 object-contain"
+                              />
                             </div>
-                            <button
-                              onClick={() => {
-                                const updatedParticulars = appSettings.particulars.filter((_, i) => i !== index);
-                                setAppSettings({...appSettings, particulars: updatedParticulars});
-                                autoSaveParticulars(updatedParticulars);
-                              }}
-                              className={`ml-3 p-1 rounded-md transition-all duration-200 hover:scale-110 opacity-70 hover:opacity-100 ${
-                                isDarkTheme 
-                                  ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300' 
-                                  : 'text-red-500 hover:bg-red-50 hover:text-red-600'
-                              }`}
-                              title="Delete particular"
-                            >
-                              <X size={14} />
-                            </button>
+                          )}
+                          <div>
+                            <h4 className="font-bold text-lg">
+                              {letterhead.firmName || 'Your Firm Name'}
+                            </h4>
+                            {letterhead.tagline && (
+                              <p className="text-xs text-blue-100">{letterhead.tagline}</p>
+                            )}
                           </div>
-                        ))}
+                        </div>
+                        <div className="text-right text-sm">
+                          <div className="bg-white/20 px-2 py-1 rounded">
+                            QUOTE #001
+                          </div>
+                        </div>
                       </div>
+                      {letterhead.address && (
+                        <div className="mt-3 pt-3 border-t border-blue-300 text-sm">
+                          <p className="text-blue-100">{letterhead.address}</p>
+                          {letterhead.phone && (
+                            <p className="text-blue-100">📞 {letterhead.phone}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    
-                    {/* Scroll Hint */}
-                    {appSettings.particulars.length > 6 && (
-                      <div className={`text-center mt-3 pt-2 border-t transition-colors duration-500 ${
-                        isDarkTheme ? 'border-white/10 text-white/50' : 'border-gray-200 text-gray-400'
-                      }`}>
-                        <p className="text-xs">↕️ Scroll to see more items</p>
-                      </div>
-                    )}
+                    <p className={`text-xs text-center mt-2 transition-colors duration-500 ${
+                      isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      This is how your letterhead will appear on documents
+                    </p>
                   </div>
-                ) : (
-                  <div className={`text-center py-8 rounded-xl border-2 border-dashed transition-all duration-500 ${
-                    isDarkTheme 
-                      ? 'border-white/20 text-white/60' 
-                      : 'border-gray-300 text-gray-500'
-                  }`}>
-                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="font-medium text-sm">No particulars added yet</p>
-                    <p className="text-xs mt-1">Add your first item above</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Letterhead Settings Section */}
-            <div>
-              <h3 className={`text-md font-semibold mb-4 transition-colors duration-500 ${
-                isDarkTheme ? 'text-white' : 'text-gray-800'
-              }`}>Letterhead Settings</h3>
-              <div className="space-y-6">
-              <div>
-                <label className={`block text-sm font-medium mb-2 transition-colors duration-500 ${
-                  isDarkTheme ? 'text-gray-300' : 'text-gray-700'
-                }`}>Company Logo</label>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files[0]) {
-                        uploadLogo(e.target.files[0]);
-                      }
-                    }}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Upload size={20} className="mr-2" />
-                    Upload Logo
-                  </button>
-                  {letterhead.logo && (
-                    <img 
-                      src={letterhead.logo} 
-                      alt="Current Logo" 
-                      className="h-12 w-12 object-contain border rounded"
-                    />
-                  )}
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Firm Name</label>
-                <input
-                  type="text"
-                  value={letterhead.firmName}
-                  onChange={(e) => setLetterhead({...letterhead, firmName: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Firm Address</label>
-                <textarea
-                  value={letterhead.address}
-                  onChange={(e) => setLetterhead({...letterhead, address: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="3"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Firm Phone</label>
-                <input
-                  type="text"
-                  value={letterhead.phone}
-                  onChange={(e) => setLetterhead({...letterhead, phone: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter firm phone number"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
-                <input
-                  type="text"
-                  value={letterhead.tagline}
-                  onChange={(e) => setLetterhead({...letterhead, tagline: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <button 
-                onClick={saveSettings}
-                className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Save Settings
-              </button>
               </div>
             </div>
           </div>
