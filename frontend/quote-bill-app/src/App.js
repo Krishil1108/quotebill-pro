@@ -340,77 +340,68 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
       const targetCount = parseInt(itemCountInput);
       const suggestions = [];
       
-      // Find quotations with exactly X items
-      const exactMatch = pastDocuments.find(doc => 
+      // STRICT LOGIC: Only find exact matches for X, X-1, and X+1
+      
+      // 1. Find quotations with exactly X items
+      const exactMatches = pastDocuments.filter(doc => 
         doc.items && doc.items.length === targetCount
       );
-      if (exactMatch) {
+      if (exactMatches.length > 0) {
+        // Take the most recent one
+        const mostRecent = exactMatches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
         suggestions.push({
-          ...exactMatch,
+          ...mostRecent,
           suggestionType: 'exact',
           suggestionReason: `Exactly ${targetCount} items`
         });
       }
       
-      // Find quotations with X-1 items (if X > 0)
+      // 2. Find quotations with X-1 items (if X > 0)
       if (targetCount > 0) {
-        const minusOneMatch = pastDocuments.find(doc => 
-          doc.items && doc.items.length === (targetCount - 1)
+        const minusOneMatches = pastDocuments.filter(doc => 
+          doc.items && doc.items.length === (targetCount - 1) && 
+          !suggestions.find(s => s._id === doc._id) // Don't duplicate
         );
-        if (minusOneMatch && !suggestions.find(s => s._id === minusOneMatch._id)) {
+        if (minusOneMatches.length > 0) {
+          const mostRecent = minusOneMatches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
           suggestions.push({
-            ...minusOneMatch,
+            ...mostRecent,
             suggestionType: 'minus-one',
             suggestionReason: `${targetCount - 1} items (one less)`
           });
         }
       }
       
-      // Find quotations with X+1 items
-      const plusOneMatch = pastDocuments.find(doc => 
-        doc.items && doc.items.length === (targetCount + 1)
+      // 3. Find quotations with X+1 items
+      const plusOneMatches = pastDocuments.filter(doc => 
+        doc.items && doc.items.length === (targetCount + 1) && 
+        !suggestions.find(s => s._id === doc._id) // Don't duplicate
       );
-      if (plusOneMatch && !suggestions.find(s => s._id === plusOneMatch._id)) {
+      if (plusOneMatches.length > 0) {
+        const mostRecent = plusOneMatches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
         suggestions.push({
-          ...plusOneMatch,
+          ...mostRecent,
           suggestionType: 'plus-one',
           suggestionReason: `${targetCount + 1} items (one more)`
         });
       }
       
-      // If we don't have 3 suggestions, try to find alternatives
-      if (suggestions.length < 3) {
-        const remainingDocs = pastDocuments.filter(doc => 
-          doc.items && !suggestions.find(s => s._id === doc._id)
-        );
-        
-        // Sort by how close they are to the target count
-        remainingDocs.sort((a, b) => {
-          const aDiff = Math.abs((a.items?.length || 0) - targetCount);
-          const bDiff = Math.abs((b.items?.length || 0) - targetCount);
-          return aDiff - bDiff;
-        });
-        
-        // Add the closest matches to fill up to 3 suggestions
-        const needed = 3 - suggestions.length;
-        for (let i = 0; i < Math.min(needed, remainingDocs.length); i++) {
-          const doc = remainingDocs[i];
-          const itemCount = doc.items?.length || 0;
-          suggestions.push({
-            ...doc,
-            suggestionType: 'alternative',
-            suggestionReason: `${itemCount} items (closest available)`
-          });
-        }
-      }
-      
+      // NO FALLBACK LOGIC - Only show exact matches
       if (suggestions.length === 0) {
-        showError(`No quotations found with ${targetCount}, ${targetCount-1}, or ${targetCount+1} items`);
+        showError(`No quotations found with exactly ${targetCount}, ${targetCount > 0 ? targetCount-1 + ', or ' : ''}${targetCount+1} items. Try a different number.`);
         return;
       }
       
+      // Sort suggestions in logical order: exact, minus-one, plus-one
+      suggestions.sort((a, b) => {
+        const order = { 'exact': 1, 'minus-one': 2, 'plus-one': 3 };
+        return order[a.suggestionType] - order[b.suggestionType];
+      });
+      
       setAiSuggestedDocs(suggestions);
-      showSuccess(`🎯 Found ${suggestions.length} quotations! Looking for ${targetCount} items: ${suggestions.map(s => s.suggestionReason).join(', ')}`);
+      
+      const foundTypes = suggestions.map(s => s.suggestionReason).join(', ');
+      showSuccess(`🎯 Found ${suggestions.length} exact matches for ${targetCount} items: ${foundTypes}`);
       
     } catch (error) {
       console.error('Error in item count suggestion:', error);

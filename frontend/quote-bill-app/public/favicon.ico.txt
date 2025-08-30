@@ -1,0 +1,9 @@
+This is a placeholder for favicon.ico
+To create the actual favicon.ico file:
+1. Go to https://favicon.io/favicon-generator/
+2. Enter "Q" as text
+3. Choose purple background color (#4F46E5)
+4. Choose white text color
+5. Download and replace this file with the generated favicon.ico
+
+Alternatively, use any online SVG to ICO converter with the favicon.svg file.
