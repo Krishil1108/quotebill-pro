@@ -539,7 +539,7 @@ app.get('/api/documents', async (req, res) => {
     
     // Fetch documents with optimized fields for list view
     const documents = await Document.find(filter)
-      .select('type documentNumber clientInfo.name totalAmount createdAt status')
+      .select('type documentNumber clientInfo.name items totalAmount createdAt status')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)

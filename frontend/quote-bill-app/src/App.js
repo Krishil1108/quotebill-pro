@@ -1139,14 +1139,6 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                       ))}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-                        <td colSpan="4" className="px-6 py-4 text-right text-lg font-bold">
-                          Total Items:
-                        </td>
-                        <td className="px-6 py-4 text-right text-lg font-bold">
-                          {items.filter(item => item.particular.trim() || item.quantity || item.rate).length} items
-                        </td>
-                      </tr>
                       <tr className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                         <td colSpan="4" className="px-6 py-4 text-right text-lg font-bold">
                           Total Amount:
@@ -1678,26 +1670,6 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                       Total Amount: ₹{getTotalAmount().toFixed(2)}
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Current Item Count Display */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                  <span className="text-lg font-semibold text-purple-800">
-                    Current Items Count
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="inline-flex items-center px-4 py-2 rounded-full text-lg font-bold bg-purple-100 text-purple-800 border-2 border-purple-300">
-                    {items.filter(item => item.particular.trim() || item.quantity || item.rate).length} items
-                  </span>
-                  <span className="text-sm text-purple-600">
-                    (Ready to save)
-                  </span>
                 </div>
               </div>
             </div>
