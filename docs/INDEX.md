@@ -10,6 +10,7 @@ Welcome to the QuoteBill Pro documentation! This folder contains the essential g
 
 - **[MONGODB_ATLAS_SETUP.md](./MONGODB_ATLAS_SETUP.md)** - MongoDB Atlas configuration guide
 - **[BACKEND_RENDER_DEPLOYMENT.md](./BACKEND_RENDER_DEPLOYMENT.md)** - Complete backend deployment guide
+- **[FRONTEND_RENDER_DEPLOYMENT.md](./FRONTEND_RENDER_DEPLOYMENT.md)** - Complete frontend deployment guide  
 - **[RENDER_UPDATE_INSTRUCTIONS.md](./RENDER_UPDATE_INSTRUCTIONS.md)** - Current MongoDB migration steps
 
 ## 🔧 Feature Documentation
@@ -20,10 +21,11 @@ Welcome to the QuoteBill Pro documentation! This folder contains the essential g
 
 If you're experiencing issues:
 
-1. **500 Server Errors**: Check [RENDER_UPDATE_INSTRUCTIONS.md](./RENDER_UPDATE_INSTRUCTIONS.md) for the latest MongoDB migration
-2. **Backend Deployment**: Follow [BACKEND_RENDER_DEPLOYMENT.md](./BACKEND_RENDER_DEPLOYMENT.md) for complete deployment guide
-3. **Database Connection**: Review [MONGODB_ATLAS_SETUP.md](./MONGODB_ATLAS_SETUP.md) for Atlas configuration
-4. **General Setup**: Start with [README.md](./README.md) for overall project overview
+1. **Backend/API Errors**: Follow [BACKEND_RENDER_DEPLOYMENT.md](./BACKEND_RENDER_DEPLOYMENT.md) for backend deployment issues
+2. **Frontend/UI Issues**: Review [FRONTEND_RENDER_DEPLOYMENT.md](./FRONTEND_RENDER_DEPLOYMENT.md) for frontend deployment problems
+3. **500 Server Errors**: Check [RENDER_UPDATE_INSTRUCTIONS.md](./RENDER_UPDATE_INSTRUCTIONS.md) for the latest MongoDB migration
+4. **Database Connection**: Review [MONGODB_ATLAS_SETUP.md](./MONGODB_ATLAS_SETUP.md) for Atlas configuration
+5. **General Setup**: Start with [README.md](./README.md) for overall project overview
 
 ## 📁 Project Structure
 
