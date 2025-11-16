@@ -6,7 +6,7 @@ console.log('🔗 Testing Alternative MongoDB Connection Methods...');
 // Alternative connection strings to try
 const connectionStrings = [
   // Original SRV format
-  'mongodb+srv://shahkrishil1108:heIRYfBzaeVXS60y@cluster0.wmqufd.mongodb.net/quotebill-pro?retryWrites=true&w=majority',
+  'mongodb+srv://shahkrishil1128:Krishil%401129@cluster0.d1rfw.mongodb.net/quotebill?retryWrites=true&w=majority',
   
   // Try without SRV (standard format) - we need to find the actual IP/hostname
   // This would need the actual server addresses from Atlas

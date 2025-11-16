@@ -4,10 +4,10 @@ async function testDNS() {
   console.log('🔍 Testing DNS Resolution for MongoDB Atlas...');
   
   const hostnames = [
-    'cluster0.wmqufd.mongodb.net',
+    'cluster0.d1rfw.mongodb.net',
     'mongodb.net',
     'google.com', // Control test
-    '_mongodb._tcp.cluster0.wmqufd.mongodb.net'
+    '_mongodb._tcp.cluster0.d1rfw.mongodb.net'
   ];
   
   for (const hostname of hostnames) {
