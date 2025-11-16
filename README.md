@@ -46,7 +46,7 @@ A modern quote and bill management application built with React and Node.js.
 
 3. Create `.env` file:
    ```env
-   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/quotebill?retryWrites=true&w=majority
+   MONGO_URI=mongodb+srv://shahkrishil1108:Pops%23100@cluster0.mongodb.net/quotebill?retryWrites=true&w=majority
    PORT=5000
    ```
 

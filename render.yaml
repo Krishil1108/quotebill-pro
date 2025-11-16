@@ -1,4 +1,18 @@
 services:
+  # Backend service
+  - type: web
+    name: quotebill-pro-backend
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false  # This needs to be set manually in Render dashboard
+
   # Frontend service
   - type: web
     name: quotebill-pro-frontend
@@ -11,4 +25,4 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
-        value: https://quotebill-pro.onrender.com/api
+        value: https://quotebill-pro-backend.onrender.com/api

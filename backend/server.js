@@ -42,28 +42,59 @@ if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// MongoDB connection with fallback
+// MongoDB connection with improved error handling
 async function connectToDatabase() {
   try {
+    console.log('🔗 Environment check:');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('PORT:', process.env.PORT);
+    console.log('MONGO_URI provided:', !!process.env.MONGO_URI);
+    
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not set');
+    }
+    
     console.log('Attempting to connect to MongoDB Atlas...');
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/quotebill');
+    console.log('Connection string format:', process.env.MONGO_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
+    
+    // Add connection options for better reliability
+    const connectionOptions = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000, // 10 seconds
+      socketTimeoutMS: 45000, // 45 seconds
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: 'majority'
+    };
+    
+    await mongoose.connect(process.env.MONGO_URI, connectionOptions);
     console.log('✅ Connected to MongoDB Atlas successfully!');
   } catch (error) {
-    console.log('⚠️  MongoDB Atlas connection failed:', error.message);
-    console.log('Falling back to local MongoDB...');
+    console.error('❌ MongoDB connection failed:', error.message);
+    console.error('Error details:', error);
     
+    // In production, we don't want to fallback to local DB
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚨 Production environment requires MongoDB Atlas connection');
+      console.log('\n📝 To fix this:');
+      console.log('1. Verify MONGO_URI environment variable is set correctly');
+      console.log('2. Check MongoDB Atlas cluster status');
+      console.log('3. Verify network access/IP whitelist (0.0.0.0/0 for Render)');
+      console.log('4. Ensure database user has proper permissions');
+      
+      // Exit in production if DB connection fails
+      process.exit(1);
+    }
+    
+    // Fallback to local only in development
+    console.log('⚠️  Falling back to local MongoDB (development only)...');
     try {
       await mongoose.connect('mongodb://localhost:27017/quotebill');
       console.log('✅ Connected to local MongoDB successfully!');
     } catch (localError) {
-      console.error('❌ Both Atlas and local MongoDB connections failed.');
-      console.error('Atlas error:', error.message);
-      console.error('Local error:', localError.message);
-      console.log('\n📝 To fix this:');
-      console.log('1. Check your MongoDB Atlas credentials and IP whitelist');
-      console.log('2. Or install MongoDB locally');
-      console.log('3. Or update the connection string in .env file');
-      // Don't exit the process, let it continue without DB
+      console.error('❌ Local MongoDB connection also failed:', localError.message);
+      throw localError;
     }
   }
 }
@@ -507,14 +538,42 @@ const upload = multer({
 
 // Routes
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
+// Enhanced health check endpoint
+app.get('/api/health', async (req, res) => {
+  const health = {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      port: process.env.PORT,
+      hasMongoUri: !!process.env.MONGO_URI
+    },
+    mongodb: {
+      readyState: mongoose.connection.readyState,
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      host: mongoose.connection.host,
+      name: mongoose.connection.name
+    }
+  };
+
+  // Test database connectivity
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await mongoose.connection.db.admin().ping();
+      health.mongodb.ping = 'success';
+    } catch (error) {
+      health.mongodb.ping = 'failed';
+      health.mongodb.pingError = error.message;
+      health.status = 'DEGRADED';
+    }
+  } else {
+    health.status = 'UNHEALTHY';
+    health.mongodb.connectionError = 'Database not connected';
+  }
+
+  const statusCode = health.status === 'OK' ? 200 : health.status === 'DEGRADED' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Get all documents
