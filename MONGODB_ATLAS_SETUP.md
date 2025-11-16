@@ -6,7 +6,7 @@
 Replace the template in `backend/.env` with your actual MongoDB Atlas connection string:
 
 ```bash
-MONGO_URI=mongodb+srv://shahkrishil1108:Pops%23100@cluster0.mongodb.net/quotebill-pro?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://shahkrishil1108:heIRYfBzaeVXS60y@cluster0.wmqufd.mongodb.net/quotebill-pro?retryWrites=true&w=majority
 PORT=5000
 NODE_ENV=development
 ```

@@ -1,7 +1,7 @@
 services:
   # Backend service
   - type: web
-    name: quotebill-pro-backend
+    name: quotebill-pro
     runtime: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
@@ -25,6 +25,6 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_BASE_URL
-        value: https://quotebill-pro-backend.onrender.com/api
+        value: https://quotebill-pro.onrender.com/api
       - key: CI
         value: false

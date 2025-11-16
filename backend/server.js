@@ -19,7 +19,9 @@ const corsOptions = {
     'http://localhost:3000', 
     'https://quotebill-pro.onrender.com', 
     'https://quotebill-pro-frontend.onrender.com',
-    'https://quotebill-pro-1.onrender.com'  // Add your current frontend domain
+    'https://quotebill-pro-1.onrender.com',
+    'https://quotebill-pro-2.onrender.com',
+    /^https:\/\/quotebill-pro.*\.onrender\.com$/  // Allow any quotebill-pro variation
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

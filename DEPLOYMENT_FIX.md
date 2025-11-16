@@ -54,7 +54,7 @@ You need to manually add the `MONGO_URI` environment variable in your Render das
 3. **Go to Environment tab**
 4. **Add environment variable**:
    - **Key**: `MONGO_URI`
-   - **Value**: `mongodb+srv://shahkrishil1108:Pops%23100@cluster0.mongodb.net/quotebill-pro?retryWrites=true&w=majority`
+   - **Value**: `mongodb+srv://shahkrishil1108:heIRYfBzaeVXS60y@cluster0.wmqufd.mongodb.net/quotebill-pro?retryWrites=true&w=majority`
 
 ### Step 3: MongoDB Atlas Network Configuration
 
@@ -114,7 +114,7 @@ mongodb://username:password@cluster0.mongodb.net/database
 
 ✅ **Correct Format**:
 ```
-mongodb+srv://shahkrishil1108:Pops%23100@cluster0.mongodb.net/quotebill-pro?retryWrites=true&w=majority
+mongodb+srv://shahkrishil1108:heIRYfBzaeVXS60y@cluster0.wmqufd.mongodb.net/quotebill-pro?retryWrites=true&w=majority
 ```
 
 ### Test Your Connection String Locally:
