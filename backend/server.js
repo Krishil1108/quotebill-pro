@@ -59,8 +59,6 @@ async function connectToDatabase() {
     
     // Add connection options for better reliability
     const connectionOptions = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000, // 10 seconds
       socketTimeoutMS: 45000, // 45 seconds
       maxPoolSize: 10,

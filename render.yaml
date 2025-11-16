@@ -2,7 +2,7 @@ services:
   # Backend service
   - type: web
     name: quotebill-pro-backend
-    env: node
+    runtime: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
     envVars:
@@ -16,8 +16,8 @@ services:
   # Frontend service
   - type: web
     name: quotebill-pro-frontend
-    env: static
-    buildCommand: cd frontend/quote-bill-app && npm install && npm run build
+    runtime: static
+    buildCommand: cd frontend/quote-bill-app && npm install && CI=false npm run build
     staticPublishPath: frontend/quote-bill-app/build
     routes:
       - type: rewrite
@@ -26,3 +26,5 @@ services:
     envVars:
       - key: REACT_APP_API_BASE_URL
         value: https://quotebill-pro-backend.onrender.com/api
+      - key: CI
+        value: false

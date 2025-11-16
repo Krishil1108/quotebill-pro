@@ -1,4 +1,16 @@
 {
+  "name": "quotebill-pro-backend",
+  "version": "1.0.0",
+  "description": "QuoteBill Pro Backend Server",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
   "dependencies": {
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
