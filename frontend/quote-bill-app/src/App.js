@@ -739,7 +739,17 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
         return savedDocument;
       } else {
         const error = await response.json();
-        showError(`Error saving document: ${error.error}`);
+        
+        // Handle specific error cases
+        if (response.status === 413 || error.code === 'PAYLOAD_TOO_LARGE') {
+          showError('Document is too large. Please reduce the number of items or remove unnecessary data.');
+        } else if (response.status === 400) {
+          showError(`Validation error: ${error.error || error.details || 'Invalid data provided'}`);
+        } else if (response.status >= 500) {
+          showError('Server error occurred. Please try again or contact support if the issue persists.');
+        } else {
+          showError(`Error saving document: ${error.error || 'Unknown error occurred'}`);
+        }
       }
     } catch (error) {
       console.error('Error saving document:', error);

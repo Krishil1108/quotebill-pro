@@ -29,7 +29,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for large documents
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // For form data
 app.use('/uploads', express.static('uploads'));
 
 // Request logging middleware
@@ -2651,12 +2652,32 @@ app.delete('/api/personal/reset', async (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
+  console.error('Error occurred:', error);
+  
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File size too large' });
+      return res.status(400).json({ error: 'File size too large. Maximum file size is 5MB.' });
     }
   }
-  res.status(500).json({ error: error.message });
+  
+  if (error.type === 'entity.too.large') {
+    return res.status(413).json({ 
+      error: 'Request entity too large. Please reduce the number of items or data size.',
+      code: 'PAYLOAD_TOO_LARGE'
+    });
+  }
+  
+  if (error.name === 'ValidationError') {
+    return res.status(400).json({ 
+      error: 'Validation error', 
+      details: error.message 
+    });
+  }
+  
+  res.status(500).json({ 
+    error: error.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  });
 });
 
 // Start server

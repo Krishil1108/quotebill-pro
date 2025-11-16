@@ -52,15 +52,28 @@ build
 
 ## 🌍 Step 2: Environment Variables
 
-Add these **exact** environment variables in Render Dashboard:
+✅ **Good News**: Environment files are already configured in the project!
+
+### **2.1 Existing Environment Files**
+- **`.env.production`** - Production configuration (already set up)
+- **`.env.local`** - Local development configuration (already set up)
+
+### **2.2 Production Environment (.env.production)**
+```bash
+REACT_APP_API_BASE_URL=https://quotebill-pro.onrender.com/api
+CI=false
+GENERATE_SOURCEMAP=false
+```
+
+### **2.3 Render Dashboard Variables (Optional)**
+You can also set these in Render Dashboard if needed:
 
 | Key | Value |
 |-----|-------|
 | `REACT_APP_API_BASE_URL` | `https://quotebill-pro.onrender.com/api` |
 | `CI` | `false` |
-| `GENERATE_SOURCEMAP` | `false` |
 
-⚠️ **Critical**: The `REACT_APP_` prefix is required for React to recognize the variable.
+⚠️ **Note**: Environment files in the project take precedence over Render dashboard variables.
 
 ## 🔄 Step 3: Build Configuration
 
