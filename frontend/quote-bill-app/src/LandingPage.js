@@ -1,191 +1,199 @@
 import React from 'react';
-import { FileText, Calculator, Sun, Moon, Sparkles, Zap, Users } from 'lucide-react';
+import {
+  FileText, Calculator, Sun, Moon, Sparkles, Zap, Users,
+  BarChart2, Download, RefreshCw, Check
+} from 'lucide-react';
+
+const FEATURES = [
+  { icon: Sparkles, title: 'AI Suggestions', desc: 'Smart electrical item sequencing', color: 'from-violet-500 to-purple-600' },
+  { icon: RefreshCw, title: 'Auto-Save',      desc: 'Never lose your work again',     color: 'from-blue-500 to-cyan-600'   },
+  { icon: Download,  title: 'PDF & CSV',       desc: 'Professional export formats',    color: 'from-emerald-500 to-teal-600'},
+  { icon: BarChart2, title: 'Analytics',       desc: 'Usage patterns & insights',      color: 'from-orange-500 to-red-500'  },
+];
 
 const LandingPage = ({ onNavigate, isDarkTheme, toggleTheme }) => {
+  const dark = isDarkTheme;
+
   return (
-    <div className={`min-h-screen transition-all duration-500 ${
-      isDarkTheme 
-        ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900' 
-        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+    <div className={`min-h-screen no-overscroll transition-colors duration-500 ${
+      dark
+        ? 'bg-gradient-to-br from-gray-950 via-blue-950 to-purple-950'
+        : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
     }`}>
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Header */}
-        <div className="text-center mb-12 sm:mb-16">
-          <div className="relative inline-block">
-            <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 transition-colors duration-500 ${
-              isDarkTheme ? 'text-white' : 'text-gray-800'
-            }`}>
-              QuoteBill Pro
-            </h1>
-            <div className="absolute -top-2 -right-2 animate-bounce">
-              <Sparkles className={`w-6 h-6 ${isDarkTheme ? 'text-yellow-400' : 'text-blue-500'}`} />
-            </div>
+
+      {/* ── Decorative blobs ───────────────────────────────────── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10" aria-hidden>
+        <div className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl animate-pulse ${
+          dark ? 'bg-blue-600/15' : 'bg-blue-300/30'
+        }`} />
+        <div className={`absolute -bottom-32 -right-32 w-96 h-96 rounded-full blur-3xl animate-pulse ${
+          dark ? 'bg-purple-600/15' : 'bg-purple-300/30'
+        }`} style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* ── Top bar ─────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 backdrop-blur-xl border-b
+        bg-white/20 dark:bg-black/20 border-white/20">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <p className={`text-lg sm:text-xl mb-6 sm:mb-8 transition-colors duration-500 max-w-2xl mx-auto ${
-            isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-          }`}>
-            Professional quotation and billing solution for modern businesses
-          </p>
-          
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-300 transform hover:scale-105 ${
-              isDarkTheme 
-                ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20' 
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm'
-            }`}
-          >
-            {isDarkTheme ? <Sun size={20} /> : <Moon size={20} />}
-            <span className="font-medium">{isDarkTheme ? 'Light' : 'Dark'} Mode</span>
-          </button>
+          <span className={`text-base font-black ${dark ? 'text-white' : 'text-gray-800'}`}>QuoteBill Pro</span>
+        </div>
+        <button
+          onClick={toggleTheme}
+          className={`p-2 rounded-xl transition-all duration-300 active:scale-90 ${
+            dark ? 'bg-white/10 text-yellow-300 hover:bg-white/20' : 'bg-gray-900/10 text-gray-600 hover:bg-gray-900/15'
+          }`}
+          aria-label="Toggle theme"
+        >
+          {dark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </div>
+
+      {/* ── Hero section ────────────────────────────────────────── */}
+      <div className="px-4 pt-10 pb-6 text-center animate-fade-in-up">
+        <div className="relative inline-flex mb-3">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600
+            flex items-center justify-center shadow-2xl shadow-blue-500/30">
+            <FileText className="w-10 h-10 text-white" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-7 h-7 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500
+            flex items-center justify-center shadow-lg shadow-orange-400/40 animate-bounce">
+            <Zap className="w-4 h-4 text-white" />
+          </div>
         </div>
 
-        {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
-          {/* Personal Use Card */}
-          <div 
-            onClick={() => onNavigate('personal')}
-            className={`group relative p-6 sm:p-8 rounded-3xl cursor-pointer transform transition-all duration-500 hover:scale-105 hover:rotate-1 ${
-              isDarkTheme 
-                ? 'bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-xl border border-white/20 hover:border-white/40 hover:from-purple-500/30 hover:to-pink-500/30' 
-                : 'bg-gradient-to-br from-white to-purple-50 shadow-xl hover:shadow-2xl border border-purple-100 hover:border-purple-200'
-            }`}
-          >
-            {/* Animated Background Effect */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-400/10 to-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            
-            <div className="relative text-center">
-              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl mx-auto mb-6 flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 ${
-                isDarkTheme 
-                  ? 'bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/25' 
-                  : 'bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/25'
-              }`}>
-                <div className="relative">
-                  <Calculator size={32} className="sm:w-10 sm:h-10" />
-                  <Zap className="absolute -top-1 -right-1 w-4 h-4 text-yellow-300 animate-pulse" />
-                </div>
-              </div>
-              
-              <h2 className={`text-2xl sm:text-3xl font-bold mb-4 transition-colors duration-500 ${
-                isDarkTheme ? 'text-white' : 'text-gray-800'
-              }`}>
-                Personal Use
-              </h2>
-              
-              <p className={`text-base sm:text-lg mb-6 transition-colors duration-500 ${
-                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Track materials and create personal quotations
-              </p>
-              
-              <div className="space-y-3 mb-6">
-                <div className={`flex items-center justify-center space-x-3 ${
-                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  <FileText size={18} className="flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Material tracking</span>
-                </div>
-                <div className={`flex items-center justify-center space-x-3 ${
-                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  <Calculator size={18} className="flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Personal quotes</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <h1 className={`text-3xl sm:text-4xl font-black mb-2 leading-tight ${
+          dark ? 'text-white' : 'text-gray-900'
+        }`}>
+          QuoteBill&nbsp;<span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Pro</span>
+        </h1>
+        <p className={`text-sm sm:text-base max-w-xs mx-auto leading-relaxed ${
+          dark ? 'text-gray-300' : 'text-gray-600'
+        }`}>
+          Professional quotations &amp; billing for electrical contractors
+        </p>
+      </div>
 
-          {/* Client Use Card */}
-          <div 
-            onClick={() => onNavigate('client')}
-            className={`group relative p-6 sm:p-8 rounded-3xl cursor-pointer transform transition-all duration-500 hover:scale-105 hover:rotate-1 ${
-              isDarkTheme 
-                ? 'bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/20 hover:border-white/40 hover:from-blue-500/30 hover:to-purple-500/30' 
-                : 'bg-gradient-to-br from-white to-blue-50 shadow-xl hover:shadow-2xl border border-blue-100 hover:border-blue-200'
-            }`}
-          >
-            {/* Animated Background Effect */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-400/10 to-purple-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            
-            <div className="relative text-center">
-              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl mx-auto mb-6 flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 ${
-                isDarkTheme 
-                  ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25' 
-                  : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-              }`}>
-                <div className="relative">
-                  <FileText size={32} className="sm:w-10 sm:h-10" />
-                  <Zap className="absolute -top-1 -right-1 w-4 h-4 text-yellow-300 animate-pulse" />
-                </div>
+      {/* ── Navigation cards ────────────────────────────────────── */}
+      <div className="px-4 pb-6 space-y-4 max-w-md mx-auto">
+
+        {/* Personal card */}
+        <button
+          onClick={() => onNavigate('personal')}
+          className={`nav-card group relative w-full rounded-3xl overflow-hidden text-left shadow-xl
+            active:scale-[0.97] transition-all duration-200 ${
+            dark
+              ? 'bg-gradient-to-br from-purple-900/60 to-pink-900/40 border border-purple-500/30'
+              : 'bg-gradient-to-br from-white to-purple-50 border border-purple-100'
+          }`}
+        >
+          {/* shimmer on hover */}
+          <div className="absolute inset-0 animate-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative p-5 flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600
+              flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
+              <Calculator className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className={`text-lg font-black ${dark ? 'text-white' : 'text-gray-900'}`}>Personal Use</h2>
+                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-500/20 text-purple-400">FREE</span>
               </div>
-              
-              <h2 className={`text-2xl sm:text-3xl font-bold mb-4 transition-colors duration-500 ${
-                isDarkTheme ? 'text-white' : 'text-gray-800'
-              }`}>
-                Client Business
-              </h2>
-              
-              <p className={`text-base sm:text-lg mb-6 transition-colors duration-500 ${
-                isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Professional quotations and bills for clients
+              <p className={`text-sm mb-3 ${dark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Track materials &amp; create personal quotations
               </p>
-              
-              <div className="space-y-3 mb-6">
-                <div className={`flex items-center justify-center space-x-3 ${
-                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  <Users size={18} className="flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Client management</span>
-                </div>
-                <div className={`flex items-center justify-center space-x-3 ${
-                  isDarkTheme ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  <FileText size={18} className="flex-shrink-0" />
-                  <span className="text-sm sm:text-base">PDF export ready</span>
-                </div>
+              <div className={`flex flex-wrap gap-2 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {['Material tracking', 'Personal quotes', 'Analytics'].map(tag => (
+                  <span key={tag} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg ${
+                    dark ? 'bg-white/10' : 'bg-purple-50 text-purple-800'
+                  }`}>
+                    <Check size={10} /> {tag}
+                  </span>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto mt-12 sm:mt-16">
-          {[
-            { title: 'AI Smart Suggestions', desc: 'Intelligent electrical item sequencing' },
-            { title: 'Dynamic UI', desc: 'Responsive design for all devices' },
-            { title: 'Auto-Save', desc: 'Never lose your work again' },
-            { title: 'PDF Export', desc: 'Professional document output' },
-            { title: 'CSV Export', desc: 'Excel-compatible data export' }
-          ].map((feature, idx) => (
-            <div key={idx} className={`p-4 sm:p-6 rounded-2xl text-center transition-all duration-500 hover:scale-105 ${
-              isDarkTheme 
-                ? 'bg-white/5 border border-white/10 hover:bg-white/10' 
-                : 'bg-white/70 border border-white/50 hover:bg-white/90 backdrop-blur-sm'
+            <div className={`flex-shrink-0 self-center rounded-xl p-2 transition-all duration-200 group-hover:translate-x-1 ${
+              dark ? 'bg-white/10 text-white' : 'bg-purple-100 text-purple-700'
             }`}>
-              <h3 className={`font-bold mb-2 ${isDarkTheme ? 'text-white' : 'text-gray-800'}`}>
-                {feature.title}
-              </h3>
-              <p className={`text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>
-                {feature.desc}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </button>
+
+        {/* Client Business card */}
+        <button
+          onClick={() => onNavigate('client')}
+          className={`nav-card group relative w-full rounded-3xl overflow-hidden text-left shadow-xl
+            active:scale-[0.97] transition-all duration-200 ${
+            dark
+              ? 'bg-gradient-to-br from-blue-900/60 to-indigo-900/40 border border-blue-500/30'
+              : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'
+          }`}
+        >
+          <div className="absolute inset-0 animate-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="relative p-5 flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600
+              flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+              <FileText className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className={`text-lg font-black ${dark ? 'text-white' : 'text-gray-900'}`}>Client Business</h2>
+                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-500/20 text-blue-400">PRO</span>
+              </div>
+              <p className={`text-sm mb-3 ${dark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Professional quotes &amp; bills for clients
               </p>
+              <div className={`flex flex-wrap gap-2 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {['Client mgmt', 'PDF export', 'AI powered'].map(tag => (
+                  <span key={tag} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg ${
+                    dark ? 'bg-white/10' : 'bg-blue-50 text-blue-800'
+                  }`}>
+                    <Check size={10} /> {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className={`flex-shrink-0 self-center rounded-xl p-2 transition-all duration-200 group-hover:translate-x-1 ${
+              dark ? 'bg-white/10 text-white' : 'bg-blue-100 text-blue-700'
+            }`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* ── Feature chips ────────────────────────────────────────── */}
+      <div className="px-4 pb-8 max-w-md mx-auto">
+        <p className={`text-xs font-semibold uppercase tracking-widest text-center mb-3 ${
+          dark ? 'text-gray-500' : 'text-gray-400'
+        }`}>Everything you need</p>
+        <div className="grid grid-cols-2 gap-3">
+          {FEATURES.map(({ icon: Icon, title, desc, color }) => (
+            <div key={title} className={`p-4 rounded-2xl transition-all duration-300 ${
+              dark
+                ? 'bg-white/5 border border-white/10'
+                : 'bg-white/80 border border-gray-100 shadow-sm'
+            }`}>
+              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-2 shadow-lg`}>
+                <Icon className="w-5 h-5 text-white" />
+              </div>
+              <p className={`text-sm font-bold mb-0.5 ${dark ? 'text-white' : 'text-gray-800'}`}>{title}</p>
+              <p className={`text-xs leading-tight ${dark ? 'text-gray-400' : 'text-gray-500'}`}>{desc}</p>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="mt-16 sm:mt-20 max-w-4xl mx-auto text-center">
-          <div className={`p-6 rounded-2xl transition-all duration-500 ${
-            isDarkTheme 
-              ? 'bg-white/5 border border-white/10' 
-              : 'bg-white/70 border border-white/50 backdrop-blur-sm'
-          }`}>
-            <p className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
-              © 2025 QuoteBill Pro. All rights reserved.
-            </p>
-          </div>
-        </div>
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <div className={`pb-8 pt-2 text-center text-xs ${dark ? 'text-gray-600' : 'text-gray-400'}`}>
+        © 2025 QuoteBill Pro · Built for electrical professionals
       </div>
     </div>
   );

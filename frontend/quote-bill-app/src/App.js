@@ -1111,67 +1111,14 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
             </button>
           </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center space-x-2">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`p-2 rounded-md transition-colors duration-300 ${
-                  isDarkTheme ? 'text-white/70 hover:text-white' : 'text-gray-400 hover:text-gray-500'
-                }`}
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
+            {/* Mobile: compact logo only, nav is in bottom bar */}
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden">
-            <div className={`px-4 pt-4 pb-6 space-y-3 sm:px-6 border-t transition-all duration-500 ${
-              isDarkTheme 
-                ? 'bg-gradient-to-r from-black/40 to-blue-900/40 border-white/10 backdrop-blur-xl' 
-                : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100'
-            }`}>
-              <button
-                onClick={() => { handleTabChange('create'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
-                  activeTab === 'create' 
-                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
-                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
-                }`}
-              >
-                <Plus className="w-5 h-5 mr-3" />
-                Create
-              </button>
-              <button
-                onClick={() => { handleTabChange('history'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
-                  activeTab === 'history' 
-                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
-                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
-                }`}
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                History
-              </button>
-              <button
-                onClick={() => { handleTabChange('settings'); setIsMenuOpen(false); }}
-                className={`flex items-center px-4 py-3 rounded-xl text-base font-semibold w-full text-left transition-all duration-300 ${
-                  activeTab === 'settings' 
-                    ? (isDarkTheme ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg')
-                    : (isDarkTheme ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-blue-600 hover:bg-white/50')
-                }`}
-              >
-                <Upload className="w-5 h-5 mr-3" />
-                Settings
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Mobile Navigation is handled by the bottom navbar */}
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 md:pb-8">
         {/* Create Tab */}
         {activeTab === 'create' && (
           <div className="space-y-6">
@@ -1246,48 +1193,68 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
             </div>
 
             {/* Client Information */}
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Users className="w-6 h-6 mr-3 text-blue-600" />
+            <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-5 sm:p-8 transition-all duration-500 ${
+              isDarkTheme ? 'bg-black/20 border-white/20' : 'bg-white/70 border-white/20'
+            }`}>
+              <h2 className={`text-xl font-bold mb-6 flex items-center transition-colors duration-500 ${
+                isDarkTheme ? 'text-white' : 'text-gray-800'
+              }`}>
+                <Users className="w-6 h-6 mr-3 text-blue-500" />
                 Client Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Client Name</label>
+                  <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Client Name</label>
                   <input
                     type="text"
                     value={clientInfo.name}
                     onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
-                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+                    className={`w-full p-4 border rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                      isDarkTheme
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:ring-blue-500/30 focus:border-blue-400'
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-3 focus:ring-blue-100 focus:border-blue-400'
+                    }`}
                     placeholder="Enter client name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+                  <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Phone</label>
                   <input
                     type="tel"
                     value={clientInfo.phone}
                     onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+                    className={`w-full p-4 border rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                      isDarkTheme
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:ring-blue-500/30 focus:border-blue-400'
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-3 focus:ring-blue-100 focus:border-blue-400'
+                    }`}
                     placeholder="Enter phone number"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
                   <input
                     type="email"
                     value={clientInfo.email}
                     onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
-                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
+                    className={`w-full p-4 border rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                      isDarkTheme
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:ring-blue-500/30 focus:border-blue-400'
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-3 focus:ring-blue-100 focus:border-blue-400'
+                    }`}
                     placeholder="Enter email address"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                  <label className={`block text-sm font-semibold mb-2 transition-colors duration-500 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Address</label>
                   <textarea
                     value={clientInfo.address}
                     onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
-                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md resize-none"
+                    className={`w-full p-4 border rounded-xl transition-all duration-200 shadow-sm hover:shadow-md resize-none ${
+                      isDarkTheme
+                        ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:ring-blue-500/30 focus:border-blue-400'
+                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-3 focus:ring-blue-100 focus:border-blue-400'
+                    }`}
                     placeholder="Enter client address"
                     rows="3"
                   />
@@ -1485,14 +1452,15 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
               <div className={`mt-8 pt-6 border-t-2 transition-colors duration-500 ${
                 isDarkTheme ? 'border-white/20' : 'border-gray-200'
               }`}>
-                <div className="flex justify-end">
-                  <div className={`p-6 rounded-2xl shadow-xl transition-all duration-500 ${
-                    isDarkTheme 
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600' 
+                <div className="flex justify-center md:justify-end">
+                  <div className={`w-full md:w-auto p-5 rounded-2xl shadow-xl transition-all duration-500 text-center ${
+                    isDarkTheme
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600'
                       : 'bg-gradient-to-r from-blue-600 to-indigo-600'
                   }`}>
-                    <div className="text-xl font-bold text-white">
-                      Total Amount: ₹{getTotalAmount().toFixed(2)}
+                    <p className="text-sm font-medium text-white/80 mb-1">Total Amount</p>
+                    <div className="text-2xl sm:text-3xl font-black text-white">
+                      ₹{getTotalAmount().toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -1523,224 +1491,241 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-xl border transition-all duration-500 ${
+            isDarkTheme ? 'bg-black/20 border-white/20' : 'bg-white/70 border-white/20'
+          }`}>
             {/* Header with Search and Filters */}
-            <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                  <FileText className="w-7 h-7 mr-3 text-blue-600" />
-                  Past Quotes & Bills
+            <div className={`px-4 sm:px-8 py-5 border-b rounded-t-2xl transition-all duration-500 ${
+              isDarkTheme ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50'
+            }`}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className={`text-xl font-bold flex items-center transition-colors duration-500 ${
+                  isDarkTheme ? 'text-white' : 'text-gray-800'
+                }`}>
+                  <FileText className="w-6 h-6 mr-2 text-blue-500" />
+                  Past Quotes &amp; Bills
                 </h2>
-                
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Search Input */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search by client, document number, or type..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 w-full sm:w-80 bg-white shadow-sm hover:shadow-md"
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Document Type Filter */}
-                  <select
-                    value={documentFilter}
-                    onChange={(e) => setDocumentFilter(e.target.value)}
-                    className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md font-medium"
-                  >
-                    <option value="all">All Documents</option>
-                    <option value="quote">Quotes Only</option>
-                    <option value="bill">Bills Only</option>
-                  </select>
-
-                  {/* Item Count Suggestions */}
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Enter item count"
-                      value={itemCountInput}
-                      onChange={(e) => setItemCountInput(e.target.value)}
-                      className="px-3 py-4 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 w-32 bg-white shadow-sm hover:shadow-md text-center"
-                      min="0"
-                      max="100"
-                    />
-                    <button
-                      onClick={findItemCountBasedSuggestions}
-                      disabled={loading || !itemCountInput || itemCountInput < 0}
-                      className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Find quotations with exact item count (X), one less (X-1), and one more (X+1)"
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {loading ? 'Finding...' : 'Find Items'}
-                    </button>
-                  </div>
-
-                  {/* Refresh Button */}
-                  <button
-                    onClick={fetchDocuments}
-                    className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                  </button>
-
-                  {/* Clear All Filters Button */}
-                  {(aiSuggestedDocs.length > 0 || searchQuery || documentFilter !== 'all') && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setDocumentFilter('all');
-                        setAiSuggestedDocs([]);
-                        setItemCountInput('');
-                      }}
-                      className="flex items-center justify-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                      title="Clear all filters and reset view"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Clear Filters
-                    </button>
-                  )}
-                </div>
+                {/* Refresh */}
+                <button
+                  onClick={fetchDocuments}
+                  className={`p-2 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isDarkTheme ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                  }`}
+                  title="Refresh"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
               </div>
 
-              {/* Enhanced Results Info */}
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
-                <span>Showing {filteredDocuments.length} of {pastDocuments.length} documents</span>
-                {searchQuery && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Search: "{searchQuery}"</span>}
-                {documentFilter !== 'all' && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Type: {documentFilter}s</span>}
-                {aiSuggestedDocs.length > 0 && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded flex items-center"><Sparkles className="h-3 w-3 mr-1" />Item Count Suggestions</span>}
-                {filteredDocuments.length > 0 && aiSuggestedDocs.length > 0 && (
-                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded flex items-center text-xs">
-                    💡 Found matches? Use <Copy className="h-3 w-3 mx-1" /> to duplicate and save time!
-                  </span>
+              {/* Search - full width */}
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  placeholder="Search client, document no, type..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`pl-10 pr-4 py-3 border rounded-xl w-full transition-all duration-200 ${
+                    isDarkTheme
+                      ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:border-blue-400'
+                      : 'bg-white border-gray-200 text-gray-800 placeholder-gray-400 focus:border-blue-400 shadow-sm'
+                  }`}
+                />
+                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isDarkTheme ? 'text-gray-400' : 'text-gray-400'}`} />
+              </div>
+
+              {/* Filter row */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <select
+                  value={documentFilter}
+                  onChange={(e) => setDocumentFilter(e.target.value)}
+                  className={`px-3 py-3 border rounded-xl font-medium transition-all duration-200 ${
+                    isDarkTheme
+                      ? 'bg-black/30 border-white/20 text-white focus:border-blue-400'
+                      : 'bg-white border-gray-200 text-gray-800 focus:border-blue-400 shadow-sm'
+                  }`}
+                >
+                  <option value="all">All Documents</option>
+                  <option value="quote">Quotes Only</option>
+                  <option value="bill">Bills Only</option>
+                </select>
+
+                {/* Clear filter button */}
+                {(aiSuggestedDocs.length > 0 || searchQuery || documentFilter !== 'all') ? (
+                  <button
+                    onClick={() => { setSearchQuery(''); setDocumentFilter('all'); setAiSuggestedDocs([]); setItemCountInput(''); }}
+                    className={`flex items-center justify-center px-3 py-3 rounded-xl font-medium transition-all duration-200 ${
+                      isDarkTheme ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Clear
+                  </button>
+                ) : (
+                  <div />
                 )}
               </div>
+
+              {/* AI item count finder */}
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="# of items"
+                  value={itemCountInput}
+                  onChange={(e) => setItemCountInput(e.target.value)}
+                  className={`flex-1 px-3 py-3 border rounded-xl text-center transition-all duration-200 ${
+                    isDarkTheme
+                      ? 'bg-black/30 border-white/20 text-white placeholder-white/40 focus:border-purple-400'
+                      : 'bg-white border-gray-200 text-gray-800 focus:border-purple-400 shadow-sm'
+                  }`}
+                  min="0" max="100"
+                />
+                <button
+                  onClick={findItemCountBasedSuggestions}
+                  disabled={loading || !itemCountInput || itemCountInput < 0}
+                  className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm"
+                >
+                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  {loading ? 'Finding…' : 'AI Find'}
+                </button>
+              </div>
+
+              {/* Results info chips */}
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <span className={`${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {filteredDocuments.length} of {pastDocuments.length} docs
+                </span>
+                {searchQuery && <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">"{searchQuery}"</span>}
+                {documentFilter !== 'all' && <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full">{documentFilter}s</span>}
+                {aiSuggestedDocs.length > 0 && <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full flex items-center"><Sparkles className="h-2.5 w-2.5 mr-0.5" />AI Match</span>}
+              </div>
             </div>
-            <div className="overflow-x-auto">
+            {/* ── Document list: cards on mobile, table on md+ ── */}
+            <div>
               {documentsLoading ? (
                 <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">Loading documents...</span>
+                  <div className={`animate-spin rounded-full h-10 w-10 border-b-2 ${isDarkTheme ? 'border-blue-400' : 'border-blue-600'}`}></div>
+                  <span className={`ml-3 font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>Loading documents…</span>
                 </div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doc No</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    {aiSuggestedDocs.length > 0 && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Match Type
-                        </div>
-                      </th>
-                    )}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredDocuments.map((doc) => (
-                    <tr key={doc._id} className={`hover:bg-gray-50 ${doc.relevanceScore ? 'bg-purple-50 border-l-4 border-purple-400' : ''}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          doc.type === 'quote' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {doc.type.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.documentNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{doc.clientInfo?.name || doc.customerName || 'Unknown Client'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                          {doc.items ? doc.items.length : 0} items
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs {(doc.totalAmount || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(doc.createdAt).toLocaleDateString()}
-                      </td>
-                      {aiSuggestedDocs.length > 0 && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {doc.suggestionReason ? (
-                            <div className="flex items-center">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                doc.suggestionType === 'exact' ? 'bg-green-100 text-green-800' :
-                                doc.suggestionType === 'minus-one' ? 'bg-blue-100 text-blue-800' :
-                                doc.suggestionType === 'plus-one' ? 'bg-orange-100 text-orange-800' :
-                                'bg-gray-100 text-gray-700'
+                <>
+                  {/* Mobile card list (hidden on md+) */}
+                  <div className="md:hidden divide-y divide-gray-100/20">
+                    {filteredDocuments.length === 0 ? (
+                      <div className={`text-center py-10 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {pastDocuments.length === 0 ? 'No documents yet. Create your first quote!' : 'No documents match your filters.'}
+                      </div>
+                    ) : filteredDocuments.map((doc) => (
+                      <div key={doc._id} className={`doc-card px-4 py-4 ${
+                        doc.relevanceScore
+                          ? (isDarkTheme ? 'border-l-4 border-purple-400 bg-purple-900/10' : 'border-l-4 border-purple-400 bg-purple-50/60')
+                          : ''
+                      }`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            {/* Type badge + doc number */}
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${
+                                doc.type === 'quote' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                               }`}>
-                                {doc.suggestionReason}
+                                {doc.type?.toUpperCase()}
                               </span>
+                              <span className={`text-xs font-mono ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                                #{doc.documentNumber}
+                              </span>
+                              {doc.suggestionReason && (
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                                  doc.suggestionType === 'exact' ? 'bg-green-100 text-green-800' :
+                                  doc.suggestionType === 'minus-one' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-orange-100 text-orange-800'
+                                }`}>{doc.suggestionReason}</span>
+                              )}
                             </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )}
-                        </td>
-                      )}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={() => generatePDF(doc._id)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                            title="Download PDF"
-                          >
-                            <Download size={16} />
-                          </button>
-                          <button 
-                            onClick={() => loadDocument(doc._id)}
-                            className="text-gray-600 hover:text-gray-900 transition-colors"
-                            title="Edit Original"
-                          >
-                            <Edit3 size={16} />
-                          </button>
-                          <button 
-                            onClick={() => duplicateDocument(doc)}
-                            className="text-green-600 hover:text-green-900 transition-colors"
-                            title="Duplicate Quote - Create a copy to modify"
-                          >
-                            <Copy size={16} />
-                          </button>
-                          <button 
-                            onClick={() => deleteDocument(doc._id)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                            {/* Client name */}
+                            <p className={`text-base font-bold truncate ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
+                              {doc.clientInfo?.name || doc.customerName || 'Unknown Client'}
+                            </p>
+                            {/* Amount + items + date */}
+                            <div className={`flex items-center gap-3 mt-1 text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <span className={`font-bold ${isDarkTheme ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                                ₹{(doc.totalAmount || 0).toLocaleString()}
+                              </span>
+                              <span>·</span>
+                              <span>{doc.items ? doc.items.length : 0} items</span>
+                              <span>·</span>
+                              <span>{new Date(doc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                            </div>
+                          </div>
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button onClick={() => generatePDF(doc._id)} className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDarkTheme ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-blue-600'}`} title="Download PDF">
+                              <Download size={16} />
+                            </button>
+                            <button onClick={() => loadDocument(doc._id)} className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDarkTheme ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-600'}`} title="Edit">
+                              <Edit3 size={16} />
+                            </button>
+                            <button onClick={() => duplicateDocument(doc)} className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDarkTheme ? 'bg-emerald-600/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`} title="Duplicate">
+                              <Copy size={16} />
+                            </button>
+                            <button onClick={() => deleteDocument(doc._id)} className={`p-2.5 rounded-xl transition-all active:scale-90 ${isDarkTheme ? 'bg-red-600/20 text-red-400' : 'bg-red-50 text-red-600'}`} title="Delete">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              )}
-              {!documentsLoading && filteredDocuments.length === 0 && pastDocuments.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No documents found. Create your first quote or bill!
-                </div>
-              )}
-              {!documentsLoading && filteredDocuments.length === 0 && pastDocuments.length > 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No documents match your search criteria. Try adjusting your search or filters.
-                </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop table (hidden on mobile) */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className={`min-w-full divide-y ${isDarkTheme ? 'divide-white/10' : 'divide-gray-200'}`}>
+                    <thead className={isDarkTheme ? 'bg-white/5' : 'bg-gray-50'}>
+                      <tr>
+                        {['Type','Doc No','Client','Items','Amount','Date','Actions'].map(h => (
+                          <th key={h} className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDarkTheme ? 'divide-white/5' : 'divide-gray-200'}`}>
+                      {filteredDocuments.map((doc) => (
+                        <tr key={doc._id} className={`transition-colors ${doc.relevanceScore ? 'border-l-4 border-purple-400' : ''} ${
+                          isDarkTheme ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                        }`}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${doc.type === 'quote' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                              {doc.type?.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkTheme ? 'text-gray-200' : 'text-gray-900'}`}>{doc.documentNumber}</td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkTheme ? 'text-gray-200' : 'text-gray-900'}`}>{doc.clientInfo?.name || doc.customerName || 'Unknown Client'}</td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-900'}`}>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${isDarkTheme ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+                              {doc.items ? doc.items.length : 0} items
+                            </span>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${isDarkTheme ? 'text-emerald-400' : 'text-gray-900'}`}>₹{(doc.totalAmount || 0).toLocaleString()}</td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>{new Date(doc.createdAt).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button onClick={() => generatePDF(doc._id)} className={`p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-blue-400 hover:bg-blue-600/20' : 'text-blue-600 hover:text-blue-900'}`} title="Download PDF"><Download size={16} /></button>
+                              <button onClick={() => loadDocument(doc._id)} className={`p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-gray-300 hover:bg-white/10' : 'text-gray-600 hover:text-gray-900'}`} title="Edit"><Edit3 size={16} /></button>
+                              <button onClick={() => duplicateDocument(doc)} className={`p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-emerald-400 hover:bg-emerald-600/20' : 'text-green-600 hover:text-green-900'}`} title="Duplicate"><Copy size={16} /></button>
+                              <button onClick={() => deleteDocument(doc._id)} className={`p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-red-400 hover:bg-red-600/20' : 'text-red-600 hover:text-red-900'}`} title="Delete"><Trash2 size={16} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredDocuments.length === 0 && (
+                    <div className={`text-center py-8 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {pastDocuments.length === 0 ? 'No documents yet. Create your first quote!' : 'No documents match your criteria.'}
+                    </div>
+                  )}
+                  </div>
+                </>
               )}
             </div>
-            
-            {/* Start of table section */}
           </div>
         )}
 
@@ -2049,33 +2034,57 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           </div>
         )}
       </main>
-      
+
+      {/* ── Mobile Bottom Navigation Bar ─────────────────────── */}
+      <nav
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bottom-nav transition-colors duration-500 ${
+          isDarkTheme
+            ? 'bg-gray-900/95 border-t border-white/10'
+            : 'bg-white/95 border-t border-gray-200/80'
+        }`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex items-stretch px-2 py-1">
+          {[
+            { tab: 'create',   icon: Plus,     label: 'Create'   },
+            { tab: 'history',  icon: FileText,  label: 'History'  },
+            { tab: 'settings', icon: Settings,  label: 'Settings' },
+          ].map(({ tab, icon: Icon, label }) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`bottom-nav-item relative flex-1 ${
+                activeTab === tab
+                  ? (isDarkTheme ? 'bg-blue-600/25 text-blue-300' : 'bg-blue-50 text-blue-600')
+                  : (isDarkTheme ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600')
+              }`}
+            >
+              <Icon className={`w-5 h-5 mb-0.5 transition-transform duration-200 ${activeTab === tab ? 'scale-110' : ''}`} />
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${activeTab === tab ? '' : 'font-medium'}`}>{label}</span>
+              {activeTab === tab && (
+                <span className={`absolute bottom-1 w-5 h-0.5 rounded-full ${isDarkTheme ? 'bg-blue-400' : 'bg-blue-600'}`} />
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {/* Error Dialog */}
       {showErrorDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-red-600 flex items-center">
-                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                Error
-              </h3>
-              <button 
-                onClick={() => setShowErrorDialog(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-gray-700 mb-6">{errorMessage}</p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowErrorDialog(false)}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              >
-                Close
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-md animate-scale-in ${isDarkTheme ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'}`}>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className={`text-base font-bold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Error</h3>
+                <button onClick={() => setShowErrorDialog(false)} className={`ml-auto p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-gray-400 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}><X size={18} /></button>
+              </div>
+              <p className={`text-sm leading-relaxed mb-4 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>{errorMessage}</p>
+              <button onClick={() => setShowErrorDialog(false)} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors">Close</button>
             </div>
           </div>
         </div>
@@ -2083,30 +2092,20 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
       {/* Success Dialog */}
       {showSuccessDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-green-600 flex items-center">
-                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Success
-              </h3>
-              <button 
-                onClick={() => setShowSuccessDialog(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-gray-700 mb-6">{successMessage}</p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowSuccessDialog(false)}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              >
-                Close
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-md animate-scale-in ${isDarkTheme ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'}`}>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className={`text-base font-bold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Success</h3>
+                <button onClick={() => setShowSuccessDialog(false)} className={`ml-auto p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-gray-400 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}><X size={18} /></button>
+              </div>
+              <p className={`text-sm leading-relaxed mb-4 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>{successMessage}</p>
+              <button onClick={() => setShowSuccessDialog(false)} className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors">Done</button>
             </div>
           </div>
         </div>
@@ -2114,36 +2113,21 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-red-600 flex items-center">
-                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                Confirm Delete
-              </h3>
-              <button 
-                onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-gray-700 mb-6">Are you sure you want to delete this document? This action cannot be undone.</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteDocument}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-md animate-scale-in ${isDarkTheme ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'}`}>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                </div>
+                <h3 className={`text-base font-bold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Delete Document?</h3>
+                <button onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }} className={`ml-auto p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-gray-400 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}><X size={18} /></button>
+              </div>
+              <p className={`text-sm leading-relaxed mb-5 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>This will permanently delete the document. This action cannot be undone.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => { setShowDeleteDialog(false); setDeleteDocId(null); }} className={`py-3 rounded-xl font-semibold transition-colors ${isDarkTheme ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Cancel</button>
+                <button onClick={confirmDeleteDocument} className="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors">Delete</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2151,36 +2135,23 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
       {/* Unsaved Changes Dialog */}
       {showUnsavedChangesDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-yellow-600 flex items-center">
-                <svg className="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                Unsaved Changes
-              </h3>
-              <button 
-                onClick={cancelTabChange}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-gray-700 mb-6">You have unsaved changes. Are you sure you want to leave without saving?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={cancelTabChange}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-              >
-                Stay
-              </button>
-              <button
-                onClick={confirmTabChange}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
-              >
-                Leave Anyway
-              </button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-md animate-scale-in ${isDarkTheme ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'}`}>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className={`text-base font-bold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Unsaved Changes</h3>
+                <button onClick={cancelTabChange} className={`ml-auto p-1.5 rounded-lg transition-colors ${isDarkTheme ? 'text-gray-400 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}><X size={18} /></button>
+              </div>
+              <p className={`text-sm leading-relaxed mb-5 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>You have unsaved changes. Are you sure you want to leave without saving?</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={cancelTabChange} className={`py-3 rounded-xl font-semibold transition-colors ${isDarkTheme ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Stay</button>
+                <button onClick={confirmTabChange} className="py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-semibold transition-colors">Leave</button>
+              </div>
             </div>
           </div>
         </div>
