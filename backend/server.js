@@ -45,6 +45,41 @@ if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
+function maskMongoUri(uri) {
+  return uri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+}
+
+function normalizeAtlasSrvHost(hostname) {
+  // Atlas SRV URI host should be cluster host (e.g. cluster0.xxxxx.mongodb.net),
+  // not individual shard host (e.g. ...-shard-0.xxxxx.mongodb.net).
+  return hostname.replace(/-shard-\d+(?=\.)/i, '');
+}
+
+function buildMongoUriCandidates(rawUri) {
+  const candidates = [];
+  const trimmedUri = rawUri.trim();
+  candidates.push(trimmedUri);
+
+  try {
+    const parsed = new URL(trimmedUri);
+    if (parsed.protocol === 'mongodb+srv:') {
+      const normalizedHost = normalizeAtlasSrvHost(parsed.hostname);
+      if (normalizedHost !== parsed.hostname) {
+        parsed.hostname = normalizedHost;
+        candidates.push(parsed.toString());
+      }
+    }
+  } catch (error) {
+    // If URL parsing fails, keep the original URI and let Mongoose report the exact issue.
+  }
+
+  return [...new Set(candidates)];
+}
+
+function looksLikeMongoPasswordPlaceholder(uri) {
+  return /<db_password>/i.test(uri);
+}
+
 // MongoDB connection with improved error handling
 async function connectToDatabase() {
   try {
@@ -56,9 +91,15 @@ async function connectToDatabase() {
     if (!process.env.MONGO_URI) {
       throw new Error('MONGO_URI environment variable is not set');
     }
-    
+
+    const mongoUri = process.env.MONGO_URI.trim();
+    const uriCandidates = buildMongoUriCandidates(mongoUri);
+
     console.log('Attempting to connect to MongoDB Atlas...');
-    console.log('Connection string format:', process.env.MONGO_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
+    console.log('Connection string format:', maskMongoUri(mongoUri));
+    if (uriCandidates.length > 1) {
+      console.log('⚠️  Detected shard-style Atlas host in MONGO_URI. Will retry with normalized SRV host if needed.');
+    }
     
     // Add connection options for better reliability
     const connectionOptions = {
@@ -69,11 +110,56 @@ async function connectToDatabase() {
       w: 'majority'
     };
     
-    await mongoose.connect(process.env.MONGO_URI, connectionOptions);
-    console.log('✅ Connected to MongoDB Atlas successfully!');
+    let lastError;
+
+    for (let i = 0; i < uriCandidates.length; i += 1) {
+      const currentUri = uriCandidates[i];
+      try {
+        if (uriCandidates.length > 1) {
+          console.log(`🔁 MongoDB connection attempt ${i + 1}/${uriCandidates.length}`);
+        }
+
+        await mongoose.connect(currentUri, connectionOptions);
+        if (i > 0) {
+          console.log('✅ Connected using normalized Atlas SRV hostname.');
+        }
+        console.log('✅ Connected to MongoDB Atlas successfully!');
+        return;
+      } catch (error) {
+        lastError = error;
+
+        if (error?.code === 'ENOTFOUND' && error?.syscall === 'querySrv') {
+          const failedHost = (error.hostname || '').replace('_mongodb._tcp.', '');
+          const suggestedHost = normalizeAtlasSrvHost(failedHost);
+
+          if (failedHost && suggestedHost !== failedHost) {
+            console.log(`💡 Atlas SRV fix hint: use host \"${suggestedHost}\" instead of \"${failedHost}\" in MONGO_URI.`);
+          }
+        }
+
+        if (i < uriCandidates.length - 1) {
+          console.log(`⚠️  Attempt ${i + 1} failed: ${error.message}`);
+        }
+      }
+    }
+
+    throw lastError;
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
     console.error('Error details:', error);
+
+    const mongoUri = (process.env.MONGO_URI || '').trim();
+    const isAuthFailure = error?.code === 8000 || /authentication failed/i.test(error?.message || '');
+
+    if (isAuthFailure) {
+      console.log('\n💡 Authentication troubleshooting hints:');
+      if (looksLikeMongoPasswordPlaceholder(mongoUri)) {
+        console.log('• Replace <db_password> in MONGO_URI with your real password.');
+      }
+      console.log('• URL-encode special characters in password (e.g. # -> %23, @ -> %40, / -> %2F).');
+      console.log('• Verify Atlas Database Access username/password exactly match MONGO_URI.');
+      console.log('• Ensure the Atlas user is allowed on the target database (or use admin auth context).');
+    }
     
     // In production, we don't want to fallback to local DB
     if (process.env.NODE_ENV === 'production') {
@@ -83,6 +169,7 @@ async function connectToDatabase() {
       console.log('2. Check MongoDB Atlas cluster status');
       console.log('3. Verify network access/IP whitelist (0.0.0.0/0 for Render)');
       console.log('4. Ensure database user has proper permissions');
+      console.log('5. URL-encode special characters in DB password inside MONGO_URI');
       
       // Exit in production if DB connection fails
       process.exit(1);
