@@ -80,6 +80,24 @@ function looksLikeMongoPasswordPlaceholder(uri) {
   return /<db_password>/i.test(uri);
 }
 
+function hasUnencodedMongoPasswordChars(uri) {
+  // Detect common unencoded password characters in the credentials segment.
+  // Example bad URI: mongodb+srv://user:pass#123@host/db
+  const credentialsMatch = uri.match(/^[a-z+]+:\/\/([^@]+)@/i);
+  if (!credentialsMatch) {
+    return false;
+  }
+
+  const credentials = credentialsMatch[1];
+  const colonIndex = credentials.indexOf(':');
+  if (colonIndex === -1) {
+    return false;
+  }
+
+  const passwordPart = credentials.slice(colonIndex + 1);
+  return /[#/@?\s]/.test(passwordPart);
+}
+
 // MongoDB connection with improved error handling
 async function connectToDatabase() {
   try {
@@ -186,9 +204,6 @@ async function connectToDatabase() {
     }
   }
 }
-
-// Initialize database connection
-connectToDatabase();
 
 const db = mongoose.connection;
 db.on('error', (error) => {
@@ -2767,7 +2782,27 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function startServer() {
+  console.log('🚀 Boot info:');
+  console.log('RENDER_GIT_COMMIT:', process.env.RENDER_GIT_COMMIT || 'not-set');
+
+  const mongoUri = (process.env.MONGO_URI || '').trim();
+  if (looksLikeMongoPasswordPlaceholder(mongoUri)) {
+    console.error('❌ Invalid MONGO_URI: contains <db_password> placeholder.');
+    process.exit(1);
+  }
+
+  if (hasUnencodedMongoPasswordChars(mongoUri)) {
+    console.error('❌ Invalid MONGO_URI: password appears to include unencoded special characters.');
+    console.error('💡 URL-encode password characters (e.g. # -> %23, @ -> %40, / -> %2F).');
+    process.exit(1);
+  }
+
+  await connectToDatabase();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+startServer();
