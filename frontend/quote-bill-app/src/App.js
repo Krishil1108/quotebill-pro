@@ -5,7 +5,7 @@ import PersonalSection from './PersonalSection';
 import IntelligentItemSuggestions from './components/IntelligentItemSuggestions';
 import PDFParticularExtractor from './components/PDFParticularExtractor';
 import ImageItemExtractor from './components/ImageItemExtractor';
-import AIQuoteAuditor from './components/AIQuoteAuditor';
+
 import VoiceEstimateDictator from './components/VoiceEstimateDictator';
 
 const DEFAULT_ITEM_COLUMNS = {
@@ -1646,12 +1646,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                 isDarkTheme={isDarkTheme}
               />
 
-              {/* AI Quote Auditor & Safety Checker */}
-              <AIQuoteAuditor
-                items={items}
-                setItems={setItems}
-                isDarkTheme={isDarkTheme}
-              />
+
 
               {/* AI Voice Estimate Dictator */}
               <VoiceEstimateDictator
