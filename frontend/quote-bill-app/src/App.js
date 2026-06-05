@@ -5,6 +5,8 @@ import PersonalSection from './PersonalSection';
 import IntelligentItemSuggestions from './components/IntelligentItemSuggestions';
 import PDFParticularExtractor from './components/PDFParticularExtractor';
 import ImageItemExtractor from './components/ImageItemExtractor';
+import AIQuoteAuditor from './components/AIQuoteAuditor';
+import VoiceEstimateDictator from './components/VoiceEstimateDictator';
 
 const DEFAULT_ITEM_COLUMNS = {
   particular: true,
@@ -1640,6 +1642,25 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
                     amount: 0
                   };
                   setItems([...items, newItem]);
+                }}
+                isDarkTheme={isDarkTheme}
+              />
+
+              {/* AI Quote Auditor & Safety Checker */}
+              <AIQuoteAuditor
+                items={items}
+                setItems={setItems}
+                isDarkTheme={isDarkTheme}
+              />
+
+              {/* AI Voice Estimate Dictator */}
+              <VoiceEstimateDictator
+                onItemsSpoken={(spokenItems) => {
+                  const newItems = spokenItems.map(item => ({
+                    id: Date.now() + Math.random(),
+                    ...item
+                  }));
+                  setItems([...items, ...newItems]);
                 }}
                 isDarkTheme={isDarkTheme}
               />
