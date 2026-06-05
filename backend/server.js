@@ -1126,47 +1126,53 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
       });
     });
 
-    // Table rows with alternating colors
+    // Table rows with alternating colors (with dynamic row heights)
     let rowY = tableY + tableHeight;
     document.items.forEach((item, index) => {
-      if (rowY > 650) { // New page if needed
+      // Calculate dynamic row height based on text wrapping
+      const textHeight = doc.font('Helvetica').fontSize(10).heightOfString(item.particular || '', {
+        width: colWidths[0] - 10
+      });
+      const rowHeight = Math.max(22, textHeight + 12); // 12pt padding (6 top, 6 bottom)
+
+      if (rowY + rowHeight > 680) { // New page if needed to avoid printing over footer Y=720
         doc.addPage();
         rowY = 60;
       }
 
       // Alternating row colors
       const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-      drawRect(40, rowY, pageWidth, 22, rowColor);
+      drawRect(40, rowY, pageWidth, rowHeight, rowColor);
 
       doc.fontSize(10)
          .fillColor('#1e293b')
          .font('Helvetica');
 
       // Particular
-      doc.text(item.particular, colPositions[0], rowY + 6, {
+      doc.text(item.particular || '', colPositions[0], rowY + 6, {
         width: colWidths[0] - 10
       });
 
       // Quantity with unit
-      doc.text(`${item.quantity} ${item.unit}`, colPositions[1], rowY + 6, {
+      doc.text(`${item.quantity || 0} ${item.unit || ''}`, colPositions[1], rowY + 6, {
         width: colWidths[1] - 10,
         align: 'center'
       });
 
       // Rate
-      doc.text(`Rs ${Number(item.rate).toFixed(2)}`, colPositions[2], rowY + 6, {
+      doc.text(`Rs ${Number(item.rate || 0).toFixed(2)}`, colPositions[2], rowY + 6, {
         width: colWidths[2] - 10,
         align: 'center'
       });
 
       // Amount
       doc.font('Helvetica-Bold')
-         .text(`Rs ${Number(item.amount).toFixed(2)}`, colPositions[3], rowY + 6, {
+         .text(`Rs ${Number(item.amount || 0).toFixed(2)}`, colPositions[3], rowY + 6, {
            width: colWidths[3] - 10,
            align: 'center'
          });
 
-      rowY += 22;
+      rowY += rowHeight;
     });
 
     // Table border
@@ -1919,25 +1925,31 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
       });
     });
 
-    // Table rows with alternating colors (EXACT same as client PDF)
+    // Table rows with alternating colors (with dynamic row heights)
     let rowY = tableY + tableHeight;
     let totalAmount = 0;
     
     quotation.materials.forEach((material, index) => {
-      if (rowY > 650) { // New page if needed
+      // Calculate dynamic row height based on text wrapping
+      const textHeight = doc.font('Helvetica').fontSize(10).heightOfString(material.itemName || 'N/A', {
+        width: colWidths[0] - 10
+      });
+      const rowHeight = Math.max(22, textHeight + 12); // 12pt padding (6 top, 6 bottom)
+
+      if (rowY + rowHeight > 680) { // New page if needed
         doc.addPage();
         rowY = 60;
       }
 
       // Alternating row colors (same as client PDF)
       const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-      drawRect(40, rowY, pageWidth, 22, rowColor);
+      drawRect(40, rowY, pageWidth, rowHeight, rowColor);
 
       doc.fontSize(10)
          .fillColor('#1e293b')
          .font('Helvetica');
 
-      const itemAmount = material.rate * material.quantity;
+      const itemAmount = (material.rate || 0) * (material.quantity || 0);
       totalAmount += itemAmount;
 
       // Particular (item name)
@@ -1964,7 +1976,7 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
            align: 'center'
          });
 
-      rowY += 22;
+      rowY += rowHeight;
     });
 
     // Table border (same as client PDF)
@@ -2230,19 +2242,29 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
       });
     });
 
-    // Table rows with alternating colors (EXACT same as client PDF)
+    // Table rows with alternating colors (with dynamic row heights)
     let rowY = tableY + tableHeight;
     let totalInventoryValue = 0;
     
     materials.forEach((material, index) => {
-      if (rowY > 650) { // New page if needed
+      // Calculate dynamic row height based on text wrapping of Item Name and Category
+      const nameHeight = doc.font('Helvetica').fontSize(10).heightOfString(material.itemName || 'N/A', {
+        width: colWidths[0] - 10
+      });
+      const categoryHeight = doc.font('Helvetica').fontSize(10).heightOfString(material.category || 'N/A', {
+        width: colWidths[1] - 10
+      });
+      const textHeight = Math.max(nameHeight, categoryHeight);
+      const rowHeight = Math.max(22, textHeight + 12); // 12pt padding (6 top, 6 bottom)
+
+      if (rowY + rowHeight > 680) { // New page if needed
         doc.addPage();
         rowY = 60;
       }
 
       // Alternating row colors (same as client PDF)
       const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-      drawRect(40, rowY, pageWidth, 22, rowColor);
+      drawRect(40, rowY, pageWidth, rowHeight, rowColor);
 
       doc.fontSize(10)
          .fillColor('#1e293b')
@@ -2288,7 +2310,7 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
            align: 'center'
          });
 
-      rowY += 22;
+      rowY += rowHeight;
     });
 
     // Table border (same as client PDF)
