@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Download, FileText, Menu, X, Edit3, Trash2, Upload, Search, DollarSign, Users, Sparkles, Zap, Settings, Copy, Package, Columns } from 'lucide-react';
-import LandingPage from './LandingPage';
-import PersonalSection from './PersonalSection';
+
+
 import IntelligentItemSuggestions from './components/IntelligentItemSuggestions';
 import PDFParticularExtractor from './components/PDFParticularExtractor';
 import ImageItemExtractor from './components/ImageItemExtractor';
@@ -989,19 +989,21 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center space-x-3">
               {/* Back to Landing Button */}
-              <button
-                onClick={onBack}
-                className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${
-                  isDarkTheme 
-                    ? 'bg-white/10 text-white hover:bg-white/20' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                title="Back to Home (ESC or Alt+←)"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${
+                    isDarkTheme 
+                      ? 'bg-white/10 text-white hover:bg-white/20' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title="Back to Home (ESC or Alt+←)"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                </button>
+              )}
               
               <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-xl">
                 <Sparkles className="h-6 w-6 text-white" />
@@ -2504,127 +2506,20 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
   );
 };
 
-// Main App Component with Landing Page Navigation
+// Main App Component
 const App = () => {
-  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'personal', 'client'
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-
-  // Initialize navigation based on URL or browser history
-  useEffect(() => {
-    const handlePopState = (event) => {
-      if (event.state && event.state.view) {
-        setCurrentView(event.state.view);
-      } else {
-        // If no state, go to landing page
-        setCurrentView('landing');
-      }
-    };
-
-    // Listen for browser back/forward navigation
-    window.addEventListener('popstate', handlePopState);
-
-    // Set initial state if not already set
-    if (!window.history.state) {
-      window.history.replaceState({ view: 'landing' }, 'Landing', '/');
-    }
-
-    // Cleanup event listener
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
 
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
   };
 
-  const handleNavigate = (view) => {
-    setCurrentView(view);
-    // Push new state to browser history
-    const titles = {
-      landing: 'QuoteBill Pro',
-      personal: 'Personal Use - QuoteBill Pro',
-      client: 'Client App - QuoteBill Pro'
-    };
-    const paths = {
-      landing: '/',
-      personal: '/personal',
-      client: '/client'
-    };
-    
-    window.history.pushState(
-      { view }, 
-      titles[view] || 'QuoteBill Pro', 
-      paths[view] || '/'
-    );
-    document.title = titles[view] || 'QuoteBill Pro';
-  };
-
-  const handleBackToLanding = () => {
-    setCurrentView('landing');
-    // Push landing state to history
-    window.history.pushState({ view: 'landing' }, 'QuoteBill Pro', '/');
-    document.title = 'QuoteBill Pro';
-  };
-
-  // Handle browser back button to exit app when on landing page
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (currentView !== 'landing') {
-        // If not on landing page, navigate to landing instead of exiting
-        event.preventDefault();
-        handleBackToLanding();
-        return false;
-      }
-    };
-
-    const handleKeyDown = (event) => {
-      // Handle Escape key to go back
-      if (event.key === 'Escape' && currentView !== 'landing') {
-        handleBackToLanding();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentView]);
-
-  if (currentView === 'landing') {
-    return (
-      <LandingPage 
-        onNavigate={handleNavigate}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-      />
-    );
-  }
-
-  if (currentView === 'personal') {
-    return (
-      <PersonalSection 
-        onBack={handleBackToLanding}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-      />
-    );
-  }
-
-  if (currentView === 'client') {
-    return (
-      <QuoteBillApp 
-        onBack={handleBackToLanding}
-        isDarkTheme={isDarkTheme}
-        toggleTheme={toggleTheme}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <QuoteBillApp 
+      isDarkTheme={isDarkTheme}
+      toggleTheme={toggleTheme}
+    />
+  );
 };
 
 export default App;
