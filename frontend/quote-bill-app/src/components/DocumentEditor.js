@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Zap, Plus, Users, DollarSign, Upload, Columns, Trash2, FileText, Download } from 'lucide-react';
+import { Zap, Plus, Users, DollarSign, Upload, Columns, Trash2, FileText, Download, Settings } from 'lucide-react';
 import IntelligentItemSuggestions from './IntelligentItemSuggestions';
 import VoiceEstimateDictator from './VoiceEstimateDictator';
 import ImageItemExtractor from './ImageItemExtractor';
@@ -39,8 +39,30 @@ const DocumentEditor = ({
   handleParticularCellBlur,
   showItemExtractor,
   setShowItemExtractor,
-  pastDocuments
+  pastDocuments,
+  pdfOptions,
+  setPdfOptions,
+  letterhead,
+  setLetterhead
 }) => {
+  const moveItemUp = (index) => {
+    if (index === 0) return;
+    const newItems = [...items];
+    const temp = newItems[index];
+    newItems[index] = newItems[index - 1];
+    newItems[index - 1] = temp;
+    setItems(newItems);
+  };
+
+  const moveItemDown = (index) => {
+    if (index === items.length - 1) return;
+    const newItems = [...items];
+    const temp = newItems[index];
+    newItems[index] = newItems[index + 1];
+    newItems[index + 1] = temp;
+    setItems(newItems);
+  };
+
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [itemColumnVisibility, setItemColumnVisibility] = useState({
     particular: true,
@@ -211,6 +233,92 @@ const DocumentEditor = ({
         </div>
       </div>
 
+      {/* PDF Document Layout Options */}
+      <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-5 sm:p-8 transition-all duration-500 ${
+        isDarkTheme ? 'bg-black/20 border-white/20' : 'bg-white/70 border-white/20'
+      }`}>
+        <h2 className={`text-xl font-bold mb-6 flex items-center transition-colors duration-500 ${
+          isDarkTheme ? 'text-white' : 'text-gray-800'
+        }`}>
+          <Settings className="w-6 h-6 mr-3 text-purple-500" />
+          PDF Document Layout Options
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Letterhead options */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-black uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Letterhead Fields</h3>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideLogo}
+                onChange={(e) => setLetterhead({...letterhead, hideLogo: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Logo</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideFirmName}
+                onChange={(e) => setLetterhead({...letterhead, hideFirmName: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Firm Name</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hidePhone}
+                onChange={(e) => setLetterhead({...letterhead, hidePhone: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Phone Number</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideAddress}
+                onChange={(e) => setLetterhead({...letterhead, hideAddress: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Address</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideTagline}
+                onChange={(e) => setLetterhead({...letterhead, hideTagline: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Tagline</span>
+            </label>
+          </div>
+
+          {/* Total box options */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-black uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Totals Panel</h3>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!pdfOptions.hideTotalBox}
+                onChange={(e) => setPdfOptions({...pdfOptions, hideTotalBox: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Total Box</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!pdfOptions.hideSubtotal}
+                onChange={(e) => setPdfOptions({...pdfOptions, hideSubtotal: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+              />
+              <span className="text-sm font-semibold">Print Subtotal inside Box</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* Items List */}
       <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-5 sm:p-8 transition-all duration-500 ${
         isDarkTheme 
@@ -319,9 +427,39 @@ const DocumentEditor = ({
               }`}
             >
               <div className="mb-3 flex items-center justify-between">
-                <span className={`text-sm font-black ${isDarkTheme ? 'text-white/70' : 'text-gray-500'}`}>
-                  Item {index + 1}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-sm font-black ${isDarkTheme ? 'text-white/70' : 'text-gray-500'}`}>
+                    Item {index + 1}
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => moveItemUp(index)}
+                      className={`p-1 rounded transition-all hover:scale-105 active:scale-95 ${
+                        isDarkTheme
+                          ? 'text-white/80 hover:bg-white/10 disabled:opacity-30'
+                          : 'text-gray-600 hover:bg-gray-100 disabled:opacity-30'
+                      }`}
+                      title="Move Up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === items.length - 1}
+                      onClick={() => moveItemDown(index)}
+                      className={`p-1 rounded transition-all hover:scale-105 active:scale-95 ${
+                        isDarkTheme
+                          ? 'text-white/80 hover:bg-white/10 disabled:opacity-30'
+                          : 'text-gray-600 hover:bg-gray-100 disabled:opacity-30'
+                      }`}
+                      title="Move Down"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
                 {items.length > 1 && (
                   <button
                     type="button"
@@ -469,12 +607,40 @@ const DocumentEditor = ({
               {items.map((item, index) => (
                 <tr
                   key={item.id}
-                  className={`transition-colors ${
+                  className={`group transition-colors ${
                     isDarkTheme ? 'bg-black/20 hover:bg-white/5' : 'bg-white/70 hover:bg-blue-50/60'
                   }`}
                 >
-                  <td className={`px-3 py-3 text-sm font-bold ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>
-                    {index + 1}
+                  <td className={`px-3 py-3 text-sm font-bold flex items-center space-x-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>
+                    <span>{index + 1}</span>
+                    <div className="opacity-0 group-hover:opacity-100 flex flex-col space-y-0.5 transition-opacity duration-200">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => moveItemUp(index)}
+                        className={`text-[9px] p-0.5 rounded transition-all hover:scale-110 ${
+                          isDarkTheme
+                            ? 'text-white/70 hover:bg-white/10 disabled:opacity-30'
+                            : 'text-gray-600 hover:bg-gray-100 disabled:opacity-30'
+                        }`}
+                        title="Move Up"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === items.length - 1}
+                        onClick={() => moveItemDown(index)}
+                        className={`text-[9px] p-0.5 rounded transition-all hover:scale-110 ${
+                          isDarkTheme
+                            ? 'text-white/70 hover:bg-white/10 disabled:opacity-30'
+                            : 'text-gray-600 hover:bg-gray-100 disabled:opacity-30'
+                        }`}
+                        title="Move Down"
+                      >
+                        ▼
+                      </button>
+                    </div>
                   </td>
 
                   {itemColumnVisibility.particular && (
@@ -485,10 +651,10 @@ const DocumentEditor = ({
                         value={item.particular}
                         onChange={(e) => updateItem(item.id, 'particular', e.target.value)}
                         onBlur={(e) => handleParticularCellBlur(e.target.value, item.id)}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-2 ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-premium ${
                           isDarkTheme
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40 focus:border-blue-400 focus:ring-blue-500/30'
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-100'
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40'
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400'
                         }`}
                         placeholder="Select or enter particulars"
                       />
@@ -502,10 +668,10 @@ const DocumentEditor = ({
                         list="quantity-options"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-2 ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-premium ${
                           isDarkTheme
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40 focus:border-blue-400 focus:ring-blue-500/30'
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-100'
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40'
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400'
                         }`}
                         placeholder="0"
                       />
@@ -519,10 +685,10 @@ const DocumentEditor = ({
                         list="unit-options"
                         value={item.unit}
                         onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-2 ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-premium ${
                           isDarkTheme
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40 focus:border-blue-400 focus:ring-blue-500/30'
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-100'
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40'
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400'
                         }`}
                         placeholder="pcs"
                       />
@@ -536,10 +702,10 @@ const DocumentEditor = ({
                         list="rate-options"
                         value={item.rate}
                         onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-2 ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-300 focus:ring-premium ${
                           isDarkTheme
-                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40 focus:border-blue-400 focus:ring-blue-500/30'
-                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:ring-blue-100'
+                            ? 'border-white/20 bg-black/30 text-white placeholder-white/40'
+                            : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400'
                         }`}
                         placeholder="0.00"
                         step="0.01"
@@ -564,7 +730,7 @@ const DocumentEditor = ({
                       <button
                         type="button"
                         onClick={() => handleDeleteItem(item.id)}
-                        className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 ${
+                        className={`opacity-0 group-hover:opacity-100 inline-flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 ${
                           isDarkTheme
                             ? 'text-red-400 hover:bg-red-900/20 hover:text-red-300'
                             : 'text-red-600 hover:bg-red-50 hover:text-red-800'

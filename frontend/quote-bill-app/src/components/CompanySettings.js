@@ -6,6 +6,8 @@ const CompanySettings = ({
   toggleTheme,
   letterhead,
   setLetterhead,
+  pdfOptions = { hideTotalBox: false, hideSubtotal: false },
+  setPdfOptions,
   appSettings,
   setAppSettings,
   uploadLogo,
@@ -205,6 +207,91 @@ const CompanySettings = ({
                 placeholder="Enter your tagline"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Default PDF Document Layout Options */}
+      <div className={`backdrop-blur-md rounded-2xl border p-6 shadow-lg transition-all duration-500 ${
+        isDarkTheme 
+          ? 'bg-black/20 border-white/20' 
+          : 'bg-white/80 border-white/30'
+      }`}>
+        <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${
+          isDarkTheme ? 'text-white' : 'text-gray-800'
+        }`}>
+          Default PDF Document Layout Options
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h4 className={`text-sm font-bold uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Letterhead Fields</h4>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideLogo}
+                onChange={(e) => setLetterhead({...letterhead, hideLogo: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Logo</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideFirmName}
+                onChange={(e) => setLetterhead({...letterhead, hideFirmName: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Firm Name</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hidePhone}
+                onChange={(e) => setLetterhead({...letterhead, hidePhone: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Phone Number</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideAddress}
+                onChange={(e) => setLetterhead({...letterhead, hideAddress: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Firm Address</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!letterhead.hideTagline}
+                onChange={(e) => setLetterhead({...letterhead, hideTagline: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Tagline</span>
+            </label>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className={`text-sm font-bold uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Totals Panel</h4>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!pdfOptions.hideTotalBox}
+                onChange={(e) => setPdfOptions({...pdfOptions, hideTotalBox: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Total Box</span>
+            </label>
+            <label className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+              <input
+                type="checkbox"
+                checked={!pdfOptions.hideSubtotal}
+                onChange={(e) => setPdfOptions({...pdfOptions, hideSubtotal: !e.target.checked})}
+                className="h-5 w-5 accent-blue-600 rounded"
+              />
+              <span className="text-sm font-semibold">Print Subtotal inside Box</span>
+            </label>
           </div>
         </div>
       </div>

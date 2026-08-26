@@ -264,7 +264,23 @@ const documentSchema = new mongoose.Schema({
     address: String,
     phone: String,
     tagline: String,
-    logo: String
+    logo: String,
+    hideLogo: { type: Boolean, default: false },
+    hideFirmName: { type: Boolean, default: false },
+    hidePhone: { type: Boolean, default: false },
+    hideAddress: { type: Boolean, default: false },
+    hideTagline: { type: Boolean, default: false }
+  },
+  columnVisibility: {
+    particular: { type: Boolean, default: true },
+    quantity: { type: Boolean, default: true },
+    unit: { type: Boolean, default: true },
+    rate: { type: Boolean, default: true },
+    amount: { type: Boolean, default: true }
+  },
+  pdfOptions: {
+    hideTotalBox: { type: Boolean, default: false },
+    hideSubtotal: { type: Boolean, default: false }
   },
   createdAt: {
     type: Date,
@@ -312,7 +328,16 @@ const settingsSchema = new mongoose.Schema({
     address: { type: String, default: 'Your Company Address' },
     phone: { type: String, default: 'Your Company Phone' },
     tagline: { type: String, default: 'Your Company Tagline' },
-    logo: String
+    logo: String,
+    hideLogo: { type: Boolean, default: false },
+    hideFirmName: { type: Boolean, default: false },
+    hidePhone: { type: Boolean, default: false },
+    hideAddress: { type: Boolean, default: false },
+    hideTagline: { type: Boolean, default: false }
+  },
+  pdfOptions: {
+    hideTotalBox: { type: Boolean, default: false },
+    hideSubtotal: { type: Boolean, default: false }
   },
   particulars: [String],
   units: [String],
@@ -620,7 +645,12 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
       address: settingsLetterhead.address?.trim() || docLetterhead.address?.trim() || '',
       phone: settingsLetterhead.phone?.trim() || docLetterhead.phone?.trim() || '',
       tagline: settingsLetterhead.tagline?.trim() || docLetterhead.tagline?.trim() || '',
-      logo: settingsLetterhead.logo?.trim() || docLetterhead.logo?.trim() || DEFAULT_LOGO
+      logo: settingsLetterhead.logo?.trim() || docLetterhead.logo?.trim() || DEFAULT_LOGO,
+      hideLogo: docLetterhead.hideLogo ?? settingsLetterhead.hideLogo ?? false,
+      hideFirmName: docLetterhead.hideFirmName ?? settingsLetterhead.hideFirmName ?? false,
+      hidePhone: docLetterhead.hidePhone ?? settingsLetterhead.hidePhone ?? false,
+      hideAddress: docLetterhead.hideAddress ?? settingsLetterhead.hideAddress ?? false,
+      hideTagline: docLetterhead.hideTagline ?? settingsLetterhead.hideTagline ?? false
     };
 
     // Create PDF with better styling
@@ -665,88 +695,91 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
 
     // Logo loading logic
     let logoWidth = 100;
-    try {
-      const logoUrl = letterhead.logo;
-      if (logoUrl && logoUrl.startsWith('data:image/')) {
-        const base64Data = logoUrl.split(',')[1];
-        const logoBuffer = Buffer.from(base64Data, 'base64');
-        doc.image(logoBuffer, 60, 55, { 
-          fit: [80, 70],
-          align: 'center',
-          valign: 'center'
-        });
-        console.log('✅ Base64 logo loaded successfully');
-      } else if (logoUrl && logoUrl.startsWith('/uploads/')) {
-        // Resolve absolute path to the uploaded logo file
-        const filePath = path.join(__dirname, logoUrl);
-        if (fs.existsSync(filePath)) {
-          doc.image(filePath, 60, 55, { 
-            fit: [80, 70],
-            align: 'center',
-            valign: 'center'
-          });
-          console.log(`✅ File-based logo loaded successfully: ${filePath}`);
-        } else {
-          throw new Error(`Logo file not found at path: ${filePath}`);
-        }
-      } else if (logoUrl && (logoUrl.startsWith('http://') || logoUrl.startsWith('https://'))) {
-        // Handle absolute URL pointing to server's uploads folder
-        if (logoUrl.includes('/uploads/')) {
-          const relativePath = '/uploads/' + logoUrl.split('/uploads/')[1];
-          const filePath = path.join(__dirname, relativePath);
-          if (fs.existsSync(filePath)) {
-            doc.image(filePath, 60, 55, { 
-              fit: [80, 70],
-              align: 'center',
-              valign: 'center'
-            });
-            console.log(`✅ File-based logo loaded from URL successfully: ${filePath}`);
-          } else {
-            throw new Error(`Logo file not found at path: ${filePath}`);
-          }
-        } else {
-          throw new Error(`Direct HTTP image URLs not supported in PDF kit yet: ${logoUrl}`);
-        }
-      } else {
-        throw new Error('Unrecognized logo format');
-      }
-    } catch (logoError) {
-      console.log('❌ Logo loading error:', logoError.message);
-      // Fallback to DEFAULT_LOGO
+    if (letterhead.hideLogo) {
+      logoWidth = 0;
+    } else {
       try {
-        if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
-          const base64Data = DEFAULT_LOGO.split(',')[1];
+        const logoUrl = letterhead.logo;
+        if (logoUrl && logoUrl.startsWith('data:image/')) {
+          const base64Data = logoUrl.split(',')[1];
           const logoBuffer = Buffer.from(base64Data, 'base64');
           doc.image(logoBuffer, 60, 55, { 
             fit: [80, 70],
             align: 'center',
             valign: 'center'
           });
-          console.log('✅ Fallback default base64 logo loaded successfully');
+          console.log('✅ Base64 logo loaded successfully');
+        } else if (logoUrl && logoUrl.startsWith('/uploads/')) {
+          const filePath = path.join(__dirname, logoUrl);
+          if (fs.existsSync(filePath)) {
+            doc.image(filePath, 60, 55, { 
+              fit: [80, 70],
+              align: 'center',
+              valign: 'center'
+            });
+            console.log(`✅ File-based logo loaded successfully: ${filePath}`);
+          } else {
+            throw new Error(`Logo file not found at path: ${filePath}`);
+          }
+        } else if (logoUrl && (logoUrl.startsWith('http://') || logoUrl.startsWith('https://'))) {
+          if (logoUrl.includes('/uploads/')) {
+            const relativePath = '/uploads/' + logoUrl.split('/uploads/')[1];
+            const filePath = path.join(__dirname, relativePath);
+            if (fs.existsSync(filePath)) {
+              doc.image(filePath, 60, 55, { 
+                fit: [80, 70],
+                align: 'center',
+                valign: 'center'
+              });
+              console.log(`✅ File-based logo loaded from URL successfully: ${filePath}`);
+            } else {
+              throw new Error(`Logo file not found at path: ${filePath}`);
+            }
+          } else {
+            throw new Error(`Direct HTTP image URLs not supported in PDF kit yet: ${logoUrl}`);
+          }
         } else {
-          const logoX = 60, logoY = 55, logoW = 80, logoH = 70;
-          const centerX = logoX + logoW / 2, centerY = logoY + logoH / 2;
-          doc.circle(centerX, centerY, Math.min(logoW, logoH) / 2 - 2)
-             .lineWidth(2).stroke('#2563eb');
-          doc.fontSize(32).fillColor('#2563eb')
-             .text('SE', centerX - 16, centerY - 16, { width: 32, align: 'center' });
+          throw new Error('Unrecognized logo format');
         }
-      } catch (fallbackError) {
-        console.log('❌ Fallback logo failed:', fallbackError.message);
-        logoWidth = 0; // No logo space if loading fails
+      } catch (logoError) {
+        console.log('❌ Logo loading error:', logoError.message);
+        try {
+          if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
+            const base64Data = DEFAULT_LOGO.split(',')[1];
+            const logoBuffer = Buffer.from(base64Data, 'base64');
+            doc.image(logoBuffer, 60, 55, { 
+              fit: [80, 70],
+              align: 'center',
+              valign: 'center'
+            });
+            console.log('✅ Fallback default base64 logo loaded successfully');
+          } else {
+            const logoX = 60, logoY = 55, logoW = 80, logoH = 70;
+            const centerX = logoX + logoW / 2, centerY = logoY + logoH / 2;
+            doc.circle(centerX, centerY, Math.min(logoW, logoH) / 2 - 2)
+               .lineWidth(2).stroke('#2563eb');
+            doc.fontSize(32).fillColor('#2563eb')
+               .text('SE', centerX - 16, centerY - 16, { width: 32, align: 'center' });
+          }
+        } catch (fallbackError) {
+          console.log('❌ Fallback logo failed:', fallbackError.message);
+          logoWidth = 0;
+        }
       }
     }
 
     // Company Name
-    doc.fontSize(24)
-       .fillColor('#1e293b')
-       .font('Helvetica-Bold')
-       .text(letterhead.firmName || 'Your Company Name', 60 + logoWidth, 60, {
-         width: pageWidth - logoWidth - 40
-       });
+    if (!letterhead.hideFirmName) {
+      doc.fontSize(24)
+         .fillColor('#1e293b')
+         .font('Helvetica-Bold')
+         .text(letterhead.firmName || 'Your Company Name', 60 + logoWidth, 60, {
+           width: pageWidth - logoWidth - 40
+         });
+    }
 
     // Company Address
-    if (letterhead.address) {
+    if (!letterhead.hideAddress && letterhead.address) {
       doc.fontSize(11)
          .fillColor('#64748b')
          .font('Helvetica')
@@ -756,7 +789,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     }
 
     // Company Phone
-    if (letterhead.phone) {
+    if (!letterhead.hidePhone && letterhead.phone) {
       doc.fontSize(11)
          .fillColor('#64748b')
          .font('Helvetica')
@@ -871,17 +904,79 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     // Table header with gradient effect
     drawRect(40, tableY, pageWidth, tableHeight, '#3b82f6');
     
-    const colWidths = [250, 80, 80, 105];
-    const colPositions = [50, 300, 380, 460];
-    const headers = ['PARTICULARS', 'QTY', 'RATE', 'AMOUNT'];
+    const colVisibility = document.columnVisibility || {
+      particular: true,
+      quantity: true,
+      unit: true,
+      rate: true,
+      amount: true
+    };
+    
+    // Calculate widths and positions dynamically based on visible columns
+    let qtyWidth = colVisibility.quantity ? 80 : 0;
+    let rateWidth = colVisibility.rate ? 80 : 0;
+    let amountWidth = colVisibility.amount ? 105 : 0;
+    let particularWidth = 515 - qtyWidth - rateWidth - amountWidth;
+
+    const colWidths = [particularWidth, qtyWidth, rateWidth, amountWidth];
+    
+    let currentX = 40;
+    const colPositions = [];
+    colPositions.push(currentX + 10); // offset a bit for padding
+    currentX += colWidths[0];
+    
+    if (colVisibility.quantity) {
+      colPositions.push(currentX);
+      currentX += colWidths[1];
+    } else {
+      colPositions.push(0);
+    }
+    
+    if (colVisibility.rate) {
+      colPositions.push(currentX);
+      currentX += colWidths[2];
+    } else {
+      colPositions.push(0);
+    }
+    
+    if (colVisibility.amount) {
+      colPositions.push(currentX);
+      currentX += colWidths[3];
+    } else {
+      colPositions.push(0);
+    }
+    
+    const activeHeaders = [];
+    const activeColPositions = [];
+    const activeColWidths = [];
+
+    activeHeaders.push('PARTICULARS');
+    activeColPositions.push(colPositions[0]);
+    activeColWidths.push(colWidths[0]);
+
+    if (colVisibility.quantity) {
+      activeHeaders.push('QTY');
+      activeColPositions.push(colPositions[1]);
+      activeColWidths.push(colWidths[1]);
+    }
+    if (colVisibility.rate) {
+      activeHeaders.push('RATE');
+      activeColPositions.push(colPositions[2]);
+      activeColWidths.push(colWidths[2]);
+    }
+    if (colVisibility.amount) {
+      activeHeaders.push('AMOUNT');
+      activeColPositions.push(colPositions[3]);
+      activeColWidths.push(colWidths[3]);
+    }
     
     doc.fontSize(11)
        .fillColor('white')
        .font('Helvetica-Bold');
     
-    headers.forEach((header, i) => {
-      doc.text(header, colPositions[i], tableY + 8, {
-        width: colWidths[i] - 10,
+    activeHeaders.forEach((header, i) => {
+      doc.text(header, activeColPositions[i], tableY + 8, {
+        width: activeColWidths[i] - 10,
         align: i === 0 ? 'left' : 'center'
       });
     });
@@ -914,23 +1009,29 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
       });
 
       // Quantity with unit
-      doc.text(`${item.quantity || 0} ${item.unit || ''}`, colPositions[1], rowY + 6, {
-        width: colWidths[1] - 10,
-        align: 'center'
-      });
+      if (colVisibility.quantity) {
+        doc.text(`${item.quantity || 0} ${item.unit || ''}`, colPositions[1], rowY + 6, {
+          width: colWidths[1] - 10,
+          align: 'center'
+        });
+      }
 
       // Rate
-      doc.text(`Rs ${Number(item.rate || 0).toFixed(2)}`, colPositions[2], rowY + 6, {
-        width: colWidths[2] - 10,
-        align: 'center'
-      });
+      if (colVisibility.rate) {
+        doc.text(`Rs ${Number(item.rate || 0).toFixed(2)}`, colPositions[2], rowY + 6, {
+          width: colWidths[2] - 10,
+          align: 'center'
+        });
+      }
 
       // Amount
-      doc.font('Helvetica-Bold')
-         .text(`Rs ${Number(item.amount || 0).toFixed(2)}`, colPositions[3], rowY + 6, {
-           width: colWidths[3] - 10,
-           align: 'center'
-         });
+      if (colVisibility.amount) {
+        doc.font('Helvetica-Bold')
+           .text(`Rs ${Number(item.amount || 0).toFixed(2)}`, colPositions[3], rowY + 6, {
+             width: colWidths[3] - 10,
+             align: 'center'
+           });
+      }
 
       rowY += rowHeight;
     });
@@ -940,37 +1041,48 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     drawLine(40, rowY, 555, rowY, '#e5e7eb', 1);
 
     // TOTAL SECTION
-    const totalY = rowY + 20;
+    const docPdfOptions = document.pdfOptions || {};
+    const settingsPdfOptions = settings?.pdfOptions || {};
     
-    // Total box with shadow effect
-    drawRect(350, totalY, 205, 60, '#f8fafc', '#e2e8f0');
-    drawRect(352, totalY + 2, 205, 60, '#ffffff');
-    
-    // Subtotal (if you want to add tax later)
-    doc.fontSize(11)
-       .fillColor('#64748b')
-       .font('Helvetica')
-       .text('Subtotal:', 365, totalY + 15);
-    
-    doc.text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + 15, {
-      align: 'right',
-      width: 80
-    });
+    const hideTotalBox = docPdfOptions.hideTotalBox ?? settingsPdfOptions.hideTotalBox ?? false;
+    const hideSubtotal = docPdfOptions.hideSubtotal ?? settingsPdfOptions.hideSubtotal ?? false;
 
-    // Total amount
-    drawLine(365, totalY + 35, 535, totalY + 35, '#3b82f6', 1);
+    let totalY = rowY + 20;
     
-    doc.fontSize(14)
-       .fillColor('#1e293b')
-       .font('Helvetica-Bold')
-       .text('TOTAL:', 365, totalY + 42);
-    
-    doc.fontSize(16)
-       .fillColor('#3b82f6')
-       .text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + 40, {
-         align: 'right',
-         width: 80
-       });
+    if (!hideTotalBox) {
+      // Total box with shadow effect
+      drawRect(350, totalY, 205, 60, '#f8fafc', '#e2e8f0');
+      drawRect(352, totalY + 2, 205, 60, '#ffffff');
+      
+      if (!hideSubtotal) {
+        doc.fontSize(11)
+           .fillColor('#64748b')
+           .font('Helvetica')
+           .text('Subtotal:', 365, totalY + 15);
+        
+        doc.text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + 15, {
+          align: 'right',
+          width: 80
+        });
+        
+        drawLine(365, totalY + 35, 535, totalY + 35, '#3b82f6', 1);
+      }
+      
+      const textOffsetY = hideSubtotal ? 20 : 42;
+      const valueOffsetY = hideSubtotal ? 18 : 40;
+
+      doc.fontSize(14)
+         .fillColor('#1e293b')
+         .font('Helvetica-Bold')
+         .text('TOTAL:', 365, totalY + textOffsetY);
+      
+      doc.fontSize(16)
+         .fillColor('#3b82f6')
+         .text(`Rs ${Number(document.totalAmount).toFixed(2)}`, 460, totalY + valueOffsetY, {
+           align: 'right',
+           width: 80
+         });
+    }
 
     // FOOTER SECTION
     const footerY = 720;
@@ -979,7 +1091,7 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
     
     // Footer content
-    if (letterhead.tagline) {
+    if (!letterhead.hideTagline && letterhead.tagline) {
       doc.fontSize(9)
          .fillColor('#64748b')
          .font('Helvetica-Oblique')

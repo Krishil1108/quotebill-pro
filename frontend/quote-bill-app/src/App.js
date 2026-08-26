@@ -62,7 +62,16 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
     logo: DEFAULT_LOGO,
     address: 'Your Company Address',
     phone: 'Your Company Phone',
-    tagline: 'Your Company Tagline'
+    tagline: 'Your Company Tagline',
+    hideLogo: false,
+    hideFirmName: false,
+    hidePhone: false,
+    hideAddress: false,
+    hideTagline: false
+  });
+  const [pdfOptions, setPdfOptions] = useState({
+    hideTotalBox: false,
+    hideSubtotal: false
   });
   const [pastDocuments, setPastDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
@@ -325,6 +334,9 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           units: settings.units || []
         });
         setLetterhead(settings.letterhead || letterhead);
+        if (settings.pdfOptions) {
+          setPdfOptions(settings.pdfOptions);
+        }
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -629,7 +641,8 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           amount: item.amount
         })).filter(item => item.particular), // Only include items with particulars
         columnVisibility: itemColumnVisibility,
-        letterhead
+        letterhead,
+        pdfOptions
       };
 
       const url = currentDocument 
@@ -688,6 +701,11 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
         setItemColumnVisibility(doc.columnVisibility || DEFAULT_ITEM_COLUMNS);
         if (doc.letterhead) {
           setLetterhead(doc.letterhead);
+        }
+        if (doc.pdfOptions) {
+          setPdfOptions(doc.pdfOptions);
+        } else {
+          setPdfOptions({ hideTotalBox: false, hideSubtotal: false });
         }
         setActiveTab('create');
       }
@@ -782,6 +800,12 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
 
       if (duplicateData.letterhead) {
         setLetterhead(duplicateData.letterhead);
+      }
+
+      if (duplicateData.pdfOptions) {
+        setPdfOptions(duplicateData.pdfOptions);
+      } else {
+        setPdfOptions({ hideTotalBox: false, hideSubtotal: false });
       }
 
       // Clear current document state since this is a new document
@@ -892,6 +916,7 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
     setClientInfo({ name: '', address: '', phone: '', email: '' });
     setItems([{ id: 1, particular: '', unit: 'pcs', quantity: '', rate: '', amount: 0 }]);
     setItemColumnVisibility(DEFAULT_ITEM_COLUMNS);
+    setPdfOptions({ hideTotalBox: false, hideSubtotal: false });
     setHasUnsavedChanges(false);
     fetchSettings();
   };
@@ -975,6 +1000,10 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
             showItemExtractor={showItemExtractor}
             setShowItemExtractor={setShowItemExtractor}
             pastDocuments={pastDocuments}
+            pdfOptions={pdfOptions}
+            setPdfOptions={setPdfOptions}
+            letterhead={letterhead}
+            setLetterhead={setLetterhead}
           />
         )}
 
@@ -1015,6 +1044,8 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
             uploadLogo={uploadLogo}
             saveSettings={saveSettings}
             autoSaveParticulars={autoSaveParticulars}
+            pdfOptions={pdfOptions}
+            setPdfOptions={setPdfOptions}
           />
         )}
       </main>

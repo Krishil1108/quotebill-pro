@@ -141,9 +141,27 @@ const DocumentHistory = ({
       {/* Document list */}
       <div>
         {documentsLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className={`animate-spin rounded-full h-10 w-10 border-b-2 ${isDarkTheme ? 'border-blue-400' : 'border-blue-600'}`}></div>
-            <span className={`ml-3 font-semibold ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>Loading documents…</span>
+          <div className="p-4 sm:p-6 space-y-4">
+            <div className="space-y-3">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className={`h-24 w-full rounded-xl border p-4 animate-pulse flex items-center justify-between ${
+                    isDarkTheme ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'
+                  }`}
+                >
+                  <div className="space-y-2 flex-1">
+                    <div className={`h-4 w-1/4 rounded ${isDarkTheme ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                    <div className={`h-5 w-1/2 rounded ${isDarkTheme ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                    <div className={`h-3 w-1/3 rounded ${isDarkTheme ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className={`h-8 w-8 rounded-lg ${isDarkTheme ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                    <div className={`h-8 w-8 rounded-lg ${isDarkTheme ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <>
