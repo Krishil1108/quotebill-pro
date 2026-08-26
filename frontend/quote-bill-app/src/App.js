@@ -1004,6 +1004,8 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
             setPdfOptions={setPdfOptions}
             letterhead={letterhead}
             setLetterhead={setLetterhead}
+            itemColumnVisibility={itemColumnVisibility}
+            setItemColumnVisibility={setItemColumnVisibility}
           />
         )}
 

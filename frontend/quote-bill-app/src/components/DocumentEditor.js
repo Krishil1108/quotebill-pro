@@ -43,7 +43,9 @@ const DocumentEditor = ({
   pdfOptions,
   setPdfOptions,
   letterhead,
-  setLetterhead
+  setLetterhead,
+  itemColumnVisibility,
+  setItemColumnVisibility
 }) => {
   const moveItemUp = (index) => {
     if (index === 0) return;
@@ -64,13 +66,6 @@ const DocumentEditor = ({
   };
 
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [itemColumnVisibility, setItemColumnVisibility] = useState({
-    particular: true,
-    quantity: true,
-    unit: true,
-    rate: true,
-    amount: true
-  });
   
   const columnSelectorRef = useRef(null);
 
@@ -243,7 +238,7 @@ const DocumentEditor = ({
           <Settings className="w-6 h-6 mr-3 text-purple-500" />
           PDF Document Layout Options
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {/* Letterhead options */}
           <div className="space-y-3">
             <h3 className={`text-sm font-black uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Letterhead Fields</h3>
@@ -292,6 +287,22 @@ const DocumentEditor = ({
               />
               <span className="text-sm font-semibold">Print Tagline</span>
             </label>
+          </div>
+
+          {/* Table Columns options */}
+          <div className="space-y-3">
+            <h3 className={`text-sm font-black uppercase tracking-wider mb-2 ${isDarkTheme ? 'text-white/60' : 'text-gray-500'}`}>Table Columns</h3>
+            {ITEM_COLUMN_CONFIG.map((column) => (
+              <label key={column.key} className={`flex items-center space-x-3 cursor-pointer ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+                <input
+                  type="checkbox"
+                  checked={itemColumnVisibility[column.key]}
+                  onChange={() => toggleItemColumn(column.key)}
+                  className="h-5 w-5 accent-blue-600 rounded animate-scale-in"
+                />
+                <span className="text-sm font-semibold">{column.label}</span>
+              </label>
+            ))}
           </div>
 
           {/* Total box options */}
