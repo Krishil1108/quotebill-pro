@@ -211,6 +211,7 @@ db.on('error', (error) => {
 });
 db.once('open', () => {
   console.log('📊 Database connection established and ready for operations');
+  startKeepAliveScheduler();
 });
 
 // Handle graceful shutdown
@@ -224,6 +225,55 @@ process.on('SIGINT', async () => {
     process.exit(1);
   }
 });
+
+// Keep-Alive Schema & Model to prevent MongoDB Atlas Free Tier from pausing due to inactivity
+const keepAliveSchema = new mongoose.Schema({
+  timestamp: { type: Date, default: Date.now },
+  type: { type: String, default: 'ping' }
+});
+const KeepAlive = mongoose.model('KeepAlive', keepAliveSchema);
+
+// Keep-alive scheduler to prevent MongoDB Atlas from pausing due to inactivity
+const startKeepAliveScheduler = () => {
+  console.log('⏰ Initializing Keep-Alive Scheduler...');
+  
+  const runCheck = async () => {
+    try {
+      const now = new Date();
+      // Check if it's 1:00 AM (local server time)
+      if (now.getHours() === 1) {
+        // Query the database for the last ping
+        const lastPing = await KeepAlive.findOne().sort({ timestamp: -1 });
+        
+        const twentyDaysInMs = 20 * 24 * 60 * 60 * 1000;
+        
+        if (!lastPing || (now.getTime() - lastPing.timestamp.getTime()) >= twentyDaysInMs) {
+          console.log('⚡ Running Keep-Alive ping database write/delete operation...');
+          
+          // Delete old keep alive entries (cleanup)
+          await KeepAlive.deleteMany({});
+          
+          // Add a new temporary entry
+          const ping = new KeepAlive({ timestamp: now, type: 'ping' });
+          await ping.save();
+          
+          console.log('✅ Keep-Alive ping database operation completed successfully.');
+        }
+      } else {
+        // Perform a simple read to keep database connection alive hourly
+        await KeepAlive.findOne();
+      }
+    } catch (error) {
+      console.error('❌ Keep-Alive Scheduler Error:', error);
+    }
+  };
+
+  // Run check immediately upon boot
+  runCheck();
+  
+  // And run check every hour
+  setInterval(runCheck, 60 * 60 * 1000); 
+};
 
 // Document Schema
 const documentSchema = new mongoose.Schema({
