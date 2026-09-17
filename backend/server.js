@@ -819,34 +819,40 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     }
 
     // Company Name
-    // Company Name
     if (!letterhead.hideFirmName) {
-      doc.fontSize(24)
+      doc.fontSize(22)
          .fillColor('#1e293b')
          .font('Helvetica-Bold')
-         .text(letterhead.firmName || 'Samir Electricals', 60 + logoWidth, 60, {
+         .text(letterhead.firmName || 'Samir Electricals', 60 + logoWidth, 52, {
            width: pageWidth - logoWidth - 40
          });
     }
 
+    let currentHeaderY = 78;
+
     // Company Address
     if (!letterhead.hideAddress) {
       const companyAddr = letterhead.address || '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004';
-      doc.fontSize(11)
+      doc.fontSize(10)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(companyAddr, 60 + logoWidth, 90, {
+         .text(companyAddr, 60 + logoWidth, currentHeaderY, {
            width: pageWidth - logoWidth - 40
          });
+
+      const addrHeight = doc.heightOfString(companyAddr, {
+        width: pageWidth - logoWidth - 40
+      });
+      currentHeaderY += addrHeight + 3;
     }
 
     // Company Phone
     if (!letterhead.hidePhone) {
       const companyPhone = letterhead.phone || '+91 98252 61708';
-      doc.fontSize(11)
+      doc.fontSize(10)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(`Phone: ${companyPhone}`, 60 + logoWidth, 110, {
+         .text(`Phone: ${companyPhone}`, 60 + logoWidth, currentHeaderY, {
            width: pageWidth - logoWidth - 40
          });
     }
@@ -1804,29 +1810,36 @@ app.post('/api/generate-personal-pdf', async (req, res) => {
     }
 
     // Company Name (EXACT same styling as client PDF)
-    doc.fontSize(24)
+    doc.fontSize(22)
        .fillColor('#1e293b')
        .font('Helvetica-Bold')
-       .text(letterheadData.firmName, 60 + logoWidth, 60, {
+       .text(letterheadData.firmName, 60 + logoWidth, 52, {
          width: pageWidth - logoWidth - 40
        });
 
+    let currentHeaderY = 78;
+
     // Company Address (EXACT same styling as client PDF)
     if (letterheadData.address) {
-      doc.fontSize(11)
+      doc.fontSize(10)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(letterheadData.address, 60 + logoWidth, 90, {
+         .text(letterheadData.address, 60 + logoWidth, currentHeaderY, {
            width: pageWidth - logoWidth - 40
          });
+
+      const addrHeight = doc.heightOfString(letterheadData.address, {
+        width: pageWidth - logoWidth - 40
+      });
+      currentHeaderY += addrHeight + 3;
     }
 
     // Company Phone (EXACT same styling as client PDF)
     if (letterheadData.phone) {
-      doc.fontSize(11)
+      doc.fontSize(10)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(`Phone: ${letterheadData.phone}`, 60 + logoWidth, 110, {
+         .text(`Phone: ${letterheadData.phone}`, 60 + logoWidth, currentHeaderY, {
            width: pageWidth - logoWidth - 40
          });
     }
@@ -2093,19 +2106,28 @@ app.post('/api/generate-materials-pdf', async (req, res) => {
     }
     
     // Company name with shadow effect
-    doc.fontSize(24)
+    doc.fontSize(22)
        .fillColor('#1e293b')
        .font('Helvetica-Bold')
-       .text(letterheadData.firmName, 160, 70, { width: 300 });
+       .text(letterheadData.firmName, 160, 52, { width: 300 });
     
+    let currentHeaderY = 78;
     // Company address and phone
-    doc.fontSize(11)
-       .fillColor('#64748b')
-       .font('Helvetica')
-       .text(letterheadData.address, 160, 95, { width: 300 });
+    if (letterheadData.address) {
+      doc.fontSize(10)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(letterheadData.address, 160, currentHeaderY, { width: 300 });
+
+      const addrHeight = doc.heightOfString(letterheadData.address, { width: 300 });
+      currentHeaderY += addrHeight + 3;
+    }
     
     if (letterheadData.phone) {
-      doc.text(`Phone: ${letterheadData.phone}`, 160, 110, { width: 300 });
+      doc.fontSize(10)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(`Phone: ${letterheadData.phone}`, 160, currentHeaderY, { width: 300 });
     }
 
     // Remove old company information code
