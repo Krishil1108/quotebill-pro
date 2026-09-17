@@ -31,7 +31,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Increased limit for large documents
 app.use(express.urlencoded({ limit: '10mb', extended: true })); // For form data
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('uploads'), (req, res) => {
+  // Graceful fallback for missing uploaded images (returns 200 transparent image instead of 404)
+  res.status(200).type('image/png').send(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'));
+});
+
+// Handle /favicon.ico route
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -1205,6 +1213,15 @@ app.get('/api/settings', async (req, res) => {
       if (!settings.letterhead.tagline || settings.letterhead.tagline === 'Your Company Tagline') {
         settings.letterhead.tagline = "Experience the power of light with Samir Electricals' top-notch solutions.";
         updated = true;
+      }
+      if (settings.letterhead.logo && settings.letterhead.logo.includes('/uploads/')) {
+        const relativePath = '/uploads/' + settings.letterhead.logo.split('/uploads/')[1];
+        const filePath = path.join(__dirname, relativePath);
+        if (!fs.existsSync(filePath)) {
+          console.log(`⚠️ Resetting non-existent logo file path: ${filePath}`);
+          settings.letterhead.logo = DEFAULT_LOGO;
+          updated = true;
+        }
       }
       if (updated) {
         await settings.save();

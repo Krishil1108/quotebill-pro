@@ -124,7 +124,12 @@ const CompanySettings = ({
               </button>
               {letterhead.logo && (
                 <div className="flex justify-center sm:justify-start">
-                  <img src={letterhead.logo} alt="Current Logo" className="h-16 w-16 object-contain border-2 border-gray-200 rounded-lg shadow-sm" />
+                  <img 
+                    src={letterhead.logo} 
+                    alt="Current Logo" 
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                    className="h-16 w-16 object-contain border-2 border-gray-200 rounded-lg shadow-sm" 
+                  />
                 </div>
               )}
             </div>
