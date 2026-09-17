@@ -58,11 +58,11 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
     email: ''
   });
   const [letterhead, setLetterhead] = useState({
-    firmName: 'Your Company Name',
+    firmName: 'Samir Electricals',
     logo: DEFAULT_LOGO,
-    address: 'Your Company Address',
-    phone: 'Your Company Phone',
-    tagline: 'Your Company Tagline',
+    address: '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004',
+    phone: '+91 98252 61708',
+    tagline: "Experience the power of light with Samir Electricals' top-notch solutions.",
     hideLogo: false,
     hideFirmName: false,
     hidePhone: false,
@@ -333,7 +333,15 @@ const QuoteBillApp = ({ onBack, isDarkTheme: parentIsDarkTheme, toggleTheme: par
           particulars: settings.particulars || [],
           units: settings.units || []
         });
-        setLetterhead(settings.letterhead || letterhead);
+        const fetchedLetterhead = settings.letterhead || {};
+        setLetterhead({
+          ...fetchedLetterhead,
+          firmName: (fetchedLetterhead.firmName && fetchedLetterhead.firmName !== 'Your Company Name') ? fetchedLetterhead.firmName : 'Samir Electricals',
+          logo: fetchedLetterhead.logo || DEFAULT_LOGO,
+          address: (fetchedLetterhead.address && !fetchedLetterhead.address.includes('Your Company Address')) ? fetchedLetterhead.address : '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004',
+          phone: (fetchedLetterhead.phone && fetchedLetterhead.phone !== 'Your Company Phone') ? fetchedLetterhead.phone : '+91 98252 61708',
+          tagline: (fetchedLetterhead.tagline && fetchedLetterhead.tagline !== 'Your Company Tagline') ? fetchedLetterhead.tagline : "Experience the power of light with Samir Electricals' top-notch solutions."
+        });
         if (settings.pdfOptions) {
           setPdfOptions(settings.pdfOptions);
         }

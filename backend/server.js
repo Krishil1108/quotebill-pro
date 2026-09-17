@@ -374,10 +374,10 @@ const Document = mongoose.model('Document', documentSchema);
 // Settings Schema
 const settingsSchema = new mongoose.Schema({
   letterhead: {
-    firmName: { type: String, default: 'Your Company Name' },
-    address: { type: String, default: 'Your Company Address' },
-    phone: { type: String, default: 'Your Company Phone' },
-    tagline: { type: String, default: 'Your Company Tagline' },
+    firmName: { type: String, default: 'Samir Electricals' },
+    address: { type: String, default: '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004' },
+    phone: { type: String, default: '+91 98252 61708' },
+    tagline: { type: String, default: "Experience the power of light with Samir Electricals' top-notch solutions." },
     logo: String,
     hideLogo: { type: Boolean, default: false },
     hideFirmName: { type: Boolean, default: false },
@@ -819,31 +819,34 @@ app.get('/api/documents/:id/pdf', async (req, res) => {
     }
 
     // Company Name
+    // Company Name
     if (!letterhead.hideFirmName) {
       doc.fontSize(24)
          .fillColor('#1e293b')
          .font('Helvetica-Bold')
-         .text(letterhead.firmName || 'Your Company Name', 60 + logoWidth, 60, {
+         .text(letterhead.firmName || 'Samir Electricals', 60 + logoWidth, 60, {
            width: pageWidth - logoWidth - 40
          });
     }
 
     // Company Address
-    if (!letterhead.hideAddress && letterhead.address) {
+    if (!letterhead.hideAddress) {
+      const companyAddr = letterhead.address || '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004';
       doc.fontSize(11)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(letterhead.address, 60 + logoWidth, 90, {
+         .text(companyAddr, 60 + logoWidth, 90, {
            width: pageWidth - logoWidth - 40
          });
     }
 
     // Company Phone
-    if (!letterhead.hidePhone && letterhead.phone) {
+    if (!letterhead.hidePhone) {
+      const companyPhone = letterhead.phone || '+91 98252 61708';
       doc.fontSize(11)
          .fillColor('#64748b')
          .font('Helvetica')
-         .text(`Phone: ${letterhead.phone}`, 60 + logoWidth, 110, {
+         .text(`Phone: ${companyPhone}`, 60 + logoWidth, 110, {
            width: pageWidth - logoWidth - 40
          });
     }
@@ -1168,16 +1171,38 @@ app.get('/api/settings', async (req, res) => {
     if (!settings) {
       settings = new Settings({
         letterhead: {
-          firmName: 'Your Company Name',
-          address: 'Your Company Address',
-          phone: 'Your Company Phone',
-          tagline: 'Your Company Tagline',
+          firmName: 'Samir Electricals',
+          address: '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004',
+          phone: '+91 98252 61708',
+          tagline: "Experience the power of light with Samir Electricals' top-notch solutions.",
           logo: DEFAULT_LOGO
         },
         particulars: ['Product A', 'Product B', 'Service X', 'Service Y', 'Consultation', 'Installation'],
         units: ['pcs', 'nos', 'meters', 'sets', 'approx', 'feet', 'points']
       });
       await settings.save();
+    } else {
+      let updated = false;
+      if (!settings.letterhead) settings.letterhead = {};
+      if (!settings.letterhead.firmName || settings.letterhead.firmName === 'Your Company Name') {
+        settings.letterhead.firmName = 'Samir Electricals';
+        updated = true;
+      }
+      if (!settings.letterhead.phone || settings.letterhead.phone === 'Your Company Phone') {
+        settings.letterhead.phone = '+91 98252 61708';
+        updated = true;
+      }
+      if (!settings.letterhead.address || settings.letterhead.address === 'Your Company Address' || settings.letterhead.address.includes('Your Company Address')) {
+        settings.letterhead.address = '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004';
+        updated = true;
+      }
+      if (!settings.letterhead.tagline || settings.letterhead.tagline === 'Your Company Tagline') {
+        settings.letterhead.tagline = "Experience the power of light with Samir Electricals' top-notch solutions.";
+        updated = true;
+      }
+      if (updated) {
+        await settings.save();
+      }
     }
     res.json(settings);
   } catch (error) {
@@ -1263,6 +1288,1416 @@ app.get('/api/dashboard/stats', async (req, res) => {
       paidBills,
       totalRevenue: totalRevenue[0]?.total || 0,
       pendingRevenue: pendingRevenue[0]?.total || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+// MATERIAL MANAGEMENT API ENDPOINTS
+
+// Get all materials for personal use
+app.get('/api/materials', async (req, res) => {
+  try {
+    const { category, page = 1, limit = 50, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const filter = {};
+    
+    // Filter by category
+    if (category && category !== 'all') filter.category = category;
+    
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { itemName: searchRegex },
+        { supplier: searchRegex },
+        { notes: searchRegex }
+      ];
+    }
+    
+    // Sort options
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    
+    const materials = await Material.find(filter)
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    
+    const total = await Material.countDocuments(filter);
+    
+    // Calculate total value of materials
+    const totalValue = await Material.aggregate([
+      { $match: filter },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    res.json({
+      materials,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total,
+      totalValue: totalValue[0]?.total || 0,
+      hasMore: parseInt(page) < Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching materials:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch materials',
+      details: error.message 
+    });
+  }
+});
+
+// Get single material
+app.get('/api/materials/:id', async (req, res) => {
+  try {
+    const material = await Material.findById(req.params.id);
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    res.json(material);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new material
+app.post('/api/materials', async (req, res) => {
+  try {
+    const { itemName, category, rate, quantity, unit, supplier, notes } = req.body;
+    
+    // Validate required fields
+    if (!itemName || !rate || !quantity) {
+      return res.status(400).json({ error: 'Missing required fields: itemName, rate, and quantity are required' });
+    }
+
+    // Calculate total amount
+    const totalAmount = parseFloat(rate) * parseFloat(quantity);
+    
+    const material = new Material({
+      itemName: itemName.trim(),
+      category: category || 'general',
+      rate: parseFloat(rate),
+      quantity: parseFloat(quantity),
+      totalAmount,
+      unit: unit || 'pcs',
+      supplier: supplier ? supplier.trim() : '',
+      notes: notes ? notes.trim() : ''
+    });
+    
+    await material.save();
+    res.status(201).json(material);
+  } catch (error) {
+    console.error('Error creating material:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update material
+app.put('/api/materials/:id', async (req, res) => {
+  try {
+    const { itemName, category, rate, quantity, unit, supplier, notes } = req.body;
+    
+    const updateData = {};
+    if (itemName) updateData.itemName = itemName.trim();
+    if (category) updateData.category = category;
+    if (rate) updateData.rate = parseFloat(rate);
+    if (quantity) updateData.quantity = parseFloat(quantity);
+    if (unit) updateData.unit = unit;
+    if (supplier !== undefined) updateData.supplier = supplier.trim();
+    if (notes !== undefined) updateData.notes = notes.trim();
+    
+    // Recalculate total amount if rate or quantity changed
+    if (rate || quantity) {
+      const material = await Material.findById(req.params.id);
+      if (material) {
+        const newRate = rate ? parseFloat(rate) : material.rate;
+        const newQuantity = quantity ? parseFloat(quantity) : material.quantity;
+        updateData.totalAmount = newRate * newQuantity;
+      }
+    }
+    
+    const material = await Material.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    
+    res.json(material);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Clear all materials
+app.delete('/api/materials/clear', async (req, res) => {
+  try {
+    console.log('🗑️ Clearing all materials...');
+    const result = await Material.deleteMany({});
+    console.log(`🗑️ Successfully cleared ${result.deletedCount} materials`);
+    res.json({ 
+      message: 'All materials cleared successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('🗑️ Error clearing materials:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete material
+app.delete('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid material ID format' });
+    }
+    
+    const material = await Material.findByIdAndDelete(id);
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+    
+    console.log(`Material deleted: ${material.itemName} - ${material.quantity} ${material.unit}`);
+    
+    res.json({ 
+      message: 'Material deleted successfully',
+      deletedMaterial: {
+        id: material._id,
+        itemName: material.itemName,
+        quantity: material.quantity,
+        unit: material.unit
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting material:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete material',
+      details: error.message 
+    });
+  }
+});
+
+// Get material categories
+app.get('/api/material-categories', async (req, res) => {
+  try {
+    const categories = await Material.distinct('category');
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL QUOTATION API ENDPOINTS
+
+// Get all personal quotations
+app.get('/api/personal-quotations', async (req, res) => {
+  try {
+    const { status, page = 1, limit = 50, search } = req.query;
+    const filter = {};
+    
+    if (status && status !== 'all') filter.status = status;
+    
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { quotationName: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+    
+    const quotations = await PersonalQuotation.find(filter)
+      .populate('materials.materialId', 'itemName category unit')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    
+    const total = await PersonalQuotation.countDocuments(filter);
+    
+    res.json({
+      quotations,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total,
+      hasMore: parseInt(page) < Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching personal quotations:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch personal quotations',
+      details: error.message 
+    });
+  }
+});
+
+// Get single personal quotation
+app.get('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    const quotation = await PersonalQuotation.findById(req.params.id)
+      .populate('materials.materialId');
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    res.json(quotation);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new personal quotation
+app.post('/api/personal-quotations', async (req, res) => {
+  try {
+    const { quotationName, description, materials } = req.body;
+    
+    if (!quotationName || !materials || materials.length === 0) {
+      return res.status(400).json({ error: 'Missing required fields: quotationName and materials are required' });
+    }
+
+    // Process materials and calculate total
+    const processedMaterials = [];
+    let totalQuotationAmount = 0;
+    
+    for (const material of materials) {
+      if (!material.materialId || !material.quantity || !material.rate) {
+        return res.status(400).json({ error: 'Each material must have materialId, quantity, and rate' });
+      }
+      
+      // Verify material exists
+      const materialDoc = await Material.findById(material.materialId);
+      if (!materialDoc) {
+        return res.status(400).json({ error: `Material with ID ${material.materialId} not found` });
+      }
+      
+      const quantity = parseFloat(material.quantity);
+      const rate = parseFloat(material.rate);
+      const totalAmount = quantity * rate;
+      
+      processedMaterials.push({
+        materialId: material.materialId,
+        itemName: materialDoc.itemName,
+        quantity,
+        rate,
+        totalAmount,
+        unit: materialDoc.unit
+      });
+      
+      totalQuotationAmount += totalAmount;
+    }
+    
+    const quotation = new PersonalQuotation({
+      quotationName: quotationName.trim(),
+      description: description ? description.trim() : '',
+      materials: processedMaterials,
+      totalQuotationAmount
+    });
+    
+    await quotation.save();
+    await quotation.populate('materials.materialId');
+    
+    res.status(201).json(quotation);
+  } catch (error) {
+    console.error('Error creating personal quotation:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update personal quotation
+app.put('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    console.log('🔧 UPDATE QUOTATION REQUEST:');
+    console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Materials received:', req.body.materials);
+    
+    const { quotationName, description, materials, status } = req.body;
+    
+    const updateData = {};
+    if (quotationName) updateData.quotationName = quotationName.trim();
+    if (description !== undefined) updateData.description = description.trim();
+    if (status) updateData.status = status;
+    
+    if (materials) {
+      console.log('🔄 Processing materials array:', materials.length, 'items');
+      const processedMaterials = [];
+      let totalQuotationAmount = 0;
+      
+      for (let i = 0; i < materials.length; i++) {
+        const material = materials[i];
+        console.log(`📦 Processing material ${i}:`, JSON.stringify(material, null, 2));
+        
+        // Handle both material object and materialId reference
+        const materialId = material.materialId || material._id || material.id;
+        console.log(`🔑 Extracted material ID: ${materialId}`);
+        
+        if (!materialId) {
+          console.error('❌ Material without ID found:', material);
+          return res.status(400).json({ error: `Material without ID found` });
+        }
+        
+        const materialDoc = await Material.findById(materialId);
+        if (!materialDoc) {
+          return res.status(400).json({ error: `Material with ID ${materialId} not found` });
+        }
+        
+        // Use provided quantity and rate, or fallback to material defaults
+        const quantity = parseFloat(material.quantity || materialDoc.quantity || 1);
+        const rate = parseFloat(material.rate || materialDoc.rate);
+        const totalAmount = quantity * rate;
+        
+        processedMaterials.push({
+          materialId: materialId,
+          itemName: materialDoc.itemName,
+          quantity,
+          rate,
+          totalAmount,
+          unit: materialDoc.unit
+        });
+        
+        totalQuotationAmount += totalAmount;
+      }
+      
+      updateData.materials = processedMaterials;
+      updateData.totalQuotationAmount = totalQuotationAmount;
+    }
+    
+    const quotation = await PersonalQuotation.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('materials.materialId');
+    
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    res.json(quotation);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete personal quotation
+app.delete('/api/personal-quotations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid quotation ID format' });
+    }
+    
+    const quotation = await PersonalQuotation.findByIdAndDelete(id);
+    if (!quotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    console.log(`Personal quotation deleted: ${quotation.quotationName}`);
+    
+    res.json({ 
+      message: 'Personal quotation deleted successfully',
+      deletedQuotation: {
+        id: quotation._id,
+        quotationName: quotation.quotationName
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting personal quotation:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete personal quotation',
+      details: error.message 
+    });
+  }
+});
+
+// Generate PDF for personal quotation
+app.post('/api/generate-personal-pdf', async (req, res) => {
+  try {
+    const { quotation, clientInfo, letterhead } = req.body;
+    
+    if (!quotation) {
+      return res.status(400).json({ error: 'Quotation data is required' });
+    }
+
+    // Get settings for letterhead (same as client PDF)
+    const settings = await Settings.findOne();
+    const letterheadData = {
+      firmName: (settings?.letterhead?.firmName && settings.letterhead.firmName !== 'Your Company Name') ? settings.letterhead.firmName : 'Samir Electricals',
+      address: (settings?.letterhead?.address && !settings.letterhead.address.includes('Your Company Address')) ? settings.letterhead.address : '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004', 
+      phone: (settings?.letterhead?.phone && settings.letterhead.phone !== 'Your Company Phone') ? settings.letterhead.phone : '+91 98252 61708',
+      tagline: (settings?.letterhead?.tagline && settings.letterhead.tagline !== 'Your Company Tagline') ? settings.letterhead.tagline : "Experience the power of light with Samir Electricals' top-notch solutions.",
+      logo: settings?.letterhead?.logo || DEFAULT_LOGO
+    };
+
+    // Set response headers for PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${quotation.quotationName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+
+    // Create PDF with exact same styling as client PDF
+    const doc = new PDFDocument({
+      margin: 40,
+      size: 'A4'
+    });
+    
+    doc.pipe(res);
+
+    // Helper function to draw a line  
+    const drawLine = (x1, y1, x2, y2, color = '#e5e7eb', width = 1) => {
+      doc.strokeColor(color)
+         .lineWidth(width)
+         .moveTo(x1, y1)
+         .lineTo(x2, y2)
+         .stroke();
+    };
+
+    // Helper function to draw a rectangle
+    const drawRect = (x, y, width, height, fillColor, strokeColor = null) => {
+      if (fillColor) {
+        doc.rect(x, y, width, height).fillColor(fillColor).fill();
+      }
+      if (strokeColor) {
+        doc.rect(x, y, width, height).strokeColor(strokeColor).stroke();
+      }
+    };
+
+    // Page dimensions
+    const pageWidth = 515; // A4 width minus margins
+    const pageHeight = 750; // A4 height minus margins
+
+    // HEADER SECTION with gradient-like effect (EXACT same as client PDF)
+    drawRect(40, 40, pageWidth, 100, '#f8fafc');
+    drawRect(40, 40, pageWidth, 4, '#3b82f6'); // Top blue bar
+
+    // Logo (EXACT same as client PDF)  
+    let logoWidth = 100;
+    try {
+      if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
+        const base64Data = DEFAULT_LOGO.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
+        
+        doc.image(logoBuffer, 60, 55, { 
+          fit: [80, 70],
+          align: 'center',
+          valign: 'center'
+        });
+        
+        console.log('✅ Logo loaded successfully for personal PDF');
+      } else {
+        // Fallback: draw simple logo if base64 fails
+        const logoX = 60, logoY = 55, logoW = 80, logoH = 70;
+        const centerX = logoX + logoW / 2, centerY = logoY + logoH / 2;
+        
+        doc.circle(centerX, centerY, Math.min(logoW, logoH) / 2 - 2)
+           .lineWidth(2).stroke('#2563eb');
+        doc.fontSize(32).fillColor('#2563eb')
+           .text('SE', centerX - 16, centerY - 16, { width: 32, align: 'center' });
+        
+        console.log('⚠️ Using fallback drawn logo for personal PDF');
+      }
+    } catch (logoError) {
+      console.log('❌ Logo loading error:', logoError.message);
+      logoWidth = 0;
+    }
+
+    // Company Name (EXACT same styling as client PDF)
+    doc.fontSize(24)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text(letterheadData.firmName, 60 + logoWidth, 60, {
+         width: pageWidth - logoWidth - 40
+       });
+
+    // Company Address (EXACT same styling as client PDF)
+    if (letterheadData.address) {
+      doc.fontSize(11)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(letterheadData.address, 60 + logoWidth, 90, {
+           width: pageWidth - logoWidth - 40
+         });
+    }
+
+    // Company Phone (EXACT same styling as client PDF)
+    if (letterheadData.phone) {
+      doc.fontSize(11)
+         .fillColor('#64748b')
+         .font('Helvetica')
+         .text(`Phone: ${letterheadData.phone}`, 60 + logoWidth, 110, {
+           width: pageWidth - logoWidth - 40
+         });
+    }
+
+    // Document Title
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text('PERSONAL QUOTATION', 50, 150);
+
+    // Quotation Details
+    doc.fontSize(12).font('Helvetica').fillColor('black');
+    doc.text(`Quotation Name: ${quotation.quotationName}`, 50, 190);
+    
+    if (quotation.description) {
+      doc.text(`Description: ${quotation.description}`, 50, 210);
+    }
+    
+    doc.text(`Date: ${new Date(quotation.createdAt || Date.now()).toLocaleDateString('en-IN')}`, 50, quotation.description ? 230 : 210);
+    doc.text(`Status: ${(quotation.status || 'ready').toUpperCase()}`, 50, quotation.description ? 250 : 230);
+
+    // Materials Table (EXACT same styling as client PDF)
+    let currentY = quotation.description ? 290 : 270;
+    
+    const tableY = currentY;
+    const tableHeight = 25;
+    
+    // Table header with gradient effect (same as client PDF)
+    drawRect(40, tableY, pageWidth, tableHeight, '#3b82f6');
+    
+    // Column definitions (same as client PDF)
+    const colWidths = [250, 80, 80, 105];
+    const colPositions = [50, 300, 380, 460];
+    const headers = ['PARTICULARS', 'QTY', 'RATE', 'AMOUNT'];
+    
+    doc.fontSize(11)
+       .fillColor('white')
+       .font('Helvetica-Bold');
+    
+    headers.forEach((header, i) => {
+      doc.text(header, colPositions[i], tableY + 8, {
+        width: colWidths[i] - 10,
+        align: i === 0 ? 'left' : 'center'
+      });
+    });
+
+    // Table rows with alternating colors (EXACT same as client PDF)
+    let rowY = tableY + tableHeight;
+    let totalAmount = 0;
+    
+    quotation.materials.forEach((material, index) => {
+      if (rowY > 650) { // New page if needed
+        doc.addPage();
+        rowY = 60;
+      }
+
+      // Alternating row colors (same as client PDF)
+      const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+      drawRect(40, rowY, pageWidth, 22, rowColor);
+
+      doc.fontSize(10)
+         .fillColor('#1e293b')
+         .font('Helvetica');
+
+      const itemAmount = material.rate * material.quantity;
+      totalAmount += itemAmount;
+
+      // Particular (item name)
+      doc.text(material.itemName || 'N/A', colPositions[0], rowY + 6, {
+        width: colWidths[0] - 10
+      });
+
+      // Quantity with unit (same as client PDF)
+      doc.text(`${material.quantity || 0} ${material.unit || 'pcs'}`, colPositions[1], rowY + 6, {
+        width: colWidths[1] - 10,
+        align: 'center'
+      });
+
+      // Rate (using Rs like client PDF)
+      doc.text(`Rs ${Number(material.rate || 0).toFixed(2)}`, colPositions[2], rowY + 6, {
+        width: colWidths[2] - 10,
+        align: 'center'
+      });
+
+      // Amount (bold like client PDF)
+      doc.font('Helvetica-Bold')
+         .text(`Rs ${Number(itemAmount).toFixed(2)}`, colPositions[3], rowY + 6, {
+           width: colWidths[3] - 10,
+           align: 'center'
+         });
+
+      rowY += 22;
+    });
+
+    // Table border (same as client PDF)
+    drawLine(40, tableY, 555, tableY, '#3b82f6', 2);
+    drawLine(40, rowY, 555, rowY, '#e5e7eb', 1);
+
+    // TOTAL SECTION (EXACT same styling as client PDF)
+    const totalY = rowY + 20;
+    
+    // Total box with shadow effect (same as client PDF)
+    drawRect(350, totalY, 205, 60, '#f8fafc', '#e2e8f0');
+    drawRect(352, totalY + 2, 205, 60, '#ffffff');
+    
+    // Subtotal (if you want to add tax later)
+    doc.fontSize(11)
+       .fillColor('#64748b')
+       .font('Helvetica')
+       .text('Subtotal:', 365, totalY + 15);
+    
+    doc.text(`Rs ${Number(totalAmount).toFixed(2)}`, 460, totalY + 15, {
+      align: 'right',
+      width: 80
+    });
+
+    // Total amount with blue line and styling (same as client PDF)
+    drawLine(365, totalY + 35, 535, totalY + 35, '#3b82f6', 1);
+    
+    doc.fontSize(14)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text('TOTAL:', 365, totalY + 42);
+    
+    doc.fontSize(16)
+       .fillColor('#3b82f6')
+       .text(`Rs ${Number(totalAmount).toFixed(2)}`, 460, totalY + 40, {
+         align: 'right',
+         width: 80
+       });
+
+    // FOOTER SECTION (EXACT same styling as client PDF, no "Generated on")
+    const footerY = 720;
+    
+    // Footer line
+    drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
+    
+    // Footer content with tagline (no "Generated on" to save space)
+    if (letterheadData.tagline) {
+      doc.fontSize(9)
+         .fillColor('#64748b')
+         .font('Helvetica-Oblique')
+         .text(letterheadData.tagline, 40, footerY + 10, {
+           align: 'center',
+           width: pageWidth
+         });
+    }
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to generate PDF',
+        details: error.message 
+      });
+    }
+  }
+});
+
+// Handle OPTIONS request for materials PDF
+app.options('/api/generate-materials-pdf', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.sendStatus(204);
+});
+
+// Generate Materials List PDF
+app.post('/api/generate-materials-pdf', async (req, res) => {
+  console.log('Materials PDF endpoint called with:', req.body);
+  try {
+    const { materials, searchQuery } = req.body;
+    
+    if (!materials || materials.length === 0) {
+      console.log('No materials provided');
+      return res.status(400).json({ error: 'No materials provided for PDF generation' });
+    }
+
+    console.log('Generating PDF for', materials.length, 'materials');
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument();
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="materials-list-${new Date().toISOString().split('T')[0]}.pdf"`);
+    doc.pipe(res);
+
+    // Helper functions for drawing
+    const drawLine = (x1, y1, x2, y2, color = '#e5e7eb', width = 1) => {
+      doc.strokeColor(color)
+         .lineWidth(width)
+         .moveTo(x1, y1)
+         .lineTo(x2, y2)
+         .stroke();
+    };
+
+    const drawRect = (x, y, width, height, fillColor, strokeColor = null) => {
+      if (fillColor) {
+        doc.rect(x, y, width, height)
+           .fillColor(fillColor)
+           .fill();
+      }
+      if (strokeColor) {
+        doc.rect(x, y, width, height)
+           .strokeColor(strokeColor)
+           .stroke();
+      }
+    };
+    
+    // Get company settings (same as client PDF)
+    const settings = await PersonalSettings.findOne() || {};
+    const clientSettings = await Settings.findOne() || {}; // Get client settings for letterhead
+    
+    // Use client letterhead for consistency
+    const letterheadData = {
+      firmName: (clientSettings?.letterhead?.firmName && clientSettings.letterhead.firmName !== 'Your Company Name') ? clientSettings.letterhead.firmName : (settings.companyName || 'Samir Electricals'),
+      address: (clientSettings?.letterhead?.address && !clientSettings.letterhead.address.includes('Your Company Address')) ? clientSettings.letterhead.address : (settings.companyAddress || '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004'),
+      phone: (clientSettings?.letterhead?.phone && clientSettings.letterhead.phone !== 'Your Company Phone') ? clientSettings.letterhead.phone : (settings.companyPhone || '+91 98252 61708'),
+      tagline: (clientSettings?.letterhead?.tagline && clientSettings.letterhead.tagline !== 'Your Company Tagline') ? clientSettings.letterhead.tagline : "Experience the power of light with Samir Electricals' top-notch solutions.",
+      logo: clientSettings?.letterhead?.logo || DEFAULT_LOGO
+    };
+
+    console.log('Materials PDF Logo debug:');
+    console.log('clientSettings logo available:', !!clientSettings?.letterhead?.logo);
+    console.log('DEFAULT_LOGO available:', !!DEFAULT_LOGO);
+    console.log('Final logo available:', !!letterheadData.logo);
+
+    // Extract company details from settings
+    const companyName = letterheadData.firmName;
+    const companyAddress = letterheadData.address;
+    const companyPhone = letterheadData.phone;
+    const companyEmail = settings.companyEmail || '';
+
+    // Add company logo and letterhead (EXACT same as client PDF)
+    const pageWidth = 555;
+    
+    // Background
+    drawRect(40, 40, pageWidth, 120, '#f8fafc');
+    
+    // Blue top bar
+    drawRect(40, 40, pageWidth, 8, '#3b82f6');
+    
+    // Logo section (EXACT same as quotation PDF)
+    if (letterheadData.logo && letterheadData.logo.startsWith('data:image/')) {
+      try {
+        const base64Data = letterheadData.logo.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
+        doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
+        console.log('✅ Logo loaded successfully for materials PDF');
+      } catch (logoError) {
+        console.warn('Logo loading failed:', logoError.message);
+      }
+    } else if (DEFAULT_LOGO && DEFAULT_LOGO.startsWith('data:image/')) {
+      // Fallback to DEFAULT_LOGO if letterhead logo is not available
+      try {
+        const base64Data = DEFAULT_LOGO.split(',')[1];
+        const logoBuffer = Buffer.from(base64Data, 'base64');
+        doc.image(logoBuffer, 60, 55, { fit: [80, 70], align: 'center', valign: 'center' });
+        console.log('✅ Default logo loaded successfully for materials PDF');
+      } catch (logoError) {
+        console.warn('Default logo loading failed:', logoError.message);
+      }
+    }
+    
+    // Company name with shadow effect
+    doc.fontSize(24)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text(letterheadData.firmName, 160, 70, { width: 300 });
+    
+    // Company address and phone
+    doc.fontSize(11)
+       .fillColor('#64748b')
+       .font('Helvetica')
+       .text(letterheadData.address, 160, 95, { width: 300 });
+    
+    if (letterheadData.phone) {
+      doc.text(`Phone: ${letterheadData.phone}`, 160, 110, { width: 300 });
+    }
+
+    // Remove old company information code
+    // Add company logo if available
+    // if (settings.logoPath) {
+    //   try {
+    //     doc.image(settings.logoPath, 50, 50, { width: 60, height: 60 });
+    //   } catch (logoError) {
+    //     console.warn('Logo loading failed:', logoError.message);
+    //   }
+    // }
+
+    // Company Information
+    // doc.fontSize(20).font('Helvetica-Bold').fillColor('#2c3e50');
+    // doc.text(companyName, 120, 60);
+    
+    // if (companyAddress) {
+    //   doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    //   doc.text(companyAddress, 120, 78);
+    // }
+    
+    // if (companyPhone || companyEmail) {
+    //   let contactY = companyAddress ? 95 : 78;
+    //   if (companyPhone) {
+    //     doc.text(`Phone: ${companyPhone}`, 120, contactY);
+    //     contactY += 12;
+    //   }
+    //   if (companyEmail) {
+    //     doc.text(`Email: ${companyEmail}`, 120, contactY);
+    //   }
+    // }
+
+    // Title
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#2c3e50');
+    const titleY = 180; // Adjusted for new letterhead height
+    doc.text('MATERIALS INVENTORY LIST', 50, titleY);
+    
+    if (searchQuery) {
+      doc.fontSize(12).font('Helvetica').fillColor('#7f8c8d');
+      doc.text(`Filtered by: "${searchQuery}"`, 50, titleY + 25);
+    }
+    
+    // Only show total materials count (remove "Generated on" to save space)
+    doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    doc.text(`Total Materials: ${materials.length}`, 50, titleY + (searchQuery ? 45 : 25));
+
+    // Add separator line
+    doc.strokeColor('#cccccc')
+       .lineWidth(1)
+       .moveTo(50, titleY + (searchQuery ? 65 : 45))
+       .lineTo(545, titleY + (searchQuery ? 65 : 45))
+       .stroke();
+
+    // MATERIALS INVENTORY TABLE (EXACT same styling as client PDF)
+    const tableY = titleY + (searchQuery ? 85 : 65);
+    const tableHeight = 25;
+    
+    // Table header with gradient effect (same as client PDF)
+    drawRect(40, tableY, pageWidth, tableHeight, '#3b82f6');
+    
+    // Column definitions (adjusted for materials)
+    const colWidths = [180, 80, 60, 80, 80, 60];
+    const colPositions = [50, 230, 310, 370, 450, 530];
+    const headers = ['ITEM NAME', 'CATEGORY', 'QTY', 'RATE', 'AMOUNT', 'UNIT'];
+    
+    doc.fontSize(11)
+       .fillColor('white')
+       .font('Helvetica-Bold');
+    
+    headers.forEach((header, i) => {
+      doc.text(header, colPositions[i], tableY + 8, {
+        width: colWidths[i] - 10,
+        align: i === 0 ? 'left' : 'center'
+      });
+    });
+
+    // Table rows with alternating colors (EXACT same as client PDF)
+    let rowY = tableY + tableHeight;
+    let totalInventoryValue = 0;
+    
+    materials.forEach((material, index) => {
+      if (rowY > 650) { // New page if needed
+        doc.addPage();
+        rowY = 60;
+      }
+
+      // Alternating row colors (same as client PDF)
+      const rowColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+      drawRect(40, rowY, pageWidth, 22, rowColor);
+
+      doc.fontSize(10)
+         .fillColor('#1e293b')
+         .font('Helvetica');
+
+      const totalValue = (material.rate || 0) * (material.quantity || 0);
+      totalInventoryValue += totalValue;
+
+      // Item Name
+      doc.text(material.itemName || 'N/A', colPositions[0], rowY + 6, {
+        width: colWidths[0] - 10
+      });
+
+      // Category
+      doc.text(material.category || 'N/A', colPositions[1], rowY + 6, {
+        width: colWidths[1] - 10,
+        align: 'center'
+      });
+
+      // Quantity
+      doc.text((material.quantity || 0).toString(), colPositions[2], rowY + 6, {
+        width: colWidths[2] - 10,
+        align: 'center'
+      });
+
+      // Rate (using Rs like client PDF)
+      doc.text(`Rs ${Number(material.rate || 0).toFixed(2)}`, colPositions[3], rowY + 6, {
+        width: colWidths[3] - 10,
+        align: 'center'
+      });
+
+      // Amount (bold like client PDF)
+      doc.font('Helvetica-Bold')
+         .text(`Rs ${Number(totalValue).toFixed(2)}`, colPositions[4], rowY + 6, {
+           width: colWidths[4] - 10,
+           align: 'center'
+         });
+
+      // Unit
+      doc.font('Helvetica')
+         .text(material.unit || 'pcs', colPositions[5], rowY + 6, {
+           width: colWidths[5] - 10,
+           align: 'center'
+         });
+
+      rowY += 22;
+    });
+
+    // Table border (same as client PDF)
+    drawLine(40, tableY, 555, tableY, '#3b82f6', 2);
+    drawLine(40, rowY, 555, rowY, '#e5e7eb', 1);
+
+    // TOTAL SECTION (EXACT same styling as client PDF)
+    const totalY = rowY + 20;
+    
+    // Total box with shadow effect (same as client PDF)
+    drawRect(350, totalY, 205, 60, '#f8fafc', '#e2e8f0');
+    drawRect(352, totalY + 2, 205, 60, '#ffffff');
+    
+    // Subtotal section
+    doc.fontSize(11)
+       .fillColor('#64748b')
+       .font('Helvetica')
+       .text('Total Inventory Value:', 365, totalY + 15);
+    
+    doc.text(`Rs ${Number(totalInventoryValue).toFixed(2)}`, 460, totalY + 15, {
+      align: 'right',
+      width: 80
+    });
+
+    // Total amount with blue line and styling (same as client PDF)
+    drawLine(365, totalY + 35, 535, totalY + 35, '#3b82f6', 1);
+    
+    doc.fontSize(14)
+       .fillColor('#1e293b')
+       .font('Helvetica-Bold')
+       .text('TOTAL:', 365, totalY + 42);
+    
+    doc.fontSize(16)
+       .fillColor('#3b82f6')
+       .text(`Rs ${Number(totalInventoryValue).toFixed(2)}`, 460, totalY + 40, {
+         align: 'right',
+         width: 80
+       });
+
+    // FOOTER SECTION (EXACT same styling as client PDF)
+    const footerY = 720;
+    
+    // Footer line
+    drawLine(40, footerY, 555, footerY, '#e5e7eb', 1);
+    
+    // Footer content with tagline
+    if (letterheadData.tagline) {
+      doc.fontSize(9)
+         .fillColor('#64748b')
+         .font('Helvetica-Oblique')
+         .text(letterheadData.tagline, 40, footerY + 10, {
+           align: 'center',
+           width: pageWidth
+         });
+    }
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('Materials PDF generation error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to generate materials PDF',
+        details: error.message 
+      });
+    }
+  }
+});
+
+// Transfer personal quotation to client quotation
+app.post('/api/personal-quotations/:id/transfer', async (req, res) => {
+  try {
+    const { clientInfo } = req.body;
+    
+    if (!clientInfo || !clientInfo.name) {
+      return res.status(400).json({ error: 'Client information with name is required' });
+    }
+    
+    const personalQuotation = await PersonalQuotation.findById(req.params.id)
+      .populate('materials.materialId');
+    
+    if (!personalQuotation) {
+      return res.status(404).json({ error: 'Personal quotation not found' });
+    }
+    
+    // Convert personal quotation materials to document items format
+    const items = personalQuotation.materials.map(material => ({
+      particular: material.itemName,
+      unit: material.unit,
+      quantity: material.quantity,
+      rate: material.rate,
+      amount: material.totalAmount
+    }));
+    
+    // Create new client document (quote)
+    const clientDocument = new Document({
+      type: 'quote',
+      clientInfo: {
+        name: clientInfo.name,
+        address: clientInfo.address || '',
+        phone: clientInfo.phone || '',
+        email: clientInfo.email || ''
+      },
+      items,
+      totalAmount: personalQuotation.totalQuotationAmount,
+      letterhead: clientInfo.letterhead || {}
+    });
+    
+    await clientDocument.save();
+    
+    // Update personal quotation status to transferred
+    personalQuotation.status = 'transferred';
+    await personalQuotation.save();
+    
+    res.json({
+      message: 'Personal quotation transferred to client successfully',
+      clientDocument,
+      personalQuotation
+    });
+  } catch (error) {
+    console.error('Error transferring personal quotation:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Dashboard stats for personal materials and quotations
+app.get('/api/personal/stats', async (req, res) => {
+  try {
+    const totalMaterials = await Material.countDocuments();
+    const totalPersonalQuotations = await PersonalQuotation.countDocuments();
+    const draftQuotations = await PersonalQuotation.countDocuments({ status: 'draft' });
+    const readyQuotations = await PersonalQuotation.countDocuments({ status: 'ready' });
+    
+    const totalMaterialValue = await Material.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    const totalQuotationValue = await PersonalQuotation.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalQuotationAmount' } } }
+    ]);
+    
+    // Get materials by category
+    const materialsByCategory = await Material.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 }, value: { $sum: '$totalAmount' } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    res.json({
+      totalMaterials,
+      totalPersonalQuotations,
+      draftQuotations,
+      readyQuotations,
+      totalMaterialValue: totalMaterialValue[0]?.total || 0,
+      totalQuotationValue: totalQuotationValue[0]?.total || 0,
+      materialsByCategory
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// CATEGORY MANAGEMENT API ENDPOINTS
+
+// Get all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ createdAt: -1 });
+    res.json({ categories });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new category
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { name, color } = req.body;
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Category name is required' });
+    }
+
+    const value = name.toLowerCase().replace(/\s+/g, '_');
+    
+    // Check if category already exists
+    const existingCategory = await Category.findOne({ value });
+    if (existingCategory) {
+      return res.status(400).json({ error: 'Category already exists' });
+    }
+
+    const category = new Category({
+      name: name.trim(),
+      value,
+      color: color || '#F0F8FF'
+    });
+
+    await category.save();
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update category
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { name, color } = req.body;
+    const category = await Category.findById(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    if (name && name.trim()) {
+      category.name = name.trim();
+      category.value = name.toLowerCase().replace(/\s+/g, '_');
+    }
+    if (color) {
+      category.color = color;
+    }
+
+    await category.save();
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete category
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    // Check if category is being used by any materials
+    const materialsUsingCategory = await Material.countDocuments({ category: category.value });
+    if (materialsUsingCategory > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete category that is being used by materials',
+        materialsCount: materialsUsingCategory
+      });
+    }
+
+    await Category.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL ANALYTICS API ENDPOINTS
+
+// Get analytics data
+app.get('/api/personal-analytics', async (req, res) => {
+  try {
+    let analytics = await PersonalAnalytics.findOne({ userId: 'default_user' });
+    
+    if (!analytics) {
+      // Create new analytics record
+      analytics = new PersonalAnalytics();
+    }
+
+    // Update analytics with current data
+    const totalMaterials = await Material.countDocuments();
+    const totalQuotations = await PersonalQuotation.countDocuments();
+    
+    const materialValue = await Material.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+    
+    const quotationValue = await PersonalQuotation.aggregate([
+      { $group: { _id: null, total: { $sum: '$totalQuotationAmount' } } }
+    ]);
+
+    // Category breakdown
+    const categoryBreakdown = await Material.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+          totalValue: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $project: {
+          category: '$_id',
+          count: 1,
+          totalValue: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    // Monthly data (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlyMaterials = await Material.aggregate([
+      {
+        $match: { createdAt: { $gte: sixMonthsAgo } }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 },
+          totalValue: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $project: {
+          month: {
+            $concat: [
+              { $toString: '$_id.year' },
+              '-',
+              { $cond: [
+                { $lt: ['$_id.month', 10] },
+                { $concat: ['0', { $toString: '$_id.month' }] },
+                { $toString: '$_id.month' }
+              ]}
+            ]
+          },
+          materials: '$count',
+          totalValue: '$totalValue',
+          _id: 0
+        }
+      }
+    ]);
+
+    const monthlyQuotations = await PersonalQuotation.aggregate([
+      {
+        $match: { createdAt: { $gte: sixMonthsAgo } }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          month: {
+            $concat: [
+              { $toString: '$_id.year' },
+              '-',
+              { $cond: [
+                { $lt: ['$_id.month', 10] },
+                { $concat: ['0', { $toString: '$_id.month' }] },
+                { $toString: '$_id.month' }
+              ]}
+            ]
+          },
+          quotations: '$count',
+          _id: 0
+        }
+      }
+    ]);
+
+    // Merge monthly data
+    const monthlyData = {};
+    monthlyMaterials.forEach(m => {
+      monthlyData[m.month] = { 
+        month: m.month, 
+        materials: m.materials, 
+        totalValue: m.totalValue,
+        quotations: 0 
+      };
+    });
+    monthlyQuotations.forEach(q => {
+      if (monthlyData[q.month]) {
+        monthlyData[q.month].quotations = q.quotations;
+      } else {
+        monthlyData[q.month] = { 
+          month: q.month, 
+          materials: 0, 
+          totalValue: 0,
+          quotations: q.quotations 
+        };
+      }
+    });
+
+    // Update analytics
+    analytics.totalMaterials = totalMaterials;
+    analytics.totalQuotations = totalQuotations;
+    analytics.totalValue = (materialValue[0]?.total || 0) + (quotationValue[0]?.total || 0);
+    analytics.categoryBreakdown = categoryBreakdown;
+    analytics.monthlyData = Object.values(monthlyData);
+
+    await analytics.save();
+    res.json(analytics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PERSONAL SETTINGS API ENDPOINTS
+
+// Get personal settings
+app.get('/api/personal-settings', async (req, res) => {
+  try {
+    let settings = await PersonalSettings.findOne({ userId: 'default_user' });
+    
+    if (!settings) {
+      // Create default settings
+      settings = new PersonalSettings();
+      await settings.save();
+    }
+    
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update personal settings
+app.put('/api/personal-settings', async (req, res) => {
+  try {
+    let settings = await PersonalSettings.findOne({ userId: 'default_user' });
+    
+    if (!settings) {
+      settings = new PersonalSettings(req.body);
+    } else {
+      Object.assign(settings, req.body);
+    }
+    
+    await settings.save();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset all personal data
+app.delete('/api/personal/reset', async (req, res) => {
+  try {
+    const materialResult = await Material.deleteMany({});
+    const quotationResult = await PersonalQuotation.deleteMany({});
+    const categoryResult = await Category.deleteMany({});
+    const analyticsResult = await PersonalAnalytics.deleteMany({});
+    
+    res.json({ 
+      message: 'All personal data reset successfully',
+      cleared: {
+        materials: materialResult.deletedCount,
+        quotations: quotationResult.deletedCount,
+        categories: categoryResult.deletedCount,
+        analytics: analyticsResult.deletedCount
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

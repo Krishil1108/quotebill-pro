@@ -7,9 +7,10 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/quotebill')
 // Settings Schema
 const settingsSchema = new mongoose.Schema({
   letterhead: {
-    firmName: { type: String, default: 'Your Company Name' },
-    address: { type: String, default: 'Your Company Address' },
-    tagline: { type: String, default: 'Your Company Tagline' },
+    firmName: { type: String, default: 'Samir Electricals' },
+    address: { type: String, default: '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004' },
+    phone: { type: String, default: '+91 98252 61708' },
+    tagline: { type: String, default: "Experience the power of light with Samir Electricals' top-notch solutions." },
     logo: String
   },
   particulars: [String],
@@ -34,9 +35,10 @@ async function initializeDatabase() {
       
       const defaultSettings = new Settings({
         letterhead: {
-          firmName: 'Your Company Name',
-          address: 'Your Company Address\nCity, State - PIN Code\nCountry',
-          tagline: 'Your Company Tagline'
+          firmName: 'Samir Electricals',
+          address: '9/1 Jay Gujarat Society, Opp. Police Commissioner Office, Shahibaug, Ahmedabad - 380004',
+          phone: '+91 98252 61708',
+          tagline: "Experience the power of light with Samir Electricals' top-notch solutions."
         },
         particulars: [
           'Product A',
